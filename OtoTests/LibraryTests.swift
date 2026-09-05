@@ -130,6 +130,21 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(MusicTime.clock(192), "3:12")
     }
 
+    func testSongSearchReturnsPlayableTracksSeparatelyFromAlbums() {
+        let tracks = [track("Album/Café.flac", number: 1), track("Album/Other.flac", number: 2)]
+        let albums = Album.grouped(tracks)
+        let search = LibrarySearch(query: "  cafe  ", albums: albums)
+        XCTAssertTrue(search.isActive)
+        XCTAssertTrue(search.albums.isEmpty)
+        XCTAssertEqual(search.tracks.map(\.id), ["Album/Café.flac"])
+        XCTAssertEqual(LibrarySearch(query: "Artist", albums: albums).tracks.count, 2)
+        XCTAssertEqual(LibrarySearch(query: "Album", albums: albums).albums.count, 1)
+        let empty = LibrarySearch(query: " \n ", albums: albums)
+        XCTAssertFalse(empty.isActive)
+        XCTAssertEqual(empty.albums, albums)
+        XCTAssertTrue(empty.tracks.isEmpty)
+    }
+
     @MainActor func testPlaybackPauseSeekNextAndEndOfAlbum() async throws {
         let music = temporary.appendingPathComponent("Music")
         try copyFixture("01", "flac", into: music)
@@ -148,14 +163,36 @@ final class LibraryTests: XCTestCase {
         controller.previous()
         XCTAssertEqual(controller.elapsed, 0, accuracy: 0.1)
         controller.next()
-        try await waitUntil { controller.isPlaying && controller.currentTrack?.title == "Second Light" }
+        try await waitUntil { !controller.isLoading && controller.currentTrack?.title == "Second Light" }
+        XCTAssertFalse(controller.isPlaying, "Skipping from pause must not unexpectedly start audio")
         XCTAssertFalse(controller.hasNext)
+        controller.resume()
+        try await waitUntil { controller.isPlaying }
         controller.seek(to: 7.6)
         try await waitUntil { !controller.isPlaying }
         XCTAssertEqual(controller.currentTrack?.title, "Second Light")
         controller.resume()
         try await waitUntil { controller.isPlaying }
         XCTAssertLessThan(controller.elapsed, 1)
+    }
+
+    @MainActor func testPreviousAndRapidSkippingRespectPause() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        try copyFixture("02", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        defer { player.stop() }
+        player.play(snapshot.tracks, bookmark: snapshot.bookmark)
+        try await waitUntil { player.isPlaying }
+        player.pause()
+        player.next()
+        player.previous()
+        try await waitUntil { !player.isLoading }
+        XCTAssertEqual(player.currentTrack?.title, "First Light")
+        XCTAssertFalse(player.isPlaying)
+        XCTAssertEqual(player.elapsed, 0, accuracy: 0.1)
     }
 
     @MainActor func testFailedFolderReplacementKeepsLibrary() async throws {

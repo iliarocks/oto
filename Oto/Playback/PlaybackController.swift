@@ -124,13 +124,18 @@ private actor AudioSessionController {
 
     func next() {
         guard hasNext else { return }
+        let autoplay = wantsPlayback
         currentIndex += 1
-        loadCurrent()
+        loadCurrent(autoplay: autoplay)
     }
 
     func previous() {
         if elapsed > 3 || currentIndex == 0 { seek(to: 0) }
-        else { currentIndex -= 1; loadCurrent() }
+        else {
+            let autoplay = wantsPlayback
+            currentIndex -= 1
+            loadCurrent(autoplay: autoplay)
+        }
     }
 
     func stop() {
@@ -150,7 +155,7 @@ private actor AudioSessionController {
         Task { await session.deactivate() }
     }
 
-    private func loadCurrent() {
+    private func loadCurrent(autoplay: Bool = true) {
         guard queue.indices.contains(currentIndex), let bookmark else { return }
         loadTask?.cancel()
         pause()
@@ -161,7 +166,7 @@ private actor AudioSessionController {
         elapsed = 0
         duration = track.duration
         isLoading = true
-        wantsPlayback = true
+        wantsPlayback = autoplay
         nowPlayingArtwork = nil
         if let key = track.artworkKey,
            let image = UIImage(contentsOfFile: artworkDirectory.appendingPathComponent(key).path) {
@@ -179,6 +184,7 @@ private actor AudioSessionController {
                 duration = prepared.player.duration
                 isLoading = false
                 if wantsPlayback { resume() }
+                else { updateNowPlaying() }
             } catch {
                 guard !Task.isCancelled, loadID == id else { return }
                 isLoading = false
@@ -208,9 +214,13 @@ private actor AudioSessionController {
     nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         Task { @MainActor [weak self] in
             guard let self, self.audio?.player === player else { return }
+            let shouldContinue = self.wantsPlayback
             self.pause()
             self.elapsed = self.duration
-            if flag && self.hasNext { self.next() }
+            if flag && shouldContinue && self.hasNext {
+                self.currentIndex += 1
+                self.loadCurrent()
+            }
             else if !flag { self.fail("Playback stopped because this audio file could not be decoded.") }
             else { self.updateNowPlaying() }
         }

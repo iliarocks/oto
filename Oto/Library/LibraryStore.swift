@@ -40,6 +40,11 @@ import Foundation
 
     func cancelScan() { scanTask?.cancel() }
 
+    func refreshAndWait() async {
+        refresh()
+        await scanTask?.value
+    }
+
     private func startScan(access: FolderAccess) {
         isScanning = true
         progress = nil

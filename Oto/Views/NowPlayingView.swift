@@ -43,6 +43,7 @@ struct MiniPlayer: View {
 
 struct NowPlayingView: View {
     let player: PlaybackController
+    var showAlbum: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var seekPosition: Double = 0
     @State private var isSeeking = false
@@ -56,7 +57,19 @@ struct NowPlayingView: View {
                     VStack(spacing: 7) {
                         Text(player.currentTrack?.title ?? "Nothing Playing").font(.title2.bold())
                         Text(player.currentTrack?.artist ?? "").font(.title3).foregroundStyle(.secondary)
-                        Text(player.currentTrack?.albumTitle ?? "").font(.subheadline).foregroundStyle(.secondary)
+                        if let showAlbum {
+                            Button(action: showAlbum) {
+                                HStack(spacing: 5) {
+                                    Text(player.currentTrack?.albumTitle ?? "")
+                                    Image(systemName: "chevron.right").font(.caption2.weight(.semibold))
+                                }
+                            }
+                            .font(.subheadline)
+                            .accessibilityLabel("Go to album, \(player.currentTrack?.albumTitle ?? "")")
+                            .accessibilityIdentifier("now-playing-album")
+                        } else {
+                            Text(player.currentTrack?.albumTitle ?? "").font(.subheadline).foregroundStyle(.secondary)
+                        }
                     }
                     .multilineTextAlignment(.center)
                     VStack(spacing: 3) {
