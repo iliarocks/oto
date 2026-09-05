@@ -117,3 +117,7 @@ Moved `PlayerBar` onto each screen's content inside the navigation stack. The li
 Three targeted UI checks passed in `work/LastSongFixed.xcresult`: complete final-row clearance and successful playback at normal and largest accessibility text sizes, plus navigation between album, library, and Now Playing. Inspected both end-of-album screenshots. Signed build 0.1 (8) succeeds.
 
 Build 8 was installed and launched on the connected iPhone.
+
+## Bottom-edge fade — September 5
+
+Added a faint gradient behind the floating player, fading from transparent above it into the system background toward the bottom safe area. It adapts to light/dark appearance, does not take taps, and does not alter the player inset. The existing final-song clearance/playback UI check passed (`work/PlayerFade.xcresult`); inspected its screenshot. Signed build 0.1 (9) succeeded and was installed on the iPhone. The user's reminder to keep tracking work in Git continues the existing incremental-commit workflow.

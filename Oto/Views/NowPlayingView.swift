@@ -20,6 +20,17 @@ struct PlayerBar: ViewModifier {
             MiniPlayer(player: player, open: open)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
+                .background {
+                    LinearGradient(stops: [
+                        .init(color: Color(uiColor: .systemBackground).opacity(0), location: 0),
+                        .init(color: Color(uiColor: .systemBackground).opacity(0.45), location: 0.55),
+                        .init(color: Color(uiColor: .systemBackground).opacity(0.9), location: 1)
+                    ], startPoint: .top, endPoint: .bottom)
+                    .padding(.top, -24)
+                    .ignoresSafeArea(.container, edges: .bottom)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
         }
     }
 }
