@@ -40,3 +40,19 @@ At the user's request before bed, built, installed, and launched version 0.1 (2)
 ## Latest user direction — usefulness and interaction quality
 
 Give feature usefulness and product judgment equal attention to reliability. For every feature, interaction, and UI component, ask whether it is the best available native pattern for its purpose, whether it makes sense, and whether it is pragmatic and worth keeping. Walk through the actual listening experience and improve or simplify friction. Modest improvements to the core flow are welcome; avoid spending the night exclusively on tests and internals. Existing boundaries remain: no playlists, decorative transitions, or unrelated features. The overnight continuation prompt has been updated to carry this direction forward.
+
+## Overnight pass 1 — 23:00–23:10
+
+Reviewed the actual library screen with the personal music folder, then exercised the changed listening paths using native simulator UI tests with synthetic music. Product findings and decisions:
+
+- Searching for a song previously returned only its album, requiring navigation and another search through its tracks. Search now has separate Albums and Songs sections; tapping a song plays it directly in album order, dismisses the keyboard, and keeps the search context. Whitespace-only queries behave as an empty search, and accents/case are handled by localized matching.
+- The album name in Now Playing now opens that album's track list. This gives the current music a clear route back into the library.
+- Partially unreadable imports previously hid issues inside Music Folder. A quiet, actionable library row now points to the affected files.
+- Changing folders from Music Folder previously presented a second sheet while the first was dismissing. The picker now opens after dismissal completes; a UI test verifies the full flow.
+- A selected folder that becomes empty now offers Refresh and explains where to add songs, rather than presenting first-run onboarding again. The complete remove/refresh/re-add/recover path passes a UI test.
+- Pull-to-refresh now waits for the scan instead of ending its native progress indication immediately. Counts use singular labels for one album/song.
+- Next/Previous while paused now stay paused; explicit Play and tapping a song still start playback. Automatic album advancement continues while listening. Rapid skips and pause intent are covered by playback checks.
+
+Validation: the five UI flows then present plus the new search-matching check passed in `work/ListeningFlow.xcresult`; screenshots of direct song search and the issue row were inspected. The changed playback policies, automatic advancement/interruption regression, empty-folder recovery, and updated playback/relaunch UI flow all passed in `work/PlaybackIntent.xcresult`. No unrelated passing tests were rerun. The GUI Simulator app was unavailable through computer-use discovery, so interaction validation used the existing native XCTest runner and simulator screenshots.
+
+Signed development build 0.1 (3) succeeds locally. The physical phone remains on build 2 and was not disturbed. Remaining overnight review should focus on meaningful file-provider/cancellation behavior, metadata edge cases, and responsiveness with larger libraries, rather than feature accumulation.

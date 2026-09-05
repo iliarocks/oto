@@ -120,6 +120,31 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Browse"].waitForExistence(timeout: 10) || app.navigationBars["Browse"].exists)
     }
 
+    @MainActor func testEmptySelectedFolderOffersRefreshAndRecovers() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        let source = try XCTUnwrap(Bundle(for: OtoUITests.self).url(forResource: "01", withExtension: "flac"))
+        let destination = folder.appendingPathComponent("01.flac")
+        try FileManager.default.copyItem(at: source, to: destination)
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        let album = app.buttons["album-Quiet Hours"]
+        XCTAssertTrue(album.waitForExistence(timeout: 20))
+        try FileManager.default.removeItem(at: destination)
+        app.buttons["library-options"].tap()
+        app.buttons["Refresh Library"].tap()
+        let refresh = app.buttons["refresh-empty-library"]
+        XCTAssertTrue(refresh.waitForExistence(timeout: 10))
+        attach(app, name: "Empty Selected Folder")
+        try FileManager.default.copyItem(at: source, to: destination)
+        refresh.tap()
+        XCTAssertTrue(album.waitForExistence(timeout: 10))
+    }
+
     @MainActor private func attach(_ app: XCUIApplication, name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name
