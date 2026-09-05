@@ -33,3 +33,5 @@ SwiftUI NavigationStack, List, ContentUnavailableView, sheets, system materials,
 No API keys, online services, cloud database, or Apple Music library authorization are required.
 
 Player labels share `MarqueeText`: measured overflow enables a bounded 30 Hz timeline, a brief initial pause, and a repeated label that cycles horizontally. Fitting text, Reduce Motion, and inactive scenes pause the timeline. Accessibility exposes one full label rather than the visual copies. Now Playing has no scroll view; portrait layout gives spare height to artwork, while landscape places artwork beside compact controls. Landscape limits text scaling to XXXL to preserve control access in its limited height; portrait supports the accessibility sizes. Dismissal uses the native sheet gesture and accessibility escape action.
+
+`PlayerBar` is applied to the library and album content inside the navigation stack, rather than outside the stack. This lets each List reserve the actual player height in its scrollable safe area, keeping the last row accessible when playback starts or text size changes.

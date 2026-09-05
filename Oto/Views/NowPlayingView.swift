@@ -2,6 +2,8 @@ import AVKit
 import SwiftUI
 
 struct PlayerBar: ViewModifier {
+    // Apply to each screen's content, inside NavigationStack, so its List
+    // receives the bar's safe-area inset when scrolling to the final row.
     let player: PlaybackController
     let open: () -> Void
 

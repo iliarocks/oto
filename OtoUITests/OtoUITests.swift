@@ -295,6 +295,57 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(mini.waitForExistence(timeout: 10))
     }
 
+    @MainActor func testLastSongClearsFloatingPlayer() throws {
+        try checkLastSongClearsPlayer(largeText: false)
+    }
+
+    @MainActor func testLastSongClearsFloatingPlayerWithLargeText() throws {
+        try checkLastSongClearsPlayer(largeText: true)
+    }
+
+    @MainActor private func checkLastSongClearsPlayer(largeText: Bool) throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        let first = try XCTUnwrap(Bundle(for: OtoUITests.self).url(forResource: "01", withExtension: "flac"))
+        let last = try XCTUnwrap(Bundle(for: OtoUITests.self).url(forResource: "02", withExtension: "flac"))
+        for index in 1...12 {
+            try FileManager.default.copyItem(at: first, to: folder.appendingPathComponent("\(index).flac"))
+        }
+        try FileManager.default.copyItem(at: last, to: folder.appendingPathComponent("last.flac"))
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        if largeText { app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"] }
+        app.launch()
+        let album = app.buttons["album-Quiet Hours"]
+        XCTAssertTrue(album.waitForExistence(timeout: 20))
+        album.tap()
+        let play = app.buttons["play-album"]
+        for _ in 0..<4 where !play.isHittable { app.swipeUp() }
+        play.tap()
+        let mini = app.buttons["mini-player"]
+        XCTAssertTrue(mini.waitForExistence(timeout: 10))
+        let finalSong = app.buttons["track-Second Light"]
+        for _ in 0..<12 {
+            if finalSong.exists && finalSong.frame.maxY < mini.frame.minY - 8 { break }
+            app.swipeUp()
+        }
+        attach(app, name: largeText ? "Final Song Above Large Player" : "Final Song Above Player")
+        XCTAssertTrue(finalSong.isHittable)
+        XCTAssertLessThan(finalSong.frame.maxY, mini.frame.minY - 8, "The complete last row must clear the floating player")
+        finalSong.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS 'Second Light'"), evaluatedWith: mini)
+        waitForExpectations(timeout: 10)
+        mini.tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
+        waitForExpectations(timeout: 10)
+        toggle.tap()
+    }
+
     @MainActor private func attach(_ app: XCUIApplication, name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

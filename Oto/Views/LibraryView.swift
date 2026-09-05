@@ -47,11 +47,13 @@ struct LibraryView: View {
                     .refreshable { await library.refreshAndWait() }
                 }
             }
+            .modifier(PlayerBar(player: player) { showingPlayer = true })
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: String.self) { id in
                 if let album = library.albums.first(where: { $0.id == id }) {
                     AlbumView(album: album, library: library, player: player)
+                        .modifier(PlayerBar(player: player) { showingPlayer = true })
                 } else { ContentUnavailableView("Album Unavailable", systemImage: "music.note") }
             }
             .toolbar {
@@ -76,7 +78,6 @@ struct LibraryView: View {
                 }
             }
         }
-        .modifier(PlayerBar(player: player) { showingPlayer = true })
         .sheet(isPresented: $showingPicker) {
             FolderPicker { url in
                 library.choose(url)

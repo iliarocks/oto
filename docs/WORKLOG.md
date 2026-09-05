@@ -107,3 +107,13 @@ Removed Now Playing's scroll view and down-arrow button. Artwork takes the remai
 Validation: three targeted UI flows passed in `work/MarqueePlayer.xcresult` (normal listening/navigation, maximum accessibility text, and long-title motion/dismissal). Checked light and dark screenshots. The dark long-title flow additionally verified visual changes over time in both mini and expanded labels, landscape control access, and dismissal (`work/MarqueeDark.xcresult`). The initial app-window screenshot was cropped incorrectly after rotation; a full-screen screenshot in `work/MarqueeScreen.xcresult` confirmed the complete landscape layout, and that flow passed. No playback-engine changes or unrelated unit-suite reruns. Signed build 0.1 (7) succeeds.
 
 Build 7 was installed and launched on the connected iPhone after validation.
+
+## Final-song visibility — September 5
+
+Reproduced the user's report with a 13-song album: after scrolling to the end, the last song extended to y=840 while the player began near y=780. The regression failed before the fix (`work/LastSongBefore.xcresult`). The player modifier was outside NavigationStack, so the album List did not receive its reserved bottom space.
+
+Moved `PlayerBar` onto each screen's content inside the navigation stack. The library and album List now receive the bar's actual safe-area inset, including when Dynamic Type changes its height. No fixed extra spacer or guessed player height was introduced.
+
+Three targeted UI checks passed in `work/LastSongFixed.xcresult`: complete final-row clearance and successful playback at normal and largest accessibility text sizes, plus navigation between album, library, and Now Playing. Inspected both end-of-album screenshots. Signed build 0.1 (8) succeeds.
+
+Build 8 was installed and launched on the connected iPhone.
