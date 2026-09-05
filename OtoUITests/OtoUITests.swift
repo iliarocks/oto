@@ -188,6 +188,42 @@ final class OtoUITests: XCTestCase {
         toggle.tap()
     }
 
+    @MainActor func testLargerFolderSearchAndPlayback() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        let sources = try ["01", "02"].map {
+            try XCTUnwrap(Bundle(for: OtoUITests.self).url(forResource: $0, withExtension: "flac"))
+        }
+        for number in 1...200 {
+            let album = folder.appendingPathComponent("Album \(number)")
+            try FileManager.default.createDirectory(at: album, withIntermediateDirectories: true)
+            for source in sources {
+                try FileManager.default.copyItem(at: source, to: album.appendingPathComponent(source.lastPathComponent))
+            }
+        }
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["200 albums · 400 songs"].waitForExistence(timeout: 60))
+        app.swipeUp()
+        app.swipeDown()
+        let search = app.searchFields.firstMatch
+        search.tap()
+        search.typeText("Test Second")
+        let song = app.buttons["search-song-Second Light"].firstMatch
+        XCTAssertTrue(song.waitForExistence(timeout: 10))
+        attach(app, name: "Artist and Song Search in 400 Songs")
+        song.tap()
+        app.buttons["mini-player"].tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
+        waitForExpectations(timeout: 10)
+        toggle.tap()
+    }
+
     @MainActor private func attach(_ app: XCUIApplication, name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

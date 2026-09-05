@@ -11,12 +11,15 @@ struct LibrarySearch {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         self.query = query
         guard !query.isEmpty else { self.albums = albums; tracks = []; return }
+        let terms = query.split(whereSeparator: \.isWhitespace).map(String.init)
+        func matches(_ fields: [String]) -> Bool {
+            terms.allSatisfy { term in fields.contains { $0.localizedStandardContains(term) } }
+        }
         self.albums = albums.filter {
-            $0.title.localizedStandardContains(query) || $0.artist.localizedStandardContains(query)
+            matches([$0.title, $0.artist])
         }
         tracks = albums.flatMap(\.tracks).filter {
-            $0.title.localizedStandardContains(query) || $0.artist.localizedStandardContains(query)
-                || $0.albumTitle.localizedStandardContains(query) || $0.albumArtist.localizedStandardContains(query)
+            matches([$0.title, $0.artist, $0.albumTitle, $0.albumArtist])
         }
     }
 }

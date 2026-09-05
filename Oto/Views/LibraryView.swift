@@ -11,10 +11,11 @@ struct LibraryView: View {
     @State private var chooseAfterFolderDismisses = false
     @FocusState private var searchFocused: Bool
 
-    private var results: LibrarySearch { LibrarySearch(query: search, albums: library.albums) }
     private var currentAlbum: Album? { library.albums.first { $0.id == player.currentTrack?.albumID } }
 
     var body: some View {
+        // Several sections read the same result. Filter once per view update.
+        let results = LibrarySearch(query: search, albums: library.albums)
         NavigationStack(path: $path) {
             Group {
                 if library.albums.isEmpty && !library.isScanning { emptyLibrary }

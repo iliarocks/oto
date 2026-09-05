@@ -69,3 +69,15 @@ Focused on making unavailable and slow-opening music manageable from the listeni
 Validation: all 20 unit/integration tests and the new retry UI flow passed in `work/FileReadCancellation.xcresult`, including the blocked-reader test with no skips. Inspected both retry alert screenshots, then shortened their message to match the new action. The shared read-path change justified rerunning the unit suite; unrelated UI flows were not repeated. Compilation has no Swift warnings; the existing Xcode beta App Intents and AVAudioSession diagnostics remain. Signed build 0.1 (4) succeeds locally. The iPhone remains on build 2, with no overnight installation or playback.
 
 Next bounded review: browsing/search responsiveness with a realistically larger library and metadata fallback behavior. Prefer an evidenced listening improvement over adding settings or unrelated features. Physical background/lock-screen/AirPlay and real iCloud re-download checks remain for a waking device session.
+
+## Final overnight pass — larger-library search
+
+The continuation arrived with a 01:09 heartbeat timestamp. At the final clock check, local time was already 03:19, past the 02:00 cutoff; stopped further development and paused the automation. No additional features or device operations are scheduled.
+
+- Removed repeated full-library filtering from a single Library view update. A local, unoptimized macOS microbenchmark with 10,000 synthetic tracks measured about 34 ms for one old search evaluation versus 245 ms for eight repeated evaluations. These are diagnostic timings, not physical-iPhone frame-rate measurements.
+- Search now matches words across song, artist, and album fields, in either order, so an artist name plus part of a song title finds the intended song. All entered words must match. The broader matching measured about 45 ms for one evaluation in the same benchmark; the view now evaluates it once rather than repeatedly for every section.
+- A native simulator flow imported 400 synthetic FLAC files in 200 distinct folders, scrolled the library, searched by artist plus song, started a result, and paused it in Now Playing. The flow passed, along with the updated search-matching unit check; result bundle `work/LargerLibrary.xcresult`. Inspected its search screenshot. No personal music was copied or modified.
+
+The final search change is compiled and tested in the simulator. Latest signed device artifact remains build 4 from the previous pass; it does not include this last search refinement. The phone remains on build 2. Git contains the finished changes and validation history. Untagged metadata behavior was reviewed but no further metadata changes or claims of expanded validation were made.
+
+Remaining hands-on checks: physical background/lock-screen/headphone/AirPlay behavior, actual iCloud eviction/re-download, and older supported iOS versions. These were deliberately left for a waking device session. No playlists or other deferred features were added.
