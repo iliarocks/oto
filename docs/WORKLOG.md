@@ -36,3 +36,7 @@ Limits of validation: background playback, physical lock-screen/headphone/AirPla
 ## Second phone build — 22:53
 
 At the user's request before bed, built, installed, and launched version 0.1 (2) on the iPhone. This supersedes the previous installation note: the device now includes the 音 icon, dark-mode contrast fixes, visible Now Playing errors, VoiceOver seeking, refresh recovery, folder-switch playback reset, and artwork deduplication. Signed device build succeeds. User authorized a few more hours of focused work overnight; continue in this task until approximately 02:00 Pacific, prioritizing actual reliability/UI findings and keeping the phone undisturbed.
+
+## Latest user direction — usefulness and interaction quality
+
+Give feature usefulness and product judgment equal attention to reliability. For every feature, interaction, and UI component, ask whether it is the best available native pattern for its purpose, whether it makes sense, and whether it is pragmatic and worth keeping. Walk through the actual listening experience and improve or simplify friction. Modest improvements to the core flow are welcome; avoid spending the night exclusively on tests and internals. Existing boundaries remain: no playlists, decorative transitions, or unrelated features. The overnight continuation prompt has been updated to carry this direction forward.
