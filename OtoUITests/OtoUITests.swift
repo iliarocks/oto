@@ -361,8 +361,12 @@ final class OtoUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
         waitForExpectations(timeout: 10)
         toggle.tap()
-        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let sheetBar = app.navigationBars["Now Playing"]
+        // Start at the sheet grabber; a drag on the large navigation title can be ignored.
+        sheetBar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
+            .withOffset(CGVector(dx: 0, dy: -10))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
+        XCTAssertTrue(toggle.waitForNonExistence(timeout: 5), "Dismiss the sheet before checking the album title")
         let mainTitle = app.staticTexts["album-main-title"]
         for _ in 0..<12 {
             if mainTitle.exists && mainTitle.frame.minY >= app.navigationBars.firstMatch.frame.maxY { break }

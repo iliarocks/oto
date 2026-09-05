@@ -163,3 +163,13 @@ Final targeted checks passed (`work/native-motion-final.xcresult`), including an
 Removed the duplicate toolbar title at the top of album pages. The title now appears only after the main album heading has scrolled above the visible content boundary, and hides again on return. The threshold uses the heading's actual geometry and the viewport safe area, so it follows title wrapping and Dynamic Type instead of relying on a fixed scroll distance. Back navigation and the player inset remain in place.
 
 Normal and largest-accessibility-text scroll/playback checks passed (`work/album-scroll-title.xcresult`), verifying the toolbar starts empty, appears after scrolling, and hides when the main heading returns. Final-song clearance still passes. Inspected the initial and scrolled screenshots. Signed build 0.1 (13) succeeded and was installed and launched on the connected iPhone.
+
+## Scroll-linked album title fade — September 5
+
+Checked [Apple's navigation-bar documentation](https://developer.apple.com/documentation/uikit/customizing-your-app-s-navigation-bar) and the installed SwiftUI SDK. The built-in large-title collapse applies to the navigation bar's own large title, not the album heading beneath artwork. Kept the native inline navigation bar and its principal title slot; opacity now follows the next 28 points of scrolling after the main heading leaves the safe-area boundary. Reversing a drag reverses the fade immediately, without a separate animation clock, translation, or private navigation APIs.
+
+The initial check caught native navigation accessibility synthesizing a label from a fully transparent title even with accessibilityHidden. The title content is now empty at zero opacity and otherwise fades with scroll progress. Geometry updates are clamped to the short transition region; the rest of the list does not receive continual scrolling state changes.
+
+Validation: the normal-size scroll/playback/return flow passed in `work/album-title-fade-verified.xcresult`. The largest-text flow passed in `work/album-title-fade-large.xcresult` after correcting the test gesture to start at the sheet grabber instead of the navigation title, and adding an explicit dismissal assertion. Earlier large-text failures were at sheet dismissal, after title visibility and final-song clearance had passed. Inspected the initial, scrolled, and return screenshots, plus a recorded transition containing an intermediate faint title frame. Signed build 0.1 (14) succeeded.
+
+Installed and launched build 14 on the connected iPhone, preserving its existing library.
