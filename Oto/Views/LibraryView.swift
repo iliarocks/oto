@@ -85,10 +85,13 @@ struct LibraryView: View {
         }
         .sheet(isPresented: $showingFolder) { FolderInfoView(library: library) { showingFolder = false; showingPicker = true } }
         .sheet(isPresented: $showingPlayer) { NowPlayingView(player: player) }
+        .onChange(of: library.folderPath) { old, new in
+            if old != new { player.stop(); showingPlayer = false }
+        }
         .alert("Couldn't Update Library", isPresented: Binding(get: { library.errorMessage != nil }, set: { if !$0 { library.errorMessage = nil } })) {
             Button("OK", role: .cancel) { library.errorMessage = nil }
         } message: { Text(library.errorMessage ?? "") }
-        .alert("Couldn't Play", isPresented: Binding(get: { player.errorMessage != nil }, set: { if !$0 { player.errorMessage = nil } })) {
+        .alert("Couldn't Play", isPresented: Binding(get: { !showingPlayer && player.errorMessage != nil }, set: { if !$0 { player.errorMessage = nil } })) {
             Button("OK", role: .cancel) { player.errorMessage = nil }
         } message: { Text(player.errorMessage ?? "") }
     }
@@ -99,7 +102,10 @@ struct LibraryView: View {
         } description: {
             Text("Choose a folder of songs or albums from Files. Your music stays in its folder.")
         } actions: {
-            Button("Choose Music Folder", systemImage: "folder.badge.plus") { showingPicker = true }
+            Button { showingPicker = true } label: {
+                Label("Choose Music Folder", systemImage: "folder.badge.plus")
+                    .foregroundStyle(Color(uiColor: .systemBackground))
+            }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("choose-folder")
         }

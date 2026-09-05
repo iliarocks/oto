@@ -1,4 +1,5 @@
 import AVFoundation
+import MediaPlayer
 import XCTest
 @testable import Oto
 
@@ -173,6 +174,92 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(store.tracks.count, 1)
         XCTAssertNotNil(store.errorMessage)
         XCTAssertEqual(try Data(contentsOf: persistence.indexURL), originalIndex)
+    }
+
+    @MainActor func testRefreshRetainsUnreadableTracksButRemovesDeletedTracks() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        try copyFixture("02", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let store = LibraryStore(persistence: persistence)
+        store.choose(music)
+        try await waitUntil { !store.isScanning }
+        try Data("incomplete download".utf8).write(to: music.appendingPathComponent("01.flac"))
+        store.refresh()
+        try await waitUntil { !store.isScanning }
+        XCTAssertEqual(store.tracks.count, 2)
+        XCTAssertEqual(store.snapshot?.issues.count, 1)
+        try FileManager.default.removeItem(at: music.appendingPathComponent("01.flac"))
+        try FileManager.default.removeItem(at: music.appendingPathComponent("02.flac"))
+        store.refresh()
+        try await waitUntil { !store.isScanning }
+        XCTAssertEqual(store.tracks.count, 0)
+        XCTAssertEqual(try persistence.load()?.tracks.count, 0)
+        XCTAssertNil(store.errorMessage)
+    }
+
+    @MainActor func testCancelledReplacementDoesNotCommit() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let store = LibraryStore(persistence: persistence)
+        store.choose(music)
+        try await waitUntil { !store.isScanning }
+        let original = try Data(contentsOf: persistence.indexURL)
+        let replacement = temporary.appendingPathComponent("Replacement")
+        try copyFixture("02", "flac", into: replacement)
+        store.choose(replacement)
+        store.cancelScan()
+        try await waitUntil { !store.isScanning }
+        XCTAssertEqual(store.tracks.first?.title, "First Light")
+        XCTAssertEqual(try Data(contentsOf: persistence.indexURL), original)
+    }
+
+    @MainActor func testAutomaticAdvanceAndInterruptionPolicy() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        try copyFixture("02", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        defer { player.stop() }
+        player.play(snapshot.tracks, bookmark: snapshot.bookmark)
+        try await waitUntil { player.isPlaying }
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyTitle] as? String, "First Light")
+        player.seek(to: 7.7)
+        try await waitUntil { player.isPlaying && player.currentTrack?.title == "Second Light" }
+        NotificationCenter.default.post(name: AVAudioSession.interruptionNotification, object: nil,
+            userInfo: [AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.began.rawValue])
+        try await waitUntil { !player.isPlaying }
+        NotificationCenter.default.post(name: AVAudioSession.interruptionNotification, object: nil,
+            userInfo: [AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.ended.rawValue,
+                       AVAudioSessionInterruptionOptionKey: AVAudioSession.InterruptionOptions.shouldResume.rawValue])
+        try await waitUntil { player.isPlaying }
+        NotificationCenter.default.post(name: AVAudioSession.routeChangeNotification, object: nil,
+            userInfo: [AVAudioSessionRouteChangeReasonKey: AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue])
+        try await waitUntil { !player.isPlaying }
+        NotificationCenter.default.post(name: AVAudioSession.interruptionNotification, object: nil,
+            userInfo: [AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.began.rawValue])
+        try await Task.sleep(for: .milliseconds(100))
+        NotificationCenter.default.post(name: AVAudioSession.interruptionNotification, object: nil,
+            userInfo: [AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.ended.rawValue,
+                       AVAudioSessionInterruptionOptionKey: AVAudioSession.InterruptionOptions.shouldResume.rawValue])
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertFalse(player.isPlaying, "A previously paused track must stay paused after an interruption")
+    }
+
+    @MainActor func testStopCancelsPendingPlayback() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        player.play(snapshot.tracks, bookmark: snapshot.bookmark)
+        player.stop()
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertNil(player.currentTrack)
+        XCTAssertFalse(player.isPlaying)
+        XCTAssertFalse(player.isLoading)
     }
 
     @MainActor private func waitUntil(_ condition: () -> Bool) async throws {

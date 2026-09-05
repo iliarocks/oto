@@ -13,19 +13,19 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Browse"].waitForExistence(timeout: 10) || app.buttons["Browse"].exists)
     }
 
-    @MainActor func testRealLibraryPlaybackAndRelaunch() throws {
+    @MainActor func testLibraryPlaybackAndRelaunch() throws {
         let app = XCUIApplication()
         app.launchEnvironment["OTO_UI_TEST"] = "1"
-        app.launchEnvironment["OTO_MUSIC_FOLDER"] = "/Users/shmilia/Library/Mobile Documents/com~apple~CloudDocs/music"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
         app.launchArguments = ["--reset-library"]
         app.launch()
-        let album = app.buttons["album-Fake It Flowers"]
+        let album = app.buttons["album-Quiet Hours"]
         XCTAssertTrue(album.waitForExistence(timeout: 90))
         attach(app, name: "Library")
         album.tap()
-        XCTAssertTrue(app.buttons["track-Care"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["track-First Light"].waitForExistence(timeout: 10))
         attach(app, name: "Album")
-        app.buttons["track-Care"].tap()
+        app.buttons["track-First Light"].tap()
         XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
         app.buttons["mini-player"].tap()
         let toggle = app.buttons["now-playing-toggle"]
@@ -36,8 +36,10 @@ final class OtoUITests: XCTestCase {
         attach(app, name: "Now Playing")
         toggle.tap()
         XCTAssertEqual(toggle.label, "Play")
-        app.buttons["Next Song"].tap()
-        XCTAssertTrue(app.staticTexts["Worth It"].waitForExistence(timeout: 10))
+        app.buttons["now-playing-next"].tap()
+        XCTAssertTrue(app.staticTexts["Second Light"].waitForExistence(timeout: 10))
+        expectation(for: playing, evaluatedWith: toggle)
+        waitForExpectations(timeout: 15)
         toggle.tap()
         app.terminate()
         app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
@@ -45,6 +47,23 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(album.waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["mini-player"].exists)
+    }
+
+    @MainActor func testLargeTextLibraryAndAlbum() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
+        app.launchArguments = ["--reset-library", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let album = app.buttons["album-Quiet Hours"]
+        XCTAssertTrue(album.waitForExistence(timeout: 20))
+        attach(app, name: "Large Text Library")
+        album.tap()
+        let play = app.buttons["play-album"]
+        XCTAssertTrue(play.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !play.isHittable { app.swipeUp() }
+        XCTAssertTrue(play.isHittable)
+        attach(app, name: "Large Text Album")
     }
 
     @MainActor private func attach(_ app: XCUIApplication, name: String) {

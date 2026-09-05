@@ -20,6 +20,7 @@ struct AlbumView: View {
                     .multilineTextAlignment(.center)
                     Button { play() } label: {
                         Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
+                            .foregroundStyle(Color(uiColor: .systemBackground))
                     }
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("play-album")
@@ -55,6 +56,7 @@ struct AlbumView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
+                        .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
                         .accessibilityIdentifier("track-\(track.title)")
                     }
                 } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }

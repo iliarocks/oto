@@ -88,16 +88,19 @@ enum MetadataReader {
 
 enum ArtworkCache {
     static func store(_ data: Data?, in directory: URL) throws -> String? {
-        guard let data, data.count <= 24 * 1_024 * 1_024,
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
+        guard let data, data.count <= 24 * 1_024 * 1_024 else { return nil }
+        // Album downloads often embed the same large image in every song.
+        // Check the source digest before decoding and resizing it again.
+        let key = "v1-" + SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() + ".jpg"
+        let destination = directory.appendingPathComponent(key)
+        if FileManager.default.fileExists(atPath: destination.path) { return key }
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceThumbnailMaxPixelSize: 1_000,
                 kCGImageSourceCreateThumbnailWithTransform: true
               ] as CFDictionary), let jpeg = UIImage(cgImage: image).jpegData(compressionQuality: 0.88) else { return nil }
-        let key = SHA256.hash(data: jpeg).map { String(format: "%02x", $0) }.joined() + ".jpg"
-        let destination = directory.appendingPathComponent(key)
-        if !FileManager.default.fileExists(atPath: destination.path) { try jpeg.write(to: destination, options: .atomic) }
+        try jpeg.write(to: destination, options: .atomic)
         return key
     }
 

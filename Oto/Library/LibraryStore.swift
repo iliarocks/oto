@@ -4,6 +4,7 @@ import Foundation
 @MainActor @Observable final class LibraryStore {
     private(set) var snapshot: LibrarySnapshot?
     private(set) var albums: [Album] = []
+    private(set) var folderPath: String?
     private(set) var isScanning = false
     private(set) var progress: ScanProgress?
     var errorMessage: String?
@@ -18,6 +19,9 @@ import Foundation
         do {
             snapshot = try persistence.load()
             albums = Album.grouped(snapshot?.tracks ?? [])
+            if let snapshot, let access = try? FolderAccess(bookmark: snapshot.bookmark) {
+                folderPath = access.url.standardizedFileURL.path
+            }
         } catch { errorMessage = error.localizedDescription }
     }
 
@@ -51,22 +55,25 @@ import Foundation
                     await self?.setProgress(value)
                 }
                 try Task.checkCancellation()
-                guard !newSnapshot.tracks.isEmpty else { throw LibraryError.emptyFolder }
                 // A partial refresh must not quietly drop previously indexed songs.
                 // Individual unreadable songs are retained for the same folder;
                 // genuine removals disappear on a successful directory traversal.
                 var committed = newSnapshot
+                var isSameFolder = false
                 if let previous = snapshot,
                    let oldAccess = try? FolderAccess(bookmark: previous.bookmark),
                    oldAccess.url.standardizedFileURL == access.url.standardizedFileURL {
+                    isSameFolder = true
                     let failedPaths = Set(newSnapshot.issues.map(\.path))
                     let retained = previous.tracks.filter { failedPaths.contains($0.relativePath) }
                     committed = LibrarySnapshot(folderName: newSnapshot.folderName, bookmark: newSnapshot.bookmark,
                         tracks: newSnapshot.tracks + retained, scannedAt: newSnapshot.scannedAt, issues: newSnapshot.issues)
                 }
+                guard isSameFolder || !committed.tracks.isEmpty else { throw LibraryError.emptyFolder }
                 try persistence.save(committed)
                 snapshot = committed
                 albums = Album.grouped(committed.tracks)
+                folderPath = access.url.standardizedFileURL.path
             } catch is CancellationError { }
             catch { errorMessage = error.localizedDescription }
         }

@@ -21,3 +21,10 @@ ffmpeg "${base[@]}" -c:a pcm_s16be OtoTests/Fixtures/untagged.aiff
 ffmpeg "${base[@]}" -c:a aac -f adts OtoTests/Fixtures/raw.aac
 ffmpeg -hide_banner -loglevel error -y -i OtoTests/Fixtures/01.flac -i OtoTests/Fixtures/cover.jpg -map 0:a -map 1:v -c copy -disposition:v attached_pic work/embedded.flac
 mv work/embedded.flac OtoTests/Fixtures/01.flac
+mkdir -p OtoUITests/Fixtures
+for track in 1 2; do
+  title='First Light'
+  if [ "$track" = 2 ]; then title='Second Light'; fi
+  ffmpeg -hide_banner -loglevel error -y -f lavfi -i 'sine=frequency=440:duration=60:sample_rate=44100' -af 'volume=0.0001' -c:a flac -metadata title="$title" -metadata artist='Test Artist' -metadata album='Quiet Hours' -metadata track="$track" "OtoUITests/Fixtures/0$track.flac"
+done
+cp OtoTests/Fixtures/cover.jpg OtoUITests/Fixtures/cover.jpg

@@ -70,6 +70,13 @@ struct NowPlayingView: View {
                         .accessibilityLabel("Playback Position")
                         .accessibilityValue(MusicTime.clock(isSeeking ? seekPosition : player.elapsed))
                         .accessibilityIdentifier("playback-position")
+                        .accessibilityAdjustableAction { direction in
+                            switch direction {
+                            case .increment: player.seek(to: player.elapsed + 5)
+                            case .decrement: player.seek(to: player.elapsed - 5)
+                            @unknown default: break
+                            }
+                        }
                         HStack {
                             Text(MusicTime.clock(isSeeking ? seekPosition : player.elapsed))
                             Spacer()
@@ -92,6 +99,7 @@ struct NowPlayingView: View {
                         .disabled(player.isLoading)
                         Button { player.next() } label: { Image(systemName: "forward.fill").font(.title).frame(width: 52, height: 60) }
                             .accessibilityLabel("Next Song").disabled(!player.hasNext)
+                            .accessibilityIdentifier("now-playing-next")
                     }
                     .buttonStyle(.plain)
                     VStack(spacing: 7) {
@@ -109,12 +117,15 @@ struct NowPlayingView: View {
             .navigationTitle("Now Playing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done", systemImage: "chevron.down") { dismiss() }.labelStyle(.iconOnly)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Close", systemImage: "chevron.down") { dismiss() }.labelStyle(.iconOnly).tint(.primary)
                 }
             }
         }
         .onChange(of: player.currentTrack?.id) { _, _ in isSeeking = false; seekPosition = 0 }
+        .alert("Couldn't Play", isPresented: Binding(get: { player.errorMessage != nil }, set: { if !$0 { player.errorMessage = nil } })) {
+            Button("OK", role: .cancel) { player.errorMessage = nil }
+        } message: { Text(player.errorMessage ?? "") }
     }
 }
 
