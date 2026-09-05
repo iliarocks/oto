@@ -20,7 +20,7 @@ Audio-session activation happens off the UI actor. Now Playing metadata and remo
 
 ## UI
 
-SwiftUI NavigationStack, List, ContentUnavailableView, sheets, system materials, and SF Symbols. The library has an inline toolbar count with no page title or search. A floating player uses `safeAreaBar` and capsule-shaped native `glassEffect` on iOS 26+, with a material and safe-area-inset fallback on iOS 18. UIKit supplies the Files picker and AVKit supplies the AirPlay route picker. Semantic colors support light/dark mode, Dynamic Type can scroll naturally, and transport controls have accessibility labels. The icon reuses Nagare's HiraginoSans-W6 geometry settings and Icon Composer material configuration with 音.
+SwiftUI NavigationStack, List, ContentUnavailableView, sheets, system materials, and SF Symbols. The library has an inline toolbar count with no page title or search. Album pages reveal their inline navigation title only once the main heading scrolls above the viewport safe area. A floating player uses `safeAreaBar` and capsule-shaped native `glassEffect` on iOS 26+, with a material and safe-area-inset fallback on iOS 18. UIKit supplies the Files picker and AVKit supplies the AirPlay route picker. Semantic colors support light/dark mode, Dynamic Type can scroll naturally, and transport controls have accessibility labels. The icon reuses Nagare's HiraginoSans-W6 geometry settings and Icon Composer material configuration with 音.
 
 ## References
 

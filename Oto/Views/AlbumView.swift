@@ -7,68 +7,75 @@ struct AlbumView: View {
     let album: Album
     let library: LibraryStore
     let player: PlaybackController
+    @State private var showsNavigationTitle = false
 
     var body: some View {
-        List {
-            Section {
-                VStack(spacing: 16) {
-                    ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory)
-                        .frame(maxWidth: 280)
-                    VStack(spacing: 6) {
-                        Text(album.title).font(.title2.bold())
-                        Text(album.artist).font(.title3).foregroundStyle(.secondary)
-                        Text("\(album.tracks.count) songs · \(MusicTime.summary(album.duration))")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                    }
-                    .multilineTextAlignment(.center)
-                    Button { play() } label: {
-                        Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
-                            .foregroundStyle(accentInk)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("play-album")
-                    .frame(maxWidth: 280)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-            }
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-
-            ForEach(discNumbers, id: \.self) { disc in
+        GeometryReader { viewport in
+            List {
                 Section {
-                    ForEach(album.tracks.filter { ($0.discNumber ?? 1) == disc }) { track in
-                        Button { play(track) } label: {
-                            HStack(spacing: 14) {
-                                Group {
-                                    if isCurrent(track) {
-                                        Image(systemName: player.isPlaying ? "speaker.wave.2.fill" : "speaker.fill").font(.caption)
-                                    } else { Text(track.trackNumber.map(String.init) ?? "–").font(.subheadline).monospacedDigit() }
-                                }
-                                .foregroundStyle(isCurrent(track) ? accent : Color.secondary)
-                                .frame(width: 26)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(track.title).foregroundStyle(isCurrent(track) ? textAccent : Color.primary)
-                                    if track.artist != album.artist { Text(track.artist).font(.caption).foregroundStyle(.secondary) }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text(MusicTime.clock(track.duration)).font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 7)
-                            .contentShape(Rectangle())
+                    VStack(spacing: 16) {
+                        ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory)
+                            .frame(maxWidth: 280)
+                        VStack(spacing: 6) {
+                            Text(album.title).font(.title2.bold())
+                                .accessibilityIdentifier("album-main-title")
+                                .onGeometryChange(for: Bool.self) { title in
+                                    title.frame(in: .global).maxY <= viewport.frame(in: .global).minY + viewport.safeAreaInsets.top
+                                } action: { showsNavigationTitle = $0 }
+                            Text(album.artist).font(.title3).foregroundStyle(.secondary)
+                            Text("\(album.tracks.count) songs · \(MusicTime.summary(album.duration))")
+                                .font(.subheadline).foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
-                        .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
-                        .accessibilityIdentifier("track-\(track.title)")
-                        .listRowSeparator(.hidden)
+                        .multilineTextAlignment(.center)
+                        Button { play() } label: {
+                            Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
+                                .foregroundStyle(accentInk)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("play-album")
+                        .frame(maxWidth: 280)
                     }
-                } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }
-                .listSectionSeparator(.hidden)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+                ForEach(discNumbers, id: \.self) { disc in
+                    Section {
+                        ForEach(album.tracks.filter { ($0.discNumber ?? 1) == disc }) { track in
+                            Button { play(track) } label: {
+                                HStack(spacing: 14) {
+                                    Group {
+                                        if isCurrent(track) {
+                                            Image(systemName: player.isPlaying ? "speaker.wave.2.fill" : "speaker.fill").font(.caption)
+                                        } else { Text(track.trackNumber.map(String.init) ?? "–").font(.subheadline).monospacedDigit() }
+                                    }
+                                    .foregroundStyle(isCurrent(track) ? accent : Color.secondary)
+                                    .frame(width: 26)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(track.title).foregroundStyle(isCurrent(track) ? textAccent : Color.primary)
+                                        if track.artist != album.artist { Text(track.artist).font(.caption).foregroundStyle(.secondary) }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    Text(MusicTime.clock(track.duration)).font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
+                                }
+                                .padding(.vertical, 7)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
+                            .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
+                            .accessibilityIdentifier("track-\(track.title)")
+                            .listRowSeparator(.hidden)
+                        }
+                    } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }
+                    .listSectionSeparator(.hidden)
+                }
             }
+            .listStyle(.plain)
         }
-        .listStyle(.plain)
-        .navigationTitle(album.title)
+        .navigationTitle(showsNavigationTitle ? album.title : "")
         .navigationBarTitleDisplayMode(.inline)
     }
 
