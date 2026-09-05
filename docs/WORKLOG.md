@@ -16,3 +16,19 @@ The music directory remains canonical. Only bookmarks, metadata, and resized cov
 Built and installed version 0.1 (1) on the connected iPhone at the user's request. Folder selection is done through the native Files picker. The simulator indexed the user's beabadoobee and Panchiko albums (23 FLAC songs), including embedded covers and correct track order. The UI test reached real FLAC playback, pause, and Now Playing. Eleven unit/integration tests pass, covering formats, tags, album grouping, file containment, persistence, failure recovery, and playback. Further UI checks and hardening are in progress; this is an early development build.
 
 Fixed findings so far: replaying the last song now immediately resets displayed time; the mini player stays visible on pushed album screens. The remaining UI test failure is an ambiguous test selector matching both the mini player's and sheet's Next button.
+
+## Hardening and UI — 22:50
+
+The user tried the first phone build and said it looked good, with UI changes to discuss later. Kept that installation running rather than interrupting it with updates.
+
+- Fixed the ambiguous UI test selector and replaced the personal library path with portable synthetic fixtures.
+- Added coverage for cancelled replacement, unreadable versus deleted files on refresh, automatic track advancement, interruption resumption, headphone-disconnection notification handling, Now Playing metadata, and stop-during-load races.
+- Allowed a successful refresh to empty a library; kept an empty new folder from accidentally replacing an existing library. Switching folders now stops the previous queue.
+- Made the playback error alert available inside Now Playing and added VoiceOver seeking increments.
+- Avoided repeatedly decoding identical embedded artwork by checking its content digest first.
+- Checked dark mode and the largest accessibility text size. Corrected prominent-button contrast in dark mode and made the sheet-dismiss control neutral.
+- Replaced the provisional icon with 音. Confirmed HiraginoSans-W6 exactly reproduces Nagare's original SVG before generating the new glyph; copied its scale and material configuration.
+
+Validation: 15 unit/integration tests and 3 UI tests pass on iPhone 17 Pro / iOS 27 in dark mode, including large-text navigation. The earlier light-mode run passed all 17 tests then present. Real library validation indexed 23 FLAC tracks across Fake It Flowers and D-E-A-T-H-M-E-T-A-L and reached playback, pause, and Now Playing. No original music files were modified.
+
+Limits of validation: background playback, physical lock-screen/headphone/AirPlay behavior, iCloud eviction/re-download, and older iOS versions still need device testing. Notification tests validate interruption policy, not actual incoming calls. Xcode beta emits an App Intents extraction notice (there is no App Intents dependency) and occasional simulator/audio-session diagnostics; app compilation has no Swift warnings. The phone currently has the earlier build 0.1 (1); later refinements are in Git and will be installed when they won't interrupt the user.
