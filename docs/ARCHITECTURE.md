@@ -20,7 +20,7 @@ Audio-session activation happens off the UI actor. Now Playing metadata and remo
 
 ## UI
 
-SwiftUI NavigationStack, List, ContentUnavailableView, searchable, sheets, system materials, and SF Symbols. UIKit supplies the Files picker and AVKit supplies the AirPlay route picker. Semantic colors support light/dark mode, Dynamic Type can scroll naturally, and transport controls have accessibility labels. The icon reuses Nagare's HiraginoSans-W6 geometry settings and Icon Composer material configuration with 音.
+SwiftUI NavigationStack, List, ContentUnavailableView, sheets, system materials, and SF Symbols. The library has an inline toolbar count with no page title or search. A floating player uses `safeAreaBar` and capsule-shaped native `glassEffect` on iOS 26+, with a material and safe-area-inset fallback on iOS 18. UIKit supplies the Files picker and AVKit supplies the AirPlay route picker. Semantic colors support light/dark mode, Dynamic Type can scroll naturally, and transport controls have accessibility labels. The icon reuses Nagare's HiraginoSans-W6 geometry settings and Icon Composer material configuration with 音.
 
 ## References
 
@@ -28,5 +28,6 @@ SwiftUI NavigationStack, List, ContentUnavailableView, searchable, sheets, syste
 - [Apple: Cancelling file coordination](https://developer.apple.com/documentation/foundation/nsfilecoordinator/cancel())
 - [Apple: AVAudioSession](https://developer.apple.com/documentation/avfaudio/avaudiosession)
 - [Apple: Becoming a Now Playable app](https://developer.apple.com/documentation/mediaplayer/becoming-a-now-playable-app)
+- [Apple: Applying Liquid Glass to custom views](https://developer.apple.com/documentation/swiftui/applying-liquid-glass-to-custom-views)
 
 No API keys, online services, cloud database, or Apple Music library authorization are required.

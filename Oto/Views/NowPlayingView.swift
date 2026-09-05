@@ -1,6 +1,27 @@
 import AVKit
 import SwiftUI
 
+struct PlayerBar: ViewModifier {
+    let player: PlaybackController
+    let open: () -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.safeAreaBar(edge: .bottom, spacing: 0) { bar }
+        } else {
+            content.safeAreaInset(edge: .bottom, spacing: 0) { bar }
+        }
+    }
+
+    @ViewBuilder private var bar: some View {
+        if player.currentTrack != nil {
+            MiniPlayer(player: player, open: open)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+        }
+    }
+}
+
 struct MiniPlayer: View {
     let player: PlaybackController
     let open: () -> Void
@@ -18,25 +39,37 @@ struct MiniPlayer: View {
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
-                .padding(.vertical, 10)
+                .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Now Playing: \(player.currentTrack?.title ?? "")")
             .accessibilityIdentifier("mini-player")
             Button { if player.isLoading { player.cancelLoading() } else { player.toggle() } } label: {
                 Image(systemName: player.isLoading ? "xmark" : player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title3).frame(width: 48, height: 48)
+                    .font(.system(size: 20, weight: .semibold)).frame(width: 48, height: 48)
             }
             .accessibilityLabel(player.isLoading ? "Cancel Loading" : player.isPlaying ? "Pause" : "Play")
             Button { player.next() } label: {
-                Image(systemName: "forward.fill").font(.title3).frame(width: 44, height: 48)
+                Image(systemName: "forward.fill").font(.system(size: 20, weight: .semibold)).frame(width: 44, height: 48)
             }
             .accessibilityLabel("Next Song")
             .disabled(!player.hasNext)
         }
-        .padding(.horizontal, 16)
-        .background(.regularMaterial)
-        .overlay(alignment: .top) { Divider() }
+        .buttonStyle(.plain)
+        .tint(.primary)
+        .padding(.leading, 12)
+        .padding(.trailing, 8)
+        .modifier(PlayerGlass())
+    }
+}
+
+private struct PlayerGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular, in: Capsule())
+        } else {
+            content.background(.regularMaterial, in: Capsule())
+        }
     }
 }
 

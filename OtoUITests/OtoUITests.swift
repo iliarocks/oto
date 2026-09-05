@@ -68,25 +68,38 @@ final class OtoUITests: XCTestCase {
         for _ in 0..<4 where !play.isHittable { app.swipeUp() }
         XCTAssertTrue(play.isHittable)
         attach(app, name: "Large Text Album")
+        play.tap()
+        let miniPlayer = app.buttons["mini-player"]
+        XCTAssertTrue(miniPlayer.waitForExistence(timeout: 10))
+        XCTAssertTrue(miniPlayer.isHittable)
+        attach(app, name: "Large Text Floating Player")
+        miniPlayer.tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !toggle.isHittable { app.swipeUp() }
+        expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
+        waitForExpectations(timeout: 10)
+        toggle.tap()
     }
 
-    @MainActor func testSearchPlaysSongDirectlyAndLinksBackToAlbum() throws {
+    @MainActor func testFloatingPlayerAndLinkBackToAlbum() throws {
         let app = XCUIApplication()
         app.launchEnvironment["OTO_UI_TEST"] = "1"
         app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
         app.launchArguments = ["--reset-library"]
         app.launch()
         XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 20))
-        let search = app.searchFields.firstMatch
-        search.tap()
-        search.typeText("Second Light")
-        let song = app.buttons["search-song-Second Light"]
-        XCTAssertTrue(song.waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["album-Quiet Hours"].exists)
-        attach(app, name: "Direct Song Search")
-        song.tap()
+        XCTAssertFalse(app.searchFields.firstMatch.exists)
+        XCTAssertFalse(app.staticTexts["Library"].exists)
+        XCTAssertEqual(app.staticTexts["library-summary"].label, "1 album · 2 songs")
+        app.buttons["album-Quiet Hours"].tap()
+        app.buttons["track-Second Light"].tap()
         XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
-        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        attach(app, name: "Floating Player on Album")
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["library-summary"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["mini-player"].isHittable)
+        attach(app, name: "Simplified Library with Floating Player")
         app.buttons["mini-player"].tap()
         XCTAssertTrue(app.buttons["now-playing-album"].waitForExistence(timeout: 10))
         let toggle = app.buttons["now-playing-toggle"]
@@ -188,7 +201,7 @@ final class OtoUITests: XCTestCase {
         toggle.tap()
     }
 
-    @MainActor func testLargerFolderSearchAndPlayback() throws {
+    @MainActor func testLargerFolderBrowsingAndPlayback() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let app = XCUIApplication()
         defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
@@ -209,13 +222,8 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["200 albums · 400 songs"].waitForExistence(timeout: 60))
         app.swipeUp()
         app.swipeDown()
-        let search = app.searchFields.firstMatch
-        search.tap()
-        search.typeText("Test Second")
-        let song = app.buttons["search-song-Second Light"].firstMatch
-        XCTAssertTrue(song.waitForExistence(timeout: 10))
-        attach(app, name: "Artist and Song Search in 400 Songs")
-        song.tap()
+        app.buttons["album-Quiet Hours"].firstMatch.tap()
+        app.buttons["track-Second Light"].tap()
         app.buttons["mini-player"].tap()
         let toggle = app.buttons["now-playing-toggle"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 10))

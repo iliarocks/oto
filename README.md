@@ -37,9 +37,10 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 
 1. Tap **Choose Music Folder**, navigate to your folder in Files, and tap **Open**.
 2. Open an album, then tap **Play** or an individual song. Playback continues in album order and stops after the final song.
-3. Search by album, artist, or song, including combinations such as an artist name and part of a song title. Song results play directly and continue through the rest of that album.
-4. Tap the compact player for seeking, previous/next, and AirPlay. Tap the album name in Now Playing to return to its track list. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
-5. After changing the contents of your folder, pull to refresh or use **Library Options → Refresh Library**. A notice in the library links to any files that couldn't be read. **Music Folder** shows the selected folder and lets you choose another.
+3. Tap the floating player for seeking, previous/next, and AirPlay. Tap the album name in Now Playing to return to its track list. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
+4. After changing the contents of your folder, pull to refresh or use **Library Options → Refresh Library**. A notice in the library links to any files that couldn't be read. **Music Folder** shows the selected folder and lets you choose another.
+
+The toolbar shows your album and song count. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.
 
 For offline listening with iCloud Drive, use **Keep Downloaded** on the folder in Files. Oto does not maintain a second copy of your audio. While a song opens, the player offers Cancel; Play retries the selected song afterward. Playback errors also offer **Try Again**. Scans show the current filename and can be cancelled without replacing the existing library. Cancellation stops waiting for coordinated access, though a file read that has already started may need to finish.
 

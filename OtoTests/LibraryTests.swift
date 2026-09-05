@@ -130,24 +130,6 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(MusicTime.clock(192), "3:12")
     }
 
-    func testSongSearchReturnsPlayableTracksSeparatelyFromAlbums() {
-        let tracks = [track("Album/Café.flac", number: 1), track("Album/Other.flac", number: 2)]
-        let albums = Album.grouped(tracks)
-        let search = LibrarySearch(query: "  cafe  ", albums: albums)
-        XCTAssertTrue(search.isActive)
-        XCTAssertTrue(search.albums.isEmpty)
-        XCTAssertEqual(search.tracks.map(\.id), ["Album/Café.flac"])
-        XCTAssertEqual(LibrarySearch(query: "artist cafe", albums: albums).tracks.map(\.id), ["Album/Café.flac"])
-        XCTAssertEqual(LibrarySearch(query: "cafe\nartist", albums: albums).tracks.map(\.id), ["Album/Café.flac"])
-        XCTAssertTrue(LibrarySearch(query: "cafe missing", albums: albums).isEmpty)
-        XCTAssertEqual(LibrarySearch(query: "Artist", albums: albums).tracks.count, 2)
-        XCTAssertEqual(LibrarySearch(query: "Album", albums: albums).albums.count, 1)
-        let empty = LibrarySearch(query: " \n ", albums: albums)
-        XCTAssertFalse(empty.isActive)
-        XCTAssertEqual(empty.albums, albums)
-        XCTAssertTrue(empty.tracks.isEmpty)
-    }
-
     @MainActor func testPlaybackPauseSeekNextAndEndOfAlbum() async throws {
         let music = temporary.appendingPathComponent("Music")
         try copyFixture("01", "flac", into: music)

@@ -85,3 +85,13 @@ Remaining hands-on checks: physical background/lock-screen/headphone/AirPlay beh
 ## Latest phone build — September 5, 10:28
 
 At the user's request, built, installed, and launched version 0.1 (5) on the connected iPhone 17 Pro. This includes all overnight changes, including the final combined search and filtering refinement. Signed device compilation and installation succeeded. Updated the existing app in place. The overnight automation remains paused.
+
+## User-directed simplification — September 5
+
+Removed search entirely, including its model, UI state, and obsolete matching test. The user judged it unnecessary for the intended library size. Album browsing is the sole library flow; the album/song count now sits inline in the toolbar and the large Library heading is gone.
+
+Replaced the edge-to-edge material player with a floating capsule using native Liquid Glass, following the supplied Apple Music reference. iOS 26+ uses `safeAreaBar` and `glassEffect(.regular, in: Capsule())`; older supported systems retain a material capsule with safe-area inset. Playback buttons remain separate accessible controls, and the capsule opens Now Playing. No tab bar was added.
+
+The updated browsing → playing → library → Now Playing → album flow passed in dark and light appearances. Inspected screenshots of both, plus the largest accessibility text size. Visual inspection caught oversized transport symbols overlapping at that size; fixed their glyph sizes while preserving 44/48-point hit targets and scalable song text. Updated the existing large-library flow to browse albums instead of searching. Playback internals were unchanged; unrelated unit tests were not rerun.
+
+The final large-text playback/navigation check passed and its corrected screenshot was inspected (`work/GlassLargeText.xcresult`). Signed build 0.1 (6) succeeded, and was installed and launched on the connected iPhone. Earlier appearance checks are in `work/SimplifiedGlass.xcresult` and `work/SimplifiedGlassLight.xcresult`. The older-iOS material fallback compiles but was not exercised on an older runtime.

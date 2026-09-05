@@ -6,94 +6,60 @@ struct LibraryView: View {
     @State private var showingPicker = false
     @State private var showingFolder = false
     @State private var showingPlayer = false
-    @State private var search = ""
     @State private var path: [String] = []
     @State private var chooseAfterFolderDismisses = false
-    @FocusState private var searchFocused: Bool
 
     private var currentAlbum: Album? { library.albums.first { $0.id == player.currentTrack?.albumID } }
 
     var body: some View {
-        // Several sections read the same result. Filter once per view update.
-        let results = LibrarySearch(query: search, albums: library.albums)
         NavigationStack(path: $path) {
             Group {
                 if library.albums.isEmpty && !library.isScanning { emptyLibrary }
                 else {
                     List {
                         if library.isScanning { scanProgress }
-                        if !library.isScanning && !results.isActive, let issues = library.snapshot?.issues, !issues.isEmpty {
+                        if !library.isScanning, let issues = library.snapshot?.issues, !issues.isEmpty {
                             Button { showingFolder = true } label: {
                                 Label(issues.count == 1 ? "1 file needs attention" : "\(issues.count) files need attention", systemImage: "exclamationmark.circle")
                                     .font(.subheadline)
                             }
                             .accessibilityIdentifier("library-issues")
                         }
-                        if !results.albums.isEmpty {
-                            Section {
-                                ForEach(results.albums) { album in
-                                    NavigationLink(value: album.id) {
-                                        HStack(spacing: 14) {
-                                            ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory, size: 64)
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(album.title).font(.headline).foregroundStyle(.primary)
-                                                Text(album.artist).font(.subheadline).foregroundStyle(.secondary)
-                                            }
-                                            .lineLimit(2)
-                                            .padding(.vertical, 5)
-                                        }
+                        ForEach(library.albums) { album in
+                            NavigationLink(value: album.id) {
+                                HStack(spacing: 14) {
+                                    ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory, size: 64)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(album.title).font(.headline).foregroundStyle(.primary)
+                                        Text(album.artist).font(.subheadline).foregroundStyle(.secondary)
                                     }
-                                    .accessibilityIdentifier("album-\(album.title)")
-                                }
-                            } header: {
-                                Text(results.isActive ? "Albums" : librarySummary)
-                                    .textCase(nil)
-                            }
-                        }
-                        if results.isActive && !results.tracks.isEmpty {
-                            Section("Songs") {
-                                ForEach(results.tracks) { track in
-                                    Button { playSearchResult(track) } label: {
-                                        HStack(spacing: 12) {
-                                            ArtworkView(key: track.artworkKey, directory: library.persistence.artworkDirectory, size: 44)
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(track.title).foregroundStyle(.primary)
-                                                Text("\(track.artist) · \(track.albumTitle)")
-                                                    .font(.caption).foregroundStyle(.secondary)
-                                            }
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            if player.currentTrack?.id == track.id {
-                                                Image(systemName: player.isPlaying ? "speaker.wave.2.fill" : "speaker.fill")
-                                                    .font(.caption).foregroundStyle(Color.accentColor)
-                                            }
-                                        }
-                                        .padding(.vertical, 5)
-                                        .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(.plain)
-                                    .accessibilityLabel("Play \(track.title), \(track.artist), \(track.albumTitle)")
-                                    .accessibilityIdentifier("search-song-\(track.title)")
+                                    .lineLimit(2)
+                                    .padding(.vertical, 5)
                                 }
                             }
+                            .accessibilityIdentifier("album-\(album.title)")
                         }
                     }
                     .listStyle(.plain)
-                    .overlay {
-                        if results.isEmpty && results.isActive { ContentUnavailableView.search(text: results.query) }
-                    }
-                    .searchable(text: $search, prompt: "Albums, artists, or songs")
-                    .searchFocused($searchFocused)
-                    .scrollDismissesKeyboard(.interactively)
                     .refreshable { await library.refreshAndWait() }
                 }
             }
-            .navigationTitle("Library")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: String.self) { id in
                 if let album = library.albums.first(where: { $0.id == id }) {
                     AlbumView(album: album, library: library, player: player)
                 } else { ContentUnavailableView("Album Unavailable", systemImage: "music.note") }
             }
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    if library.snapshot != nil {
+                        Text(librarySummary)
+                            .font(.subheadline).foregroundStyle(.secondary)
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                            .accessibilityIdentifier("library-summary")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button(library.snapshot == nil ? "Choose Music Folder" : "Choose Another Folder", systemImage: "folder.badge.plus") { showingPicker = true }
@@ -107,9 +73,7 @@ struct LibraryView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if player.currentTrack != nil { MiniPlayer(player: player) { showingPlayer = true } }
-        }
+        .modifier(PlayerBar(player: player) { showingPlayer = true })
         .sheet(isPresented: $showingPicker) {
             FolderPicker { url in
                 library.choose(url)
@@ -131,8 +95,6 @@ struct LibraryView: View {
         .sheet(isPresented: $showingPlayer) {
             NowPlayingView(player: player, showAlbum: currentAlbum.map { album in
                 {
-                    searchFocused = false
-                    search = ""
                     path = [album.id]
                     showingPlayer = false
                 }
@@ -143,7 +105,6 @@ struct LibraryView: View {
                 player.stop()
                 showingPlayer = false
                 path = []
-                search = ""
             }
         }
         .alert("Couldn't Update Library", isPresented: Binding(get: { library.errorMessage != nil }, set: { if !$0 { library.errorMessage = nil } })) {
@@ -161,13 +122,6 @@ struct LibraryView: View {
         let albums = library.albums.count == 1 ? "1 album" : "\(library.albums.count) albums"
         let songs = library.tracks.count == 1 ? "1 song" : "\(library.tracks.count) songs"
         return "\(albums) · \(songs)"
-    }
-
-    private func playSearchResult(_ track: Track) {
-        guard let album = library.albums.first(where: { $0.id == track.albumID }),
-              let bookmark = library.snapshot?.bookmark else { return }
-        searchFocused = false
-        player.play(album.tracks, startingAt: track, bookmark: bookmark)
     }
 
     private var emptyLibrary: some View {
