@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AlbumView: View {
     @Environment(\.albumAccent) private var accent
+    @Environment(\.albumAccentInk) private var accentInk
+    @Environment(\.albumTextAccent) private var textAccent
     let album: Album
     let library: LibraryStore
     let player: PlaybackController
@@ -21,7 +23,7 @@ struct AlbumView: View {
                     .multilineTextAlignment(.center)
                     Button { play() } label: {
                         Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
-                            .foregroundStyle(Color(uiColor: .systemBackground))
+                            .foregroundStyle(accentInk)
                     }
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("play-album")
@@ -46,7 +48,7 @@ struct AlbumView: View {
                                 .foregroundStyle(isCurrent(track) ? accent : Color.secondary)
                                 .frame(width: 26)
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(track.title).foregroundStyle(isCurrent(track) ? accent : Color.primary)
+                                    Text(track.title).foregroundStyle(isCurrent(track) ? textAccent : Color.primary)
                                     if track.artist != album.artist { Text(track.artist).font(.caption).foregroundStyle(.secondary) }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -59,7 +61,6 @@ struct AlbumView: View {
                         .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
                         .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
                         .accessibilityIdentifier("track-\(track.title)")
-                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         .listRowSeparator(.hidden)
                     }
                 } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }
