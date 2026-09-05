@@ -54,12 +54,40 @@ final class FolderAccess {
 }
 
 enum CoordinatedRead {
-    static func perform<T>(at url: URL, _ body: (URL) throws -> T) throws -> T {
-        let coordinator = NSFileCoordinator()
+    static func perform<T: Sendable>(at url: URL, _ body: @Sendable (URL) throws -> T) async throws -> T {
+        let operation = FileReadOperation()
+        return try await withTaskCancellationHandler {
+            do {
+                try Task.checkCancellation()
+                let result = try operation.read(at: url, body)
+                try Task.checkCancellation()
+                return result
+            } catch {
+                // A user cancellation takes precedence over a provider's error.
+                try Task.checkCancellation()
+                throw error
+            }
+        } onCancel: {
+            operation.cancel()
+        }
+    }
+}
+
+// A coordinator is used by one read. Only cancel() crosses threads, which
+// NSFileCoordinator explicitly supports. A running accessor must still finish.
+private final class FileReadOperation: @unchecked Sendable {
+    private let coordinator = NSFileCoordinator()
+
+    func cancel() { coordinator.cancel() }
+
+    func read<T>(at url: URL, _ body: (URL) throws -> T) throws -> T {
         var coordinationError: NSError?
         var result: Result<T, Error>?
         coordinator.coordinate(readingItemAt: url, options: [.withoutChanges], error: &coordinationError) { readable in
-            result = Result { try body(readable) }
+            result = Result {
+                try Task.checkCancellation()
+                return try body(readable)
+            }
         }
         if let coordinationError { throw coordinationError }
         guard let result else { throw LibraryError.inaccessibleFolder }

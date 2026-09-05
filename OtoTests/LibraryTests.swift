@@ -299,6 +299,26 @@ final class LibraryTests: XCTestCase {
         XCTAssertFalse(player.isLoading)
     }
 
+    @MainActor func testCancelledLoadingCanRetrySelectedSong() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        defer { player.stop() }
+        player.play(snapshot.tracks, bookmark: snapshot.bookmark)
+        XCTAssertTrue(player.isLoading)
+        player.cancelLoading()
+        XCTAssertFalse(player.isLoading)
+        XCTAssertEqual(player.currentTrack?.title, "First Light")
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertFalse(player.isPlaying)
+        XCTAssertNil(player.errorMessage)
+        player.resume()
+        try await waitUntil { player.isPlaying }
+        XCTAssertEqual(player.currentTrack?.title, "First Light")
+    }
+
     @MainActor private func waitUntil(_ condition: () -> Bool) async throws {
         let deadline = Date().addingTimeInterval(10)
         while !condition() && Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }

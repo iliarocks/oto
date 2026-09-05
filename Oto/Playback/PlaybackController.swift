@@ -12,13 +12,23 @@ private final class PreparedAudio: @unchecked Sendable {
 }
 
 private actor PlaybackLoader {
-    func load(track: Track, bookmark: Data) throws -> PreparedAudio {
+    func load(track: Track, bookmark: Data) async throws -> PreparedAudio {
         let access = try FolderAccess(bookmark: bookmark)
         let url = try MusicPath.resolve(track.relativePath, in: access.url)
-        let player = try CoordinatedRead.perform(at: url) { try AVAudioPlayer(contentsOf: $0) }
-        guard player.prepareToPlay() else { throw LibraryError.inaccessibleFolder }
-        return PreparedAudio(player: player, access: access)
+        // Keep the scope alive across the read without sharing the player itself.
+        let prepared = try await CoordinatedRead.perform(at: url) { readable in
+            let player = try AVAudioPlayer(contentsOf: readable)
+            guard player.prepareToPlay() else { throw LibraryError.inaccessibleFolder }
+            return PreparedPlayer(player: player)
+        }
+        try Task.checkCancellation()
+        return PreparedAudio(player: prepared.player, access: access)
     }
+}
+
+private final class PreparedPlayer: @unchecked Sendable {
+    let player: AVAudioPlayer
+    init(player: AVAudioPlayer) { self.player = player }
 }
 
 private actor AudioSessionController {
@@ -155,6 +165,16 @@ private actor AudioSessionController {
         Task { await session.deactivate() }
     }
 
+    func cancelLoading() {
+        guard isLoading else { return }
+        loadID = UUID()
+        loadTask?.cancel()
+        loadTask = nil
+        isLoading = false
+        pause()
+        // Keep the selected song visible so Play is a clear retry action.
+    }
+
     private func loadCurrent(autoplay: Bool = true) {
         guard queue.indices.contains(currentIndex), let bookmark else { return }
         loadTask?.cancel()
@@ -188,7 +208,7 @@ private actor AudioSessionController {
             } catch {
                 guard !Task.isCancelled, loadID == id else { return }
                 isLoading = false
-                fail("Couldn't open “\(track.title)”. Make sure the file is downloaded in Files and the music folder is still available, then try Play again.")
+                fail("Couldn't open “\(track.title)”. Check that the music folder is available and the song is downloaded in Files, then try again.")
             }
         }
     }

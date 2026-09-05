@@ -41,7 +41,7 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 4. Tap the compact player for seeking, previous/next, and AirPlay. Tap the album name in Now Playing to return to its track list. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
 5. After changing the contents of your folder, pull to refresh or use **Library Options → Refresh Library**. A notice in the library links to any files that couldn't be read. **Music Folder** shows the selected folder and lets you choose another.
 
-For offline listening with iCloud Drive, use **Keep Downloaded** on the folder in Files. Oto does not maintain a second copy of your audio. A cloud provider can need time to download a file, and cancellation may wait for its current coordinated read to finish.
+For offline listening with iCloud Drive, use **Keep Downloaded** on the folder in Files. Oto does not maintain a second copy of your audio. While a song opens, the player offers Cancel; Play retries the selected song afterward. Playback errors also offer **Try Again**. Scans show the current filename and can be cancelled without replacing the existing library. Cancellation stops waiting for coordinated access, though a file read that has already started may need to finish.
 
 ## Deliberate limits
 

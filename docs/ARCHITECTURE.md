@@ -10,7 +10,7 @@ The selected folder owns the audio. Oto never moves, deletes, converts, or rewri
 
 The scanner skips hidden files, packages, and symbolic links. `MusicPath` checks containment again before playback. Reads are coordinated with file providers. Audio decoding and duration use AVFoundation; a bounds-checked FLAC metadata reader handles Vorbis comments and embedded pictures that AVAsset may not expose. Other tags use AVAsset's asynchronous metadata API. Artwork is downsampled to 1,000 pixels and keyed by a content digest to avoid decoding repeated album art during subsequent scans.
 
-A scan stages a replacement snapshot. Cancellation or traversal failure keeps the existing index. During refresh of the same folder, unreadable tracks retain their prior metadata and receive an issue entry; genuinely removed files disappear. An empty replacement folder is rejected; a successful refresh of the current folder can become empty. Only a successful atomic write publishes the new library. Switching to a different folder stops the prior playback session.
+A scan stages a replacement snapshot. Cancellation or traversal failure keeps the existing index. Each coordinated read connects task cancellation to its own coordinator's `cancel()`, so waiting for provider access can be interrupted; an accessor already executing must finish. During refresh of the same folder, unreadable tracks retain their prior metadata and receive an issue entry; genuinely removed files disappear. An empty replacement folder is rejected; a successful refresh of the current folder can become empty. Only a successful atomic write publishes the new library. Switching to a different folder stops the prior playback session.
 
 ## Playback
 
@@ -25,6 +25,7 @@ SwiftUI NavigationStack, List, ContentUnavailableView, searchable, sheets, syste
 ## References
 
 - [Apple: Providing access to directories](https://developer.apple.com/documentation/uikit/providing-access-to-directories)
+- [Apple: Cancelling file coordination](https://developer.apple.com/documentation/foundation/nsfilecoordinator/cancel())
 - [Apple: AVAudioSession](https://developer.apple.com/documentation/avfaudio/avaudiosession)
 - [Apple: Becoming a Now Playable app](https://developer.apple.com/documentation/mediaplayer/becoming-a-now-playable-app)
 

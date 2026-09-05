@@ -56,3 +56,16 @@ Reviewed the actual library screen with the personal music folder, then exercise
 Validation: the five UI flows then present plus the new search-matching check passed in `work/ListeningFlow.xcresult`; screenshots of direct song search and the issue row were inspected. The changed playback policies, automatic advancement/interruption regression, empty-folder recovery, and updated playback/relaunch UI flow all passed in `work/PlaybackIntent.xcresult`. No unrelated passing tests were rerun. The GUI Simulator app was unavailable through computer-use discovery, so interaction validation used the existing native XCTest runner and simulator screenshots.
 
 Signed development build 0.1 (3) succeeds locally. The physical phone remains on build 2 and was not disturbed. Remaining overnight review should focus on meaningful file-provider/cancellation behavior, metadata edge cases, and responsiveness with larger libraries, rather than feature accumulation.
+
+## Overnight pass 2 — 00:00–00:12, September 5
+
+Focused on making unavailable and slow-opening music manageable from the listening UI:
+
+- The main player control now cancels a pending song load instead of becoming disabled. The selected song remains visible and Play retries it. Now Playing explains that it is opening the song.
+- Playback errors offer Try Again from both the album/library screen and Now Playing. Verified the entire missing-file → restore-file → retry → playing flow in both locations.
+- A scan shows the filename currently being read. Cancel gives immediate Cancelling feedback and prevents repeated requests while cleanup finishes; the existing library stays intact.
+- Task cancellation now cancels the corresponding file coordinator. A native file-presenter test confirmed that cancellation releases a read waiting for access before the presenter relinquishes. This is stronger evidence than just cancelling a task before it starts, but does not simulate actual iCloud download/eviction behavior. Already-running accessors may still need to finish.
+
+Validation: all 20 unit/integration tests and the new retry UI flow passed in `work/FileReadCancellation.xcresult`, including the blocked-reader test with no skips. Inspected both retry alert screenshots, then shortened their message to match the new action. The shared read-path change justified rerunning the unit suite; unrelated UI flows were not repeated. Compilation has no Swift warnings; the existing Xcode beta App Intents and AVAudioSession diagnostics remain. Signed build 0.1 (4) succeeds locally. The iPhone remains on build 2, with no overnight installation or playback.
+
+Next bounded review: browsing/search responsiveness with a realistically larger library and metadata fallback behavior. Prefer an evidenced listening improvement over adding settings or unrelated features. Physical background/lock-screen/AirPlay and real iCloud re-download checks remain for a waking device session.

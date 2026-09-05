@@ -6,6 +6,7 @@ import Foundation
     private(set) var albums: [Album] = []
     private(set) var folderPath: String?
     private(set) var isScanning = false
+    private(set) var isCancelling = false
     private(set) var progress: ScanProgress?
     var errorMessage: String?
     let persistence: LibraryPersistence
@@ -38,7 +39,11 @@ import Foundation
         catch { errorMessage = LibraryError.inaccessibleFolder.localizedDescription }
     }
 
-    func cancelScan() { scanTask?.cancel() }
+    func cancelScan() {
+        guard isScanning else { return }
+        isCancelling = true
+        scanTask?.cancel()
+    }
 
     func refreshAndWait() async {
         refresh()
@@ -51,6 +56,7 @@ import Foundation
         scanTask = Task {
             defer {
                 isScanning = false
+                isCancelling = false
                 progress = nil
                 scanTask = nil
                 withExtendedLifetime(access) {}

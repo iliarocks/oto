@@ -149,7 +149,10 @@ struct LibraryView: View {
             Button("OK", role: .cancel) { library.errorMessage = nil }
         } message: { Text(library.errorMessage ?? "") }
         .alert("Couldn't Play", isPresented: Binding(get: { !showingPlayer && player.errorMessage != nil }, set: { if !$0 { player.errorMessage = nil } })) {
-            Button("OK", role: .cancel) { player.errorMessage = nil }
+            if player.currentTrack != nil {
+                Button("Try Again") { player.errorMessage = nil; player.resume() }
+            }
+            Button("Cancel", role: .cancel) { player.errorMessage = nil }
         } message: { Text(player.errorMessage ?? "") }
     }
 
@@ -199,13 +202,18 @@ struct LibraryView: View {
         Section {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("Reading your music…").font(.headline)
+                    Text(library.isCancelling ? "Cancelling…" : "Reading your music…").font(.headline)
                     Spacer()
                     Button("Cancel") { library.cancelScan() }.font(.subheadline)
+                        .disabled(library.isCancelling)
                 }
                 if let progress = library.progress, progress.total > 0 {
                     ProgressView(value: Double(progress.completed), total: Double(progress.total))
                     Text("\(progress.completed) of \(progress.total) songs").font(.caption).foregroundStyle(.secondary)
+                    if !progress.filename.isEmpty {
+                        Text(progress.filename).font(.caption).foregroundStyle(.secondary)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
                 } else { ProgressView().frame(maxWidth: .infinity, alignment: .leading) }
                 Text("Files in iCloud may need a moment to download.").font(.caption).foregroundStyle(.secondary)
             }

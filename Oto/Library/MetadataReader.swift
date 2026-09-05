@@ -3,7 +3,7 @@ import CryptoKit
 import ImageIO
 import UIKit
 
-struct AudioMetadata {
+struct AudioMetadata: Sendable {
     var title: String?
     var artist: String?
     var album: String?
@@ -16,7 +16,7 @@ struct AudioMetadata {
 
 enum MetadataReader {
     static func read(_ url: URL) async throws -> AudioMetadata {
-        var value = try CoordinatedRead.perform(at: url) { readable in
+        var value = try await CoordinatedRead.perform(at: url) { readable in
             let file = try AVAudioFile(forReading: readable)
             var result = AudioMetadata()
             result.duration = Double(file.length) / file.fileFormat.sampleRate
@@ -104,14 +104,14 @@ enum ArtworkCache {
         return key
     }
 
-    static func folderCover(at directory: URL) -> Data? {
+    static func folderCover(at directory: URL) async -> Data? {
         guard let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.fileSizeKey, .isSymbolicLinkKey]) else { return nil }
         let names = ["cover.jpg", "cover.jpeg", "cover.png", "folder.jpg", "folder.png", "front.jpg", "front.png"]
         for name in names {
             if let file = files.first(where: { $0.lastPathComponent.lowercased() == name }),
                let properties = try? file.resourceValues(forKeys: [.fileSizeKey, .isSymbolicLinkKey]),
                properties.isSymbolicLink != true, (properties.fileSize ?? Int.max) <= 24 * 1_024 * 1_024 {
-                return try? CoordinatedRead.perform(at: file) { try Data(contentsOf: $0) }
+                return try? await CoordinatedRead.perform(at: file) { try Data(contentsOf: $0) }
             }
         }
         return nil

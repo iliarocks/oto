@@ -145,6 +145,49 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(album.waitForExistence(timeout: 10))
     }
 
+    @MainActor func testUnavailableSongCanRetryFromLibraryAndNowPlaying() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        let sources = try ["01", "02"].map { name in
+            try XCTUnwrap(Bundle(for: OtoUITests.self).url(forResource: name, withExtension: "flac"))
+        }
+        let destinations = ["01.flac", "02.flac"].map { folder.appendingPathComponent($0) }
+        for (source, destination) in zip(sources, destinations) {
+            try FileManager.default.copyItem(at: source, to: destination)
+        }
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        let album = app.buttons["album-Quiet Hours"]
+        XCTAssertTrue(album.waitForExistence(timeout: 20))
+        try FileManager.default.removeItem(at: destinations[0])
+        album.tap()
+        app.buttons["track-First Light"].tap()
+        XCTAssertTrue(app.alerts["Couldn't Play"].waitForExistence(timeout: 10))
+        attach(app, name: "Retry Missing Song")
+        try FileManager.default.copyItem(at: sources[0], to: destinations[0])
+        app.alerts.buttons["Try Again"].tap()
+        app.buttons["mini-player"].tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
+        waitForExpectations(timeout: 10)
+        toggle.tap()
+        try FileManager.default.removeItem(at: destinations[1])
+        app.buttons["now-playing-next"].tap()
+        XCTAssertTrue(app.alerts["Couldn't Play"].waitForExistence(timeout: 10))
+        attach(app, name: "Retry from Now Playing")
+        try FileManager.default.copyItem(at: sources[1], to: destinations[1])
+        app.alerts.buttons["Try Again"].tap()
+        expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
+        waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.staticTexts["Second Light"].exists)
+        toggle.tap()
+    }
+
     @MainActor private func attach(_ app: XCUIApplication, name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

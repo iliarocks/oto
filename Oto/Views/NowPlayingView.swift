@@ -23,12 +23,11 @@ struct MiniPlayer: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Now Playing: \(player.currentTrack?.title ?? "")")
             .accessibilityIdentifier("mini-player")
-            Button { player.toggle() } label: {
-                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+            Button { if player.isLoading { player.cancelLoading() } else { player.toggle() } } label: {
+                Image(systemName: player.isLoading ? "xmark" : player.isPlaying ? "pause.fill" : "play.fill")
                     .font(.title3).frame(width: 48, height: 48)
             }
-            .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-            .disabled(player.isLoading)
+            .accessibilityLabel(player.isLoading ? "Cancel Loading" : player.isPlaying ? "Pause" : "Play")
             Button { player.next() } label: {
                 Image(systemName: "forward.fill").font(.title3).frame(width: 44, height: 48)
             }
@@ -72,6 +71,10 @@ struct NowPlayingView: View {
                         }
                     }
                     .multilineTextAlignment(.center)
+                    if player.isLoading {
+                        HStack(spacing: 8) { ProgressView(); Text("Opening song…") }
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
                     VStack(spacing: 3) {
                         Slider(value: Binding(get: { isSeeking ? seekPosition : player.elapsed }, set: { seekPosition = $0 }),
                                in: 0...max(player.duration, 1), onEditingChanged: { editing in
@@ -100,16 +103,15 @@ struct NowPlayingView: View {
                     HStack(spacing: 38) {
                         Button { player.previous() } label: { Image(systemName: "backward.fill").font(.title).frame(width: 52, height: 60) }
                             .accessibilityLabel("Previous Song")
-                        Button { player.toggle() } label: {
+                        Button { if player.isLoading { player.cancelLoading() } else { player.toggle() } } label: {
                             Group {
-                                if player.isLoading { ProgressView().controlSize(.large) }
+                                if player.isLoading { Image(systemName: "xmark").font(.system(size: 36)) }
                                 else { Image(systemName: player.isPlaying ? "pause.fill" : "play.fill").font(.system(size: 44)) }
                             }
                             .frame(width: 64, height: 64)
                         }
-                        .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                        .accessibilityLabel(player.isLoading ? "Cancel Loading" : player.isPlaying ? "Pause" : "Play")
                         .accessibilityIdentifier("now-playing-toggle")
-                        .disabled(player.isLoading)
                         Button { player.next() } label: { Image(systemName: "forward.fill").font(.title).frame(width: 52, height: 60) }
                             .accessibilityLabel("Next Song").disabled(!player.hasNext)
                             .accessibilityIdentifier("now-playing-next")
@@ -137,7 +139,10 @@ struct NowPlayingView: View {
         }
         .onChange(of: player.currentTrack?.id) { _, _ in isSeeking = false; seekPosition = 0 }
         .alert("Couldn't Play", isPresented: Binding(get: { player.errorMessage != nil }, set: { if !$0 { player.errorMessage = nil } })) {
-            Button("OK", role: .cancel) { player.errorMessage = nil }
+            if player.currentTrack != nil {
+                Button("Try Again") { player.errorMessage = nil; player.resume() }
+            }
+            Button("Cancel", role: .cancel) { player.errorMessage = nil }
         } message: { Text(player.errorMessage ?? "") }
     }
 }

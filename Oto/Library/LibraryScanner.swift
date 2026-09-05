@@ -15,7 +15,7 @@ actor LibraryScanner {
         defer { withExtendedLifetime(access) {} }
         try persistence.prepare()
         let bookmark = try access.bookmark()
-        let candidates = try enumerate(folder)
+        let candidates = try await enumerate(folder)
         var tracks: [Track] = []
         var issues: [ScanIssue] = []
         var covers: [String: String] = [:]
@@ -36,7 +36,7 @@ actor LibraryScanner {
                 if artworkKey == nil {
                     for directory in [parent, albumFolder] where artworkKey == nil {
                         if coverDirectories.insert(directory.path).inserted {
-                            covers[directory.path] = try ArtworkCache.store(ArtworkCache.folderCover(at: directory), in: persistence.artworkDirectory)
+                            covers[directory.path] = try await ArtworkCache.store(ArtworkCache.folderCover(at: directory), in: persistence.artworkDirectory)
                         }
                         artworkKey = covers[directory.path]
                     }
@@ -60,8 +60,8 @@ actor LibraryScanner {
                                tracks: tracks.sorted(by: Track.ordered), scannedAt: Date(), issues: issues)
     }
 
-    private func enumerate(_ folder: URL) throws -> [URL] {
-        try CoordinatedRead.perform(at: folder) { readable in
+    private func enumerate(_ folder: URL) async throws -> [URL] {
+        try await CoordinatedRead.perform(at: folder) { readable in
             let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey]
             var failure: Error?
             guard let enumerator = FileManager.default.enumerator(at: readable, includingPropertiesForKeys: keys,

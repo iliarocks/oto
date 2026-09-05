@@ -20,6 +20,7 @@ struct FLACMetadata: Sendable {
         var result = FLACMetadata()
         var total = 0
         for _ in 0..<256 {
+            try Task.checkCancellation()
             let header = try read(4)
             let length = Int(header[1]) << 16 | Int(header[2]) << 8 | Int(header[3])
             total += length
