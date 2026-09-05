@@ -1,0 +1,378 @@
+// !$*UTF8*$!
+{
+	"archiveVersion" = "1";
+	"classes" = {
+	};
+	"objectVersion" = "77";
+	"objects" = {
+		"000000000000000000000001" = {
+			"isa" = "PBXGroup";
+			"children" = ("000000000000000000000007", "000000000000000000000011", "00000000000000000000001C");
+			"name" = "Products";
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000002" = {
+			"isa" = "PBXGroup";
+			"children" = ("000000000000000000000008", "000000000000000000000012", "00000000000000000000001D", "000000000000000000000001");
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000003" = {
+			"isa" = "PBXProject";
+			"attributes" = {
+				"BuildIndependentTargetsInParallel" = "YES";
+				"LastUpgradeCheck" = "2700";
+			};
+			"buildConfigurationList" = "000000000000000000000006";
+			"compatibilityVersion" = "Xcode 16.0";
+			"developmentRegion" = "en";
+			"hasScannedForEncodings" = "0";
+			"knownRegions" = ("en", "Base");
+			"mainGroup" = "000000000000000000000002";
+			"productRefGroup" = "000000000000000000000001";
+			"projectDirPath" = "";
+			"projectRoot" = "";
+			"targets" = ("00000000000000000000000F", "000000000000000000000019", "000000000000000000000024");
+		};
+		"000000000000000000000004" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"IPHONEOS_DEPLOYMENT_TARGET" = "18.0";
+				"SDKROOT" = "iphoneos";
+				"SWIFT_VERSION" = "5.0";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"CLANG_ENABLE_OBJC_ARC" = "YES";
+				"SWIFT_STRICT_CONCURRENCY" = "complete";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "YES";
+				"GCC_C_LANGUAGE_STANDARD" = "gnu17";
+				"GCC_WARN_64_TO_32_BIT_CONVERSION" = "YES";
+				"CLANG_WARN_DOCUMENTATION_COMMENTS" = "YES";
+				"CLANG_WARN_UNREACHABLE_CODE" = "YES";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG $(inherited)";
+				"ENABLE_TESTABILITY" = "YES";
+			};
+			"name" = "Debug";
+		};
+		"000000000000000000000005" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"IPHONEOS_DEPLOYMENT_TARGET" = "18.0";
+				"SDKROOT" = "iphoneos";
+				"SWIFT_VERSION" = "5.0";
+				"CLANG_ENABLE_MODULES" = "YES";
+				"CLANG_ENABLE_OBJC_ARC" = "YES";
+				"SWIFT_STRICT_CONCURRENCY" = "complete";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "YES";
+				"GCC_C_LANGUAGE_STANDARD" = "gnu17";
+				"GCC_WARN_64_TO_32_BIT_CONVERSION" = "YES";
+				"CLANG_WARN_DOCUMENTATION_COMMENTS" = "YES";
+				"CLANG_WARN_UNREACHABLE_CODE" = "YES";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf-with-dsym";
+			};
+			"name" = "Release";
+		};
+		"000000000000000000000006" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ("000000000000000000000004", "000000000000000000000005");
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"000000000000000000000007" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.application";
+			"includeInIndex" = "0";
+			"path" = "Oto.app";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"000000000000000000000008" = {
+			"isa" = "PBXFileSystemSynchronizedRootGroup";
+			"path" = "Oto";
+			"sourceTree" = "<group>";
+			"exceptions" = ("000000000000000000000010");
+		};
+		"000000000000000000000009" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"00000000000000000000000A" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"00000000000000000000000B" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"00000000000000000000000C" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.shmilia.oto";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"DEVELOPMENT_TEAM" = "978R47NCN9";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"INFOPLIST_FILE" = "Oto/Info.plist";
+				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = "YES";
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone" = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG $(inherited)";
+				"ENABLE_TESTABILITY" = "YES";
+			};
+			"name" = "Debug";
+		};
+		"00000000000000000000000D" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.shmilia.oto";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"DEVELOPMENT_TEAM" = "978R47NCN9";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"INFOPLIST_FILE" = "Oto/Info.plist";
+				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = "YES";
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone" = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = "AccentColor";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf-with-dsym";
+			};
+			"name" = "Release";
+		};
+		"00000000000000000000000E" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ("00000000000000000000000C", "00000000000000000000000D");
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"00000000000000000000000F" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "00000000000000000000000E";
+			"buildPhases" = ("000000000000000000000009", "00000000000000000000000A", "00000000000000000000000B");
+			"buildRules" = ();
+			"dependencies" = ();
+			"fileSystemSynchronizedGroups" = ("000000000000000000000008");
+			"name" = "Oto";
+			"productName" = "Oto";
+			"productReference" = "000000000000000000000007";
+			"productType" = "com.apple.product-type.application";
+		};
+		"000000000000000000000010" = {
+			"isa" = "PBXFileSystemSynchronizedBuildFileExceptionSet";
+			"membershipExceptions" = ("Info.plist");
+			"target" = "00000000000000000000000F";
+		};
+		"000000000000000000000011" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.cfbundle";
+			"includeInIndex" = "0";
+			"path" = "OtoTests.xctest";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"000000000000000000000012" = {
+			"isa" = "PBXFileSystemSynchronizedRootGroup";
+			"path" = "OtoTests";
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000013" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"000000000000000000000014" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"000000000000000000000015" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"000000000000000000000016" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.shmilia.ototests";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"DEVELOPMENT_TEAM" = "978R47NCN9";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/Oto.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Oto";
+				"BUNDLE_LOADER" = "$(TEST_HOST)";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG $(inherited)";
+				"ENABLE_TESTABILITY" = "YES";
+			};
+			"name" = "Debug";
+		};
+		"000000000000000000000017" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.shmilia.ototests";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"DEVELOPMENT_TEAM" = "978R47NCN9";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/Oto.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Oto";
+				"BUNDLE_LOADER" = "$(TEST_HOST)";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf-with-dsym";
+			};
+			"name" = "Release";
+		};
+		"000000000000000000000018" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ("000000000000000000000016", "000000000000000000000017");
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"000000000000000000000019" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "000000000000000000000018";
+			"buildPhases" = ("000000000000000000000013", "000000000000000000000014", "000000000000000000000015");
+			"buildRules" = ();
+			"dependencies" = ("00000000000000000000001B");
+			"fileSystemSynchronizedGroups" = ("000000000000000000000012");
+			"name" = "OtoTests";
+			"productName" = "OtoTests";
+			"productReference" = "000000000000000000000011";
+			"productType" = "com.apple.product-type.bundle.unit-test";
+		};
+		"00000000000000000000001A" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "000000000000000000000003";
+			"proxyType" = "1";
+			"remoteGlobalIDString" = "00000000000000000000000F";
+			"remoteInfo" = "Oto";
+		};
+		"00000000000000000000001B" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "00000000000000000000000F";
+			"targetProxy" = "00000000000000000000001A";
+		};
+		"00000000000000000000001C" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.cfbundle";
+			"includeInIndex" = "0";
+			"path" = "OtoUITests.xctest";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"00000000000000000000001D" = {
+			"isa" = "PBXFileSystemSynchronizedRootGroup";
+			"path" = "OtoUITests";
+			"sourceTree" = "<group>";
+		};
+		"00000000000000000000001E" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"00000000000000000000001F" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"000000000000000000000020" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"000000000000000000000021" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.shmilia.otouitests";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"DEVELOPMENT_TEAM" = "978R47NCN9";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"TEST_TARGET_NAME" = "Oto";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf";
+				"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG $(inherited)";
+				"ENABLE_TESTABILITY" = "YES";
+			};
+			"name" = "Debug";
+		};
+		"000000000000000000000022" = {
+			"isa" = "XCBuildConfiguration";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.shmilia.otouitests";
+				"TARGETED_DEVICE_FAMILY" = "1,2";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"DEVELOPMENT_TEAM" = "978R47NCN9";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"SWIFT_EMIT_LOC_STRINGS" = "YES";
+				"TEST_TARGET_NAME" = "Oto";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"DEBUG_INFORMATION_FORMAT" = "dwarf-with-dsym";
+			};
+			"name" = "Release";
+		};
+		"000000000000000000000023" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = ("000000000000000000000021", "000000000000000000000022");
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"000000000000000000000024" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "000000000000000000000023";
+			"buildPhases" = ("00000000000000000000001E", "00000000000000000000001F", "000000000000000000000020");
+			"buildRules" = ();
+			"dependencies" = ("000000000000000000000026");
+			"fileSystemSynchronizedGroups" = ("00000000000000000000001D");
+			"name" = "OtoUITests";
+			"productName" = "OtoUITests";
+			"productReference" = "00000000000000000000001C";
+			"productType" = "com.apple.product-type.bundle.ui-testing";
+		};
+		"000000000000000000000025" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "000000000000000000000003";
+			"proxyType" = "1";
+			"remoteGlobalIDString" = "00000000000000000000000F";
+			"remoteInfo" = "Oto";
+		};
+		"000000000000000000000026" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "00000000000000000000000F";
+			"targetProxy" = "000000000000000000000025";
+		};
+	};
+	"rootObject" = "000000000000000000000003";
+}
