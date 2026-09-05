@@ -336,7 +336,7 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(album.waitForExistence(timeout: 20))
         album.tap()
         let toolbarTitle = app.navigationBars.staticTexts["Quiet Hours"]
-        XCTAssertFalse(toolbarTitle.exists)
+        XCTAssertFalse(toolbarTitle.isHittable)
         attach(app, name: "Album Without Duplicate Toolbar Title")
         let play = app.buttons["play-album"]
         for _ in 0..<4 where !play.isHittable { app.swipeUp() }
@@ -349,7 +349,7 @@ final class OtoUITests: XCTestCase {
             app.swipeUp()
         }
         attach(app, name: largeText ? "Final Song Above Large Player" : "Final Song Above Player")
-        XCTAssertTrue(toolbarTitle.exists, "The toolbar identifies the album after its main title scrolls away")
+        XCTAssertTrue(toolbarTitle.isHittable, "The toolbar identifies the album after its main title scrolls away")
         XCTAssertTrue(finalSong.isHittable)
         XCTAssertLessThan(finalSong.frame.maxY, mini.frame.minY - 8, "The complete last row must clear the floating player")
         finalSong.tap()
@@ -373,7 +373,7 @@ final class OtoUITests: XCTestCase {
             app.swipeDown()
         }
         XCTAssertTrue(mainTitle.isHittable)
-        XCTAssertFalse(toolbarTitle.exists, "Returning to the main album title hides the duplicate toolbar title")
+        XCTAssertFalse(toolbarTitle.isHittable, "Returning to the main album title hides the duplicate toolbar title")
         attach(app, name: "Main Album Title Restored After Scrolling Back")
     }
 

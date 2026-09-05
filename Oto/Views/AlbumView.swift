@@ -7,7 +7,7 @@ struct AlbumView: View {
     let album: Album
     let library: LibraryStore
     let player: PlaybackController
-    @State private var navigationTitleOpacity: CGFloat = 0
+    @State private var showsNavigationTitle = false
 
     var body: some View {
         GeometryReader { viewport in
@@ -19,12 +19,10 @@ struct AlbumView: View {
                         VStack(spacing: 6) {
                             Text(album.title).font(.title2.bold())
                                 .accessibilityIdentifier("album-main-title")
-                                .onGeometryChange(for: CGFloat.self) { title in
+                                .onGeometryChange(for: Bool.self) { title in
                                     let top = viewport.frame(in: .global).minY + viewport.safeAreaInsets.top
-                                    // Fade over the next 28 points after the main title leaves the viewport.
-                                    // Following the scroll directly also makes a partial reversal seamless.
-                                    return min(max((top - title.frame(in: .global).maxY) / 28, 0), 1)
-                                } action: { navigationTitleOpacity = $0 }
+                                    return title.frame(in: .global).maxY <= top
+                                } action: { showsNavigationTitle = $0 }
                             Text(album.artist).font(.title3).foregroundStyle(.secondary)
                             Text("\(album.tracks.count) songs · \(MusicTime.summary(album.duration))")
                                 .font(.subheadline).foregroundStyle(.secondary)
@@ -82,14 +80,8 @@ struct AlbumView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                // Keep a stable title view while omitting the label when completely hidden.
-                // Navigation bars may synthesize accessibility from their title content.
-                Text(navigationTitleOpacity > 0 ? album.title : "")
-                    .font(.headline)
-                    .lineLimit(1)
-                    .opacity(navigationTitleOpacity)
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityHidden(navigationTitleOpacity == 0)
+                FadingNavigationTitle(title: album.title, isVisible: showsNavigationTitle)
+                    .accessibilityHidden(!showsNavigationTitle)
             }
         }
     }

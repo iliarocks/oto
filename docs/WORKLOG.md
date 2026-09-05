@@ -173,3 +173,13 @@ The initial check caught native navigation accessibility synthesizing a label fr
 Validation: the normal-size scroll/playback/return flow passed in `work/album-title-fade-verified.xcresult`. The largest-text flow passed in `work/album-title-fade-large.xcresult` after correcting the test gesture to start at the sheet grabber instead of the navigation title, and adding an explicit dismissal assertion. Earlier large-text failures were at sheet dismissal, after title visibility and final-song clearance had passed. Inspected the initial, scrolled, and return screenshots, plus a recorded transition containing an intermediate faint title frame. Signed build 0.1 (14) succeeded.
 
 Installed and launched build 14 on the connected iPhone, preserving its existing library.
+
+## Symmetric album-title transitions — September 5
+
+Compared both user recordings, including Notes' more deliberate title transition. Build 14's short, distance-driven fade rushed on quick swipes, and replacing the text with an empty string cut off disappearance. A SwiftUI opacity removal transition passed endpoint checks but the recorded toolbar still discarded the outgoing title abruptly.
+
+The principal toolbar slot now holds a persistent native UILabel. Its alpha uses a 0.25-second ease-in/ease-out UIView animation in either direction; interrupted changes begin from the current visible alpha. Scroll geometry only chooses whether the title should be shown, so swipe speed no longer shortens the fade. The label retains its text during disappearance and hides its accessibility representation when the main heading returns. Native title sizing remains single-line with capped navigation-bar text scaling.
+
+Updated the existing UI checks to assert visibility/hittability rather than absence of a retained native label. Both normal and largest-text scroll/playback/dismissal/return checks passed in `work/album-native-title-final.xcresult`. Inspected recorded frames of both directions: each now contains several progressively fainter/darker title frames, including the previously missing fade-out (`work/native-title-in.png`, `work/native-title-out.png`). The earlier SwiftUI-only experiment's passing endpoint tests were insufficient to establish animation behavior; recording inspection caught that before installation. Signed build 0.1 (15) succeeded.
+
+Installed and launched build 15 on the connected iPhone with its existing library preserved.
