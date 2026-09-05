@@ -121,3 +121,15 @@ Build 8 was installed and launched on the connected iPhone.
 ## Bottom-edge fade — September 5
 
 Added a faint gradient behind the floating player, fading from transparent above it into the system background toward the bottom safe area. It adapts to light/dark appearance, does not take taps, and does not alter the player inset. The existing final-song clearance/playback UI check passed (`work/PlayerFade.xcresult`); inspected its screenshot. Signed build 0.1 (9) succeeded and was installed on the iPhone. The user's reminder to keep tracking work in Git continues the existing incremental-commit workflow.
+
+## Artwork accents and smoother playback UI — September 5
+
+Checked the separator-removal commit: it added no explicit padding. Set smaller, explicit native row insets (8 points vertically for albums, 6 for songs) to tighten the lists while retaining comfortable tap targets.
+
+Album artwork now supplies the Play button and current-song accent, plus the playing track's scrubber and AirPlay tint. A cached actor samples downscaled artwork off the main actor. Following the user's clarification, low-contrast colors fall back to black in light mode or white in dark mode without modifying the sampled hue. The 4.5:1 check includes the elevated charcoal sheet background, not only the library's pure black. Missing artwork retains the app accent.
+
+Replaced the marquee's 30 Hz redraw loop with a continuous native linear transform animation. Overflow still cycles with a brief pause, and Reduce Motion/inactive scenes stop it. The visible scrubber now samples precise native audio time at display cadence, while coarse model updates retain their lightweight timer. Removed the album link and “Opening song…” message from Now Playing; cancellable loading remains available through the transport control.
+
+Validation: long-title motion in both players, seeking while paused, portrait/landscape controls, and sheet dismissal passed in `work/artwork-motion-final.xcresult`. Largest accessibility text and final-song clearance passed in `work/artwork-motion-check.xcresult`; that first run exposed two test-harness issues (a center-screen swipe hitting the slider, and overly exact native-slider drag tolerance), corrected in the final run. Inspected screenshots of the tighter lists, full sheet, and landscape controls. Artwork extraction and black/white fallback have targeted unit coverage. A dark appearance check prompted the elevated-surface contrast refinement.
+
+Final contrast tests and the dark playback/dismissal flow passed (`work/artwork-contrast-final.xcresult`); inspected the white fallback on the charcoal sheet. Signed build 0.1 (10) succeeded and was installed and launched on the connected iPhone, preserving its library. Motion checks confirm continuous movement and working seeking; device frame pacing remains subject to normal rendering load and has not been instrument-profiled.

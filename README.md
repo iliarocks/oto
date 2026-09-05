@@ -37,7 +37,7 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 
 1. Tap **Choose Music Folder**, navigate to your folder in Files, and tap **Open**.
 2. Open an album, then tap **Play** or an individual song. Playback continues in album order and stops after the final song.
-3. Tap the floating player for seeking, previous/next, and AirPlay. Tap the album name in Now Playing to return to its track list. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
+3. Tap the floating player for seeking, previous/next, and AirPlay. Swipe down to dismiss Now Playing. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
 4. After changing the contents of your folder, pull to refresh or use **Library Options → Refresh Library**. A notice in the library links to any files that couldn't be read. **Music Folder** shows the selected folder and lets you choose another.
 
 The toolbar shows your album and song count. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.

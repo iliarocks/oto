@@ -84,7 +84,7 @@ final class OtoUITests: XCTestCase {
         toggle.tap()
     }
 
-    @MainActor func testFloatingPlayerAndLinkBackToAlbum() throws {
+    @MainActor func testFloatingPlayerAndModalDismissal() throws {
         let app = XCUIApplication()
         app.launchEnvironment["OTO_UI_TEST"] = "1"
         app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
@@ -103,12 +103,18 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.buttons["mini-player"].isHittable)
         attach(app, name: "Simplified Library with Floating Player")
         app.buttons["mini-player"].tap()
-        XCTAssertTrue(app.buttons["now-playing-album"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["now-playing-toggle"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["now-playing-album"].exists)
+        XCTAssertFalse(app.staticTexts["Opening song…"].exists)
+        attach(app, name: "Artwork Accents in Now Playing")
         let toggle = app.buttons["now-playing-toggle"]
         expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
         waitForExpectations(timeout: 10)
         toggle.tap()
-        app.buttons["now-playing-album"].tap()
+        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
+        XCTAssertTrue(app.staticTexts["library-summary"].waitForExistence(timeout: 10))
+        app.buttons["album-Quiet Hours"].tap()
         XCTAssertTrue(app.buttons["track-Second Light"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.buttons["track-Second Light"].value as? String, "Paused")
         attach(app, name: "Return to Playing Album")
@@ -223,7 +229,8 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts["200 albums · 400 songs"].waitForExistence(timeout: 60))
         app.swipeUp()
-        app.swipeDown()
+        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         app.buttons["album-Quiet Hours"].firstMatch.tap()
         app.buttons["track-Second Light"].tap()
         app.buttons["mini-player"].tap()
@@ -281,6 +288,11 @@ final class OtoUITests: XCTestCase {
         XCTAssertNotEqual(before, label.screenshot().pngRepresentation, "An overflowing title must move")
         attach(app, name: "Fixed Now Playing Long Title Moving")
         toggle.tap()
+        XCTAssertEqual(toggle.label, "Play")
+        let scrubber = app.sliders["playback-position"]
+        scrubber.adjust(toNormalizedSliderPosition: 0.5)
+        let value = scrubber.value as? String ?? ""
+        XCTAssertTrue((27...33).map { "0:\($0)" }.contains(value), "Seeking should move playback to the midpoint: \(value)")
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
         try await Task.sleep(for: .seconds(1))
@@ -291,7 +303,8 @@ final class OtoUITests: XCTestCase {
         landscape.lifetime = .keepAlways
         add(landscape)
         XCUIDevice.shared.orientation = .portrait
-        app.swipeDown()
+        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         XCTAssertTrue(mini.waitForExistence(timeout: 10))
     }
 

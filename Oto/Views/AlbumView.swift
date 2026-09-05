@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlbumView: View {
+    @Environment(\.albumAccent) private var accent
     let album: Album
     let library: LibraryStore
     let player: PlaybackController
@@ -42,10 +43,10 @@ struct AlbumView: View {
                                         Image(systemName: player.isPlaying ? "speaker.wave.2.fill" : "speaker.fill").font(.caption)
                                     } else { Text(track.trackNumber.map(String.init) ?? "–").font(.subheadline).monospacedDigit() }
                                 }
-                                .foregroundStyle(isCurrent(track) ? Color.accentColor : Color.secondary)
+                                .foregroundStyle(isCurrent(track) ? accent : Color.secondary)
                                 .frame(width: 26)
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(track.title).foregroundStyle(isCurrent(track) ? Color.accentColor : Color.primary)
+                                    Text(track.title).foregroundStyle(isCurrent(track) ? accent : Color.primary)
                                     if track.artist != album.artist { Text(track.artist).font(.caption).foregroundStyle(.secondary) }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -58,6 +59,7 @@ struct AlbumView: View {
                         .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
                         .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
                         .accessibilityIdentifier("track-\(track.title)")
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         .listRowSeparator(.hidden)
                     }
                 } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }

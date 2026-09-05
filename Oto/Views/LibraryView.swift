@@ -9,8 +9,6 @@ struct LibraryView: View {
     @State private var path: [String] = []
     @State private var chooseAfterFolderDismisses = false
 
-    private var currentAlbum: Album? { library.albums.first { $0.id == player.currentTrack?.albumID } }
-
     var body: some View {
         NavigationStack(path: $path) {
             Group {
@@ -39,6 +37,7 @@ struct LibraryView: View {
                                 }
                             }
                             .accessibilityIdentifier("album-\(album.title)")
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .listRowSeparator(.hidden)
                         }
                         .listSectionSeparator(.hidden)
@@ -53,6 +52,7 @@ struct LibraryView: View {
             .navigationDestination(for: String.self) { id in
                 if let album = library.albums.first(where: { $0.id == id }) {
                     AlbumView(album: album, library: library, player: player)
+                        .modifier(ArtworkTheme(key: album.artworkKey, directory: library.persistence.artworkDirectory))
                         .modifier(PlayerBar(player: player) { showingPlayer = true })
                 } else { ContentUnavailableView("Album Unavailable", systemImage: "music.note") }
             }
@@ -97,12 +97,7 @@ struct LibraryView: View {
             }
         }
         .sheet(isPresented: $showingPlayer) {
-            NowPlayingView(player: player, showAlbum: currentAlbum.map { album in
-                {
-                    path = [album.id]
-                    showingPlayer = false
-                }
-            })
+            NowPlayingView(player: player)
         }
         .onChange(of: library.folderPath) { old, new in
             if old != new {

@@ -16,7 +16,7 @@ A scan stages a replacement snapshot. Cancellation or traversal failure keeps th
 
 `PlaybackController` is a main-actor observable model backed by `AVAudioPlayer`. A separate actor prepares each file, then transfers exclusive ownership to the controller. A generation token rejects stale load completions. The implicit queue is an album's ordered tracks, not a saved playlist.
 
-Audio-session activation happens off the UI actor. Now Playing metadata and remote commands cover play/pause, previous/next, and seeking. Notification handling pauses for route disconnection, resumes after eligible interruptions only when previously playing, and lets the user retry after media-service resets. A lightweight timer updates the visible scrubber while playback runs. Background audio is declared in Info.plist.
+Audio-session activation happens off the UI actor. Now Playing metadata and remote commands cover play/pause, previous/next, and seeking. Notification handling pauses for route disconnection, resumes after eligible interruptions only when previously playing, and lets the user retry after media-service resets. A lightweight timer publishes coarse playback state; the visible scrubber reads precise native playback time at display cadence, only while playing in an active scene. Background audio is declared in Info.plist.
 
 ## UI
 
@@ -32,6 +32,8 @@ SwiftUI NavigationStack, List, ContentUnavailableView, sheets, system materials,
 
 No API keys, online services, cloud database, or Apple Music library authorization are required.
 
-Player labels share `MarqueeText`: measured overflow enables a bounded 30 Hz timeline, a brief initial pause, and a repeated label that cycles horizontally. Fitting text, Reduce Motion, and inactive scenes pause the timeline. Accessibility exposes one full label rather than the visual copies. Now Playing has no scroll view; portrait layout gives spare height to artwork, while landscape places artwork beside compact controls. Landscape limits text scaling to XXXL to preserve control access in its limited height; portrait supports the accessibility sizes. Dismissal uses the native sheet gesture and accessibility escape action.
+Player labels share `MarqueeText`: measured overflow enables a continuous native linear transform animation, a brief initial pause, and a repeated label that cycles horizontally. Fitting text, Reduce Motion, and inactive scenes stop movement. Accessibility exposes one full label rather than the visual copies. Now Playing has no scroll view; portrait layout gives spare height to artwork, while landscape places artwork beside compact controls. Landscape limits text scaling to XXXL to preserve control access in its limited height; portrait supports the accessibility sizes. Dismissal uses the native sheet gesture and accessibility escape action.
 
 `PlayerBar` is applied to the library and album content inside the navigation stack, rather than outside the stack. This lets each List reserve the actual player height in its scrollable safe area, keeping the last row accessible when playback starts or text size changes.
+
+Album accents come from a cached, off-main-actor sample of artwork. Colors need 4.5:1 contrast against the current light/dark background, including the elevated dark sheet; insufficient contrast falls back to black or white. The album Play button and current-song marker use that album’s palette, while Now Playing uses the playing track’s artwork for the scrubber and AirPlay. Now Playing shows title and artist without an album link or loading-message row.

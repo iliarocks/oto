@@ -85,8 +85,8 @@ private struct PlayerGlass: ViewModifier {
 
 struct NowPlayingView: View {
     let player: PlaybackController
-    var showAlbum: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var seekPosition: Double = 0
     @State private var isSeeking = false
 
@@ -118,6 +118,7 @@ struct NowPlayingView: View {
             .navigationTitle("Now Playing")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .modifier(ArtworkTheme(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory))
         .presentationDragIndicator(.visible)
         .accessibilityAction(.escape) { dismiss() }
         .onChange(of: player.currentTrack?.id) { _, _ in isSeeking = false; seekPosition = 0 }
@@ -136,10 +137,6 @@ struct NowPlayingView: View {
     private func details(compact: Bool) -> some View {
         VStack(spacing: compact ? 8 : 22) {
             metadata
-            if player.isLoading {
-                HStack(spacing: 8) { ProgressView(); Text("Opening song…") }
-                    .font(.subheadline).foregroundStyle(.secondary)
-            }
             seeking
             transport(compact: compact)
             if !compact {
@@ -158,48 +155,38 @@ struct NowPlayingView: View {
             MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", alignment: .center).font(.title2.bold())
                 .accessibilityIdentifier("now-playing-title")
             MarqueeText(text: player.currentTrack?.artist ?? "", alignment: .center).font(.title3).foregroundStyle(.secondary)
-            if let showAlbum {
-                Button(action: showAlbum) {
-                    HStack(spacing: 5) {
-                        MarqueeText(text: player.currentTrack?.albumTitle ?? "", alignment: .center)
-                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
-                    }
-                }
-                .font(.subheadline)
-                .accessibilityLabel("Go to album, \(player.currentTrack?.albumTitle ?? "")")
-                .accessibilityIdentifier("now-playing-album")
-            } else {
-                MarqueeText(text: player.currentTrack?.albumTitle ?? "", alignment: .center).font(.subheadline).foregroundStyle(.secondary)
-            }
         }
         .multilineTextAlignment(.center)
     }
 
     private var seeking: some View {
-        VStack(spacing: 3) {
-            Slider(value: Binding(get: { isSeeking ? seekPosition : player.elapsed }, set: { seekPosition = $0 }),
-                   in: 0...max(player.duration, 1), onEditingChanged: { editing in
-                if editing { seekPosition = player.elapsed }
-                isSeeking = editing
-                if !editing { player.seek(to: seekPosition) }
-            })
-            .disabled(player.isLoading)
-            .accessibilityLabel("Playback Position")
-            .accessibilityValue(MusicTime.clock(isSeeking ? seekPosition : player.elapsed))
-            .accessibilityIdentifier("playback-position")
-            .accessibilityAdjustableAction { direction in
-                switch direction {
-                case .increment: player.seek(to: player.elapsed + 5)
-                case .decrement: player.seek(to: player.elapsed - 5)
-                @unknown default: break
+        TimelineView(.animation(paused: !player.isPlaying || scenePhase != .active)) { _ in
+            let position = isSeeking ? seekPosition : player.preciseElapsed
+            VStack(spacing: 3) {
+                Slider(value: Binding(get: { position }, set: { seekPosition = $0 }),
+                       in: 0...max(player.duration, 1), onEditingChanged: { editing in
+                    if editing { seekPosition = player.preciseElapsed }
+                    isSeeking = editing
+                    if !editing { player.seek(to: seekPosition) }
+                })
+                .disabled(player.isLoading)
+                .accessibilityLabel("Playback Position")
+                .accessibilityValue(MusicTime.clock(position))
+                .accessibilityIdentifier("playback-position")
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: player.seek(to: player.elapsed + 5)
+                    case .decrement: player.seek(to: player.elapsed - 5)
+                    @unknown default: break
+                    }
                 }
+                HStack {
+                    Text(MusicTime.clock(position))
+                    Spacer()
+                    Text("−" + MusicTime.clock(player.duration - position))
+                }
+                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
             }
-            HStack {
-                Text(MusicTime.clock(isSeeking ? seekPosition : player.elapsed))
-                Spacer()
-                Text("−" + MusicTime.clock(player.duration - (isSeeking ? seekPosition : player.elapsed)))
-            }
-            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
         }
     }
 
@@ -227,12 +214,16 @@ struct NowPlayingView: View {
 }
 
 private struct RoutePicker: UIViewRepresentable {
+    @Environment(\.albumAccent) private var accent
     func makeUIView(context: Context) -> AVRoutePickerView {
         let view = AVRoutePickerView()
-        view.tintColor = .label
-        view.activeTintColor = .tintColor
+        view.tintColor = UIColor(accent)
+        view.activeTintColor = UIColor(accent)
         view.prioritizesVideoDevices = false
         return view
     }
-    func updateUIView(_ view: AVRoutePickerView, context: Context) { }
+    func updateUIView(_ view: AVRoutePickerView, context: Context) {
+        view.tintColor = UIColor(accent)
+        view.activeTintColor = UIColor(accent)
+    }
 }

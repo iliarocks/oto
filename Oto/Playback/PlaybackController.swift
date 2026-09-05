@@ -51,6 +51,7 @@ private actor AudioSessionController {
     var errorMessage: String?
     private(set) var queue: [Track] = []
     private(set) var currentIndex = 0
+    var preciseElapsed: TimeInterval { audio?.player.currentTime ?? elapsed }
     var hasNext: Bool { currentIndex + 1 < queue.count }
     var hasPrevious: Bool { currentTrack != nil }
     let artworkDirectory: URL
