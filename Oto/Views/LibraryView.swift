@@ -72,9 +72,9 @@ struct LibraryView: View {
                     .accessibilityIdentifier("library-options")
                 }
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if player.currentTrack != nil { MiniPlayer(player: player) { showingPlayer = true } }
-            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if player.currentTrack != nil { MiniPlayer(player: player) { showingPlayer = true } }
         }
         .sheet(isPresented: $showingPicker) {
             FolderPicker { url in

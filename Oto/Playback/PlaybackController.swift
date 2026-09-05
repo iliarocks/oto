@@ -21,6 +21,17 @@ private actor PlaybackLoader {
     }
 }
 
+private actor AudioSessionController {
+    func activate() throws {
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.playback, mode: .default, policy: .longFormAudio)
+        try session.setActive(true)
+    }
+    func deactivate() {
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+}
+
 @MainActor @Observable final class PlaybackController: NSObject, AVAudioPlayerDelegate {
     private(set) var currentTrack: Track?
     private(set) var isPlaying = false
@@ -36,6 +47,8 @@ private actor PlaybackLoader {
 
     @ObservationIgnored private var audio: PreparedAudio?
     @ObservationIgnored private let loader = PlaybackLoader()
+    @ObservationIgnored private let session = AudioSessionController()
+    @ObservationIgnored private var playRequestID = UUID()
     @ObservationIgnored private var bookmark: Data?
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var loadID = UUID()
@@ -67,6 +80,7 @@ private actor PlaybackLoader {
     }
 
     func pause() {
+        playRequestID = UUID()
         wantsPlayback = false
         resumeAfterInterruption = false
         audio?.player.pause()
@@ -82,14 +96,23 @@ private actor PlaybackLoader {
         wantsPlayback = true
         if isLoading { return }
         guard let audio else { loadCurrent(); return }
-        do {
-            try activateSession()
-            if audio.player.currentTime >= audio.player.duration - 0.05 { audio.player.currentTime = 0 }
-            guard audio.player.play() else { throw LibraryError.inaccessibleFolder }
-            isPlaying = true
-            startTimer()
-            updateNowPlaying()
-        } catch { fail("Couldn't start playback. \(error.localizedDescription)") }
+        let request = UUID()
+        playRequestID = request
+        Task {
+            do {
+                try await session.activate()
+                guard playRequestID == request, wantsPlayback, self.audio === audio else { return }
+                if elapsed >= duration - 0.05 { audio.player.currentTime = 0 }
+                guard audio.player.play() else { throw LibraryError.inaccessibleFolder }
+                isPlaying = true
+                updateTime()
+                startTimer()
+                updateNowPlaying()
+            } catch {
+                guard playRequestID == request else { return }
+                fail("Couldn't start playback. \(error.localizedDescription)")
+            }
+        }
     }
 
     func seek(to seconds: TimeInterval) {
@@ -124,7 +147,7 @@ private actor PlaybackLoader {
         elapsed = 0
         duration = 0
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        Task { await session.deactivate() }
     }
 
     private func loadCurrent() {
@@ -167,12 +190,6 @@ private actor PlaybackLoader {
     private func fail(_ message: String) {
         pause()
         errorMessage = message
-    }
-
-    private func activateSession() throws {
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playback, mode: .default, policy: .longFormAudio)
-        try session.setActive(true)
     }
 
     private func startTimer() {
