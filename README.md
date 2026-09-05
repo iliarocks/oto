@@ -42,6 +42,8 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 
 The toolbar shows your album and song count. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.
 
+Long titles and artist names stay on one line and scroll horizontally in both players. Short text stays still. Now Playing fits its controls on screen, with artwork adapting to the available space; swipe down to dismiss it. Text motion respects Reduce Motion, and VoiceOver reads the full label.
+
 For offline listening with iCloud Drive, use **Keep Downloaded** on the folder in Files. Oto does not maintain a second copy of your audio. While a song opens, the player offers Cancel; Play retries the selected song afterward. Playback errors also offer **Try Again**. Scans show the current filename and can be cancelled without replacing the existing library. Cancellation stops waiting for coordinated access, though a file read that has already started may need to finish.
 
 ## Deliberate limits

@@ -58,8 +58,10 @@ struct AlbumView: View {
                         .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
                         .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
                         .accessibilityIdentifier("track-\(track.title)")
+                        .listRowSeparator(.hidden)
                     }
                 } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }
+                .listSectionSeparator(.hidden)
             }
         }
         .listStyle(.plain)

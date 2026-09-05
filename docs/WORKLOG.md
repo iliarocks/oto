@@ -95,3 +95,15 @@ Replaced the edge-to-edge material player with a floating capsule using native L
 The updated browsing → playing → library → Now Playing → album flow passed in dark and light appearances. Inspected screenshots of both, plus the largest accessibility text size. Visual inspection caught oversized transport symbols overlapping at that size; fixed their glyph sizes while preserving 44/48-point hit targets and scalable song text. Updated the existing large-library flow to browse albums instead of searching. Playback internals were unchanged; unrelated unit tests were not rerun.
 
 The final large-text playback/navigation check passed and its corrected screenshot was inspected (`work/GlassLargeText.xcresult`). Signed build 0.1 (6) succeeded, and was installed and launched on the connected iPhone. Earlier appearance checks are in `work/SimplifiedGlass.xcresult` and `work/SimplifiedGlassLight.xcresult`. The older-iOS material fallback compiles but was not exercised on an older runtime.
+
+## Player spacing and overflowing text — September 5
+
+Applied the next round of user feedback: removed album and song row separators, reduced mini-player artwork from 44 to 36 points, and increased the capsule's internal padding to 18 points horizontally and 10 vertically. Playback hit targets remain 44/48 points.
+
+Added a shared single-line marquee for player titles, artists, and the Now Playing album link. It measures overflow, pauses briefly at the start, then cycles the full text with a repeated copy and faded edges. Short labels stay still; Reduce Motion and inactive scenes stop movement. VoiceOver receives the full label once.
+
+Removed Now Playing's scroll view and down-arrow button. Artwork takes the remaining portrait height, allowing the controls to stay visible even with accessibility text sizes. Landscape uses artwork beside compact controls. Native swipe-to-dismiss and accessibility escape remain available.
+
+Validation: three targeted UI flows passed in `work/MarqueePlayer.xcresult` (normal listening/navigation, maximum accessibility text, and long-title motion/dismissal). Checked light and dark screenshots. The dark long-title flow additionally verified visual changes over time in both mini and expanded labels, landscape control access, and dismissal (`work/MarqueeDark.xcresult`). The initial app-window screenshot was cropped incorrectly after rotation; a full-screen screenshot in `work/MarqueeScreen.xcresult` confirmed the complete landscape layout, and that flow passed. No playback-engine changes or unrelated unit-suite reruns. Signed build 0.1 (7) succeeds.
+
+Build 7 was installed and launched on the connected iPhone after validation.

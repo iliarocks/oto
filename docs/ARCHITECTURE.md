@@ -31,3 +31,5 @@ SwiftUI NavigationStack, List, ContentUnavailableView, sheets, system materials,
 - [Apple: Applying Liquid Glass to custom views](https://developer.apple.com/documentation/swiftui/applying-liquid-glass-to-custom-views)
 
 No API keys, online services, cloud database, or Apple Music library authorization are required.
+
+Player labels share `MarqueeText`: measured overflow enables a bounded 30 Hz timeline, a brief initial pause, and a repeated label that cycles horizontally. Fitting text, Reduce Motion, and inactive scenes pause the timeline. Accessibility exposes one full label rather than the visual copies. Now Playing has no scroll view; portrait layout gives spare height to artwork, while landscape places artwork beside compact controls. Landscape limits text scaling to XXXL to preserve control access in its limited height; portrait supports the accessibility sizes. Dismissal uses the native sheet gesture and accessibility escape action.

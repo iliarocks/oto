@@ -76,7 +76,9 @@ final class OtoUITests: XCTestCase {
         miniPlayer.tap()
         let toggle = app.buttons["now-playing-toggle"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 10))
-        for _ in 0..<4 where !toggle.isHittable { app.swipeUp() }
+        XCTAssertTrue(toggle.isHittable)
+        XCTAssertFalse(app.scrollViews.firstMatch.exists)
+        attach(app, name: "Large Text Fixed Now Playing")
         expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
         waitForExpectations(timeout: 10)
         toggle.tap()
@@ -230,6 +232,67 @@ final class OtoUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
         waitForExpectations(timeout: 10)
         toggle.tap()
+    }
+
+    @MainActor func testLongTitlesCarouselAndSheetDismisses() async throws {
+        let title = "A Song With A Very Long Name That Continues Beyond The Edge Of Both Players"
+        let albumName = "An Album With A Long Name That Also Needs To Stay On One Line"
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let album = folder.appendingPathComponent(albumName)
+        try FileManager.default.createDirectory(at: album, withIntermediateDirectories: true)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        // Original silent PCM fixture; the filename/folder exercise untagged titles.
+        let byteCount = 44_100 * 2 * 60
+        func little(_ value: UInt32) -> Data { withUnsafeBytes(of: value.littleEndian) { Data($0) } }
+        var wav = Data("RIFF".utf8)
+        wav.append(little(UInt32(byteCount + 36)))
+        wav.append(Data("WAVEfmt ".utf8)); wav.append(little(16))
+        wav.append(contentsOf: [1, 0, 1, 0]); wav.append(little(44_100)); wav.append(little(88_200))
+        wav.append(contentsOf: [2, 0, 16, 0]); wav.append(Data("data".utf8)); wav.append(little(UInt32(byteCount)))
+        wav.append(Data(count: byteCount))
+        try wav.write(to: album.appendingPathComponent(title + ".wav"))
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        let row = app.buttons["album-" + albumName]
+        XCTAssertTrue(row.waitForExistence(timeout: 15))
+        row.tap()
+        app.buttons["play-album"].tap()
+        let mini = app.buttons["mini-player"]
+        XCTAssertTrue(mini.waitForExistence(timeout: 10))
+        let miniBefore = mini.screenshot().pngRepresentation
+        try await Task.sleep(for: .seconds(3))
+        XCTAssertNotEqual(miniBefore, mini.screenshot().pngRepresentation, "The mini player's overflowing title must move")
+        attach(app, name: "Padded Mini Player with Long Title")
+        mini.tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        XCTAssertTrue(toggle.isHittable)
+        XCTAssertTrue(app.sliders["playback-position"].isHittable)
+        XCTAssertFalse(app.scrollViews.firstMatch.exists)
+        XCTAssertFalse(app.buttons["Close"].exists)
+        let label = app.staticTexts["now-playing-title"]
+        XCTAssertEqual(label.label, title)
+        let before = label.screenshot().pngRepresentation
+        attach(app, name: "Fixed Now Playing Long Title Start")
+        try await Task.sleep(for: .seconds(3))
+        XCTAssertNotEqual(before, label.screenshot().pngRepresentation, "An overflowing title must move")
+        attach(app, name: "Fixed Now Playing Long Title Moving")
+        toggle.tap()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertTrue(toggle.isHittable)
+        XCTAssertTrue(app.sliders["playback-position"].isHittable)
+        let landscape = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        landscape.name = "Fixed Landscape Now Playing"
+        landscape.lifetime = .keepAlways
+        add(landscape)
+        XCUIDevice.shared.orientation = .portrait
+        app.swipeDown()
+        XCTAssertTrue(mini.waitForExistence(timeout: 10))
     }
 
     @MainActor private func attach(_ app: XCUIApplication, name: String) {

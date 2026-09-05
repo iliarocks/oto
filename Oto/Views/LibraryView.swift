@@ -24,6 +24,7 @@ struct LibraryView: View {
                                     .font(.subheadline)
                             }
                             .accessibilityIdentifier("library-issues")
+                            .listRowSeparator(.hidden)
                         }
                         ForEach(library.albums) { album in
                             NavigationLink(value: album.id) {
@@ -38,7 +39,9 @@ struct LibraryView: View {
                                 }
                             }
                             .accessibilityIdentifier("album-\(album.title)")
+                            .listRowSeparator(.hidden)
                         }
+                        .listSectionSeparator(.hidden)
                     }
                     .listStyle(.plain)
                     .refreshable { await library.refreshAndWait() }
