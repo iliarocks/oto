@@ -44,9 +44,8 @@ struct MiniPlayer: View {
                 HStack(spacing: 12) {
                     ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: 36)
                     VStack(alignment: .leading, spacing: 3) {
-                        MarqueeText(text: player.currentTrack?.title ?? "").font(.subheadline.weight(.medium)).foregroundStyle(.primary)
-                        MarqueeText(text: player.isLoading ? "Opening song…" : player.currentTrack?.artist ?? "")
-                            .font(.caption).foregroundStyle(.secondary)
+                        MarqueeText(text: player.currentTrack?.title ?? "", style: .subheadline, weight: .medium)
+                        MarqueeText(text: player.isLoading ? "Opening song…" : player.currentTrack?.artist ?? "", style: .caption1, color: .secondaryLabel)
                     }
                 }
                 .contentShape(Rectangle())
@@ -152,41 +151,24 @@ struct NowPlayingView: View {
 
     private var metadata: some View {
         VStack(spacing: 7) {
-            MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", alignment: .center).font(.title2.bold())
+            MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", alignment: .center, style: .title2, weight: .bold)
                 .accessibilityIdentifier("now-playing-title")
-            MarqueeText(text: player.currentTrack?.artist ?? "", alignment: .center).font(.title3).foregroundStyle(.secondary)
+            MarqueeText(text: player.currentTrack?.artist ?? "", alignment: .center, style: .title3, color: .secondaryLabel)
         }
         .multilineTextAlignment(.center)
     }
 
     private var seeking: some View {
-        TimelineView(.animation(paused: !player.isPlaying || scenePhase != .active)) { _ in
-            let position = isSeeking ? seekPosition : player.preciseElapsed
-            VStack(spacing: 3) {
-                Slider(value: Binding(get: { position }, set: { seekPosition = $0 }),
-                       in: 0...max(player.duration, 1), onEditingChanged: { editing in
-                    if editing { seekPosition = player.preciseElapsed }
-                    isSeeking = editing
-                    if !editing { player.seek(to: seekPosition) }
-                })
-                .disabled(player.isLoading)
-                .accessibilityLabel("Playback Position")
-                .accessibilityValue(MusicTime.clock(position))
-                .accessibilityIdentifier("playback-position")
-                .accessibilityAdjustableAction { direction in
-                    switch direction {
-                    case .increment: player.seek(to: player.elapsed + 5)
-                    case .decrement: player.seek(to: player.elapsed - 5)
-                    @unknown default: break
-                    }
-                }
-                HStack {
-                    Text(MusicTime.clock(position))
-                    Spacer()
-                    Text("−" + MusicTime.clock(player.duration - position))
-                }
-                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+        let position = isSeeking ? seekPosition : player.elapsed
+        return VStack(spacing: 3) {
+            PlaybackSlider(player: player, active: scenePhase == .active, preview: $seekPosition, seeking: $isSeeking)
+                .frame(height: 44)
+            HStack {
+                Text(MusicTime.clock(position))
+                Spacer()
+                Text("−" + MusicTime.clock(player.duration - position))
             }
+            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
         }
     }
 
