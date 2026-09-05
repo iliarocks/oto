@@ -81,3 +81,7 @@ The continuation arrived with a 01:09 heartbeat timestamp. At the final clock ch
 The final search change is compiled and tested in the simulator. Latest signed device artifact remains build 4 from the previous pass; it does not include this last search refinement. The phone remains on build 2. Git contains the finished changes and validation history. Untagged metadata behavior was reviewed but no further metadata changes or claims of expanded validation were made.
 
 Remaining hands-on checks: physical background/lock-screen/headphone/AirPlay behavior, actual iCloud eviction/re-download, and older supported iOS versions. These were deliberately left for a waking device session. No playlists or other deferred features were added.
+
+## Latest phone build — September 5, 10:28
+
+At the user's request, built, installed, and launched version 0.1 (5) on the connected iPhone 17 Pro. This includes all overnight changes, including the final combined search and filtering refinement. Signed device compilation and installation succeeded. Updated the existing app in place. The overnight automation remains paused.
