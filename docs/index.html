@@ -227,12 +227,15 @@
   <main>
     <section class="hero" aria-labelledby="page-title">
       <figure class="app-shot">
-        <img
-          src="assets/oto-mobile.png"
-          width="1206"
-          height="2622"
-          alt="Oto showing an album library and a compact music player on iPhone"
-        >
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="assets/oto-library-dark.png">
+          <img
+            src="assets/oto-library-light.png"
+            width="1206"
+            height="2622"
+            alt="Oto showing an album library in title order with a Settings button on iPhone"
+          >
+        </picture>
       </figure>
 
       <div class="intro">

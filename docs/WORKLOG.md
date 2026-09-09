@@ -481,3 +481,7 @@ Installed and launched build 53 normally on the connected iPhone, preserving its
 Adapted Nagare's static website into `docs/index.html`, preserving its responsive layout, typography, light/dark colors, screenshot treatment, and Privacy/Support sections. Used the supplied Oto library screenshot without editing it, Oto branding (音), the Oto source-repository link, and the confirmed `support@oto.page` address. Privacy copy reflects local indexing, artwork/playback data, original music remaining in its selected folder, and iCloud Drive file ownership.
 
 The App Store button retains Nagare's normal download presentation, with a clearly marked placeholder href for the listing URL to be added before launch. Verified HTML nesting, section anchors, contact links, branding, and the screenshot asset. Both page and screenshot return HTTP 200 from the localhost-only preview at `http://127.0.0.1:8765/`, opened for review. No publishing, remote push, domain configuration, or app changes were performed.
+
+## Replace website screenshots with current build — September 8
+
+Replaced the historical phone image with unedited captures from simulator build 1.0 (53), using the actual eight-album library after a fresh scan. Verified both captures show the current Settings-only toolbar and title ordering. The page now selects a matching light/dark screenshot via `picture`; new asset filenames avoid retaining the old image in browser caches. Page and both images return HTTP 200, and the existing local preview was refreshed. No app code changes, publishing, or remote push.
