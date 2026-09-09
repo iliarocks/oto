@@ -415,3 +415,13 @@ The header discrepancy came from the album's custom regular-material overlay ver
 Dark-mode UI checks passed for edge taps, modal dismissal, large text, final-song clearance, gradual header reveal/reversal, playback restoration, and clearing playback without losing the library. Reviewed dark screenshots and recorded frames confirming the player entrance and direct glyph changes. Signed build 1.0 (46) succeeded, its packaged version was verified, and it was installed on the connected iPhone. Launched once with clear-playback, then relaunched normally so the user can select a song and inspect the first entrance.
 
 The player hit-target/dismissal and header/final-song flows also passed in light mode (`work/player-interactions-light.xcresult`); reviewed the light-mode album/player screenshot. Dark results are in `work/player-interactions-dark.xcresult`. No playback-engine changes were required.
+
+## Restore immediate player appearance and coordinated header fades — September 8
+
+Removed the floating player's insertion animation and movement transition, retaining the separate 56×68-point Play/Pause and 44×68-point Next targets and immediate playback glyph changes. The accepted artwork/queue transition is unchanged.
+
+The library now reveals its background over the first 56 points of scrolling, using the same bar-material backdrop as album pages and disabling the independent native top scroll-edge background. The summary remains visible. The album's existing 12% scroll-range stagger had not been changed in build 46; added a 40-millisecond directional delay to the entering title and exiting backdrop so the slight lead/lag also survives a fast swipe. Shared 180-millisecond easing preserves gradual slow-scroll changes and reversals.
+
+The player hit-target/dismissal and album header/reversal/final-song checks passed in dark mode (`work/header-player47-dark.xcresult`). Temporary library inspection captures cover hidden, partial, and full material states. Signed build 1.0 (47) succeeded. No playback or library data migration is involved.
+
+Light-mode album reveal/reversal/clearance also passed (`work/header47-light.xcresult`). Reviewed library material captures in both appearances and confirmed returning from an album preserves the library's scrolled backdrop, which fades away again at the top (`work/header47-library-return-final.xcresult`). The temporary capture-only test was removed afterward. Build 47's packaged version was verified, installed, and launched normally on the connected iPhone, preserving the existing library and playback state.

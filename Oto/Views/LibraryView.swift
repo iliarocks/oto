@@ -4,6 +4,7 @@ struct LibraryView: View {
     @AppStorage("albumSort") private var albumSort: AlbumSort = .artist
     @Bindable var library: LibraryStore
     @Bindable var player: PlaybackController
+    @State private var headerProgress: CGFloat = 0
     @State private var showingPicker = false
     @State private var showingSettings = false
     @State private var showingPlayer = false
@@ -33,54 +34,16 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            Group {
-                if library.albums.isEmpty && !showingScanProgress { emptyLibrary }
-                else {
-                    List {
-                        if showingScanProgress { scanProgress }
-                        if !showingScanProgress, let issues = library.snapshot?.issues, !issues.isEmpty {
-                            Button { showingSettings = true } label: {
-                                Label(issues.count == 1 ? "1 file needs attention" : "\(issues.count) files need attention", systemImage: "exclamationmark.circle")
-                                    .font(.subheadline)
-                            }
-                            .accessibilityIdentifier("library-issues")
-                            .listRowSeparator(.hidden)
-                        }
-                        ForEach(albumSort.sorted(library.albums)) { album in
-                            NavigationLink(value: album.id) {
-                                HStack(spacing: 14) {
-                                    ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory, size: 64)
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(album.title).font(.headline).foregroundStyle(.primary)
-                                        Text(album.artist).font(.subheadline).foregroundStyle(.secondary)
-                                    }
-                                    .lineLimit(2)
-                                    .padding(.vertical, 5)
-                                }
-                            }
-                            .accessibilityIdentifier("album-\(album.title)")
-                            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
-                            .listRowSeparator(.hidden)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button {
-                                    if let bookmark = library.snapshot?.bookmark {
-                                        player.enqueue(album.tracks, bookmark: bookmark)
-                                    }
-                                } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
-                                .tint(Color.accentColor)
-                                .accessibilityLabel("Add to Queue")
-                            }
-                        }
-                        .listSectionSeparator(.hidden)
+            GeometryReader { viewport in
+                libraryContent
+                    .overlay(alignment: .top) {
+                        NavigationHeaderBackdrop(progress: headerProgress, height: viewport.safeAreaInsets.top)
                     }
-                    .listStyle(.plain)
-                    .refreshable { await library.refreshAndWait() }
-                }
             }
             .modifier(PlayerBar(player: player) { showingPlayer = true })
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.bar, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .navigationDestination(for: String.self) { id in
                 if let album = library.albums.first(where: { $0.id == id }) {
                     AlbumView(album: album, library: library, player: player)
@@ -162,6 +125,59 @@ struct LibraryView: View {
             }
             Button("Cancel", role: .cancel) { player.errorMessage = nil }
         } message: { Text(player.errorMessage ?? "") }
+    }
+
+    private var libraryContent: some View {
+        Group {
+            if library.albums.isEmpty && !showingScanProgress { emptyLibrary }
+            else {
+                List {
+                    if showingScanProgress { scanProgress }
+                    if !showingScanProgress, let issues = library.snapshot?.issues, !issues.isEmpty {
+                        Button { showingSettings = true } label: {
+                            Label(issues.count == 1 ? "1 file needs attention" : "\(issues.count) files need attention", systemImage: "exclamationmark.circle")
+                                .font(.subheadline)
+                        }
+                        .accessibilityIdentifier("library-issues")
+                        .listRowSeparator(.hidden)
+                    }
+                    ForEach(albumSort.sorted(library.albums)) { album in
+                        NavigationLink(value: album.id) {
+                            HStack(spacing: 14) {
+                                ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory, size: 64)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(album.title).font(.headline).foregroundStyle(.primary)
+                                    Text(album.artist).font(.subheadline).foregroundStyle(.secondary)
+                                }
+                                .lineLimit(2)
+                                .padding(.vertical, 5)
+                            }
+                        }
+                        .accessibilityIdentifier("album-\(album.title)")
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button {
+                                if let bookmark = library.snapshot?.bookmark {
+                                    player.enqueue(album.tracks, bookmark: bookmark)
+                                }
+                            } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
+                            .tint(Color.accentColor)
+                            .accessibilityLabel("Add to Queue")
+                        }
+                    }
+                    .listSectionSeparator(.hidden)
+                }
+                .listStyle(.plain)
+                .modifier(FadingHeaderScrollEdge())
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    min(max((geometry.contentOffset.y + geometry.contentInsets.top) / 56, 0), 1)
+                } action: { _, progress in
+                    headerProgress = progress
+                }
+                .refreshable { await library.refreshAndWait() }
+            }
+        }
     }
 
     private var librarySummary: String {

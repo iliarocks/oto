@@ -6,18 +6,13 @@ struct PlayerBar: ViewModifier {
     // receives the bar's safe-area inset when scrolling to the final row.
     let player: PlaybackController
     let open: () -> Void
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        Group {
-            if #available(iOS 26, *) {
-                content.safeAreaBar(edge: .bottom, spacing: 0) { bar }
-            } else {
-                content.safeAreaInset(edge: .bottom, spacing: 0) { bar }
-            }
+        if #available(iOS 26, *) {
+            content.safeAreaBar(edge: .bottom, spacing: 0) { bar }
+        } else {
+            content.safeAreaInset(edge: .bottom, spacing: 0) { bar }
         }
-        .animation(reduceMotion ? .easeOut(duration: 0.2) : .smooth(duration: 0.35, extraBounce: 0),
-                   value: player.currentTrack != nil)
     }
 
     @ViewBuilder private var bar: some View {
@@ -36,7 +31,6 @@ struct PlayerBar: ViewModifier {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
                 }
-                .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
         }
     }
 }

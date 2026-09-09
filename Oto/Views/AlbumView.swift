@@ -97,16 +97,9 @@ struct AlbumView: View {
                 }
             }
             .listStyle(.plain)
-            .modifier(AlbumScrollEdge())
+            .modifier(FadingHeaderScrollEdge())
             .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(.bar)
-                    .opacity(backdropProgress)
-                    .animation(.easeOut(duration: 0.18), value: headerProgress)
-                    .frame(height: topInset)
-                    .offset(y: -topInset)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
+                NavigationHeaderBackdrop(progress: backdropProgress, height: topInset)
             }
         }
         .navigationTitle("")
@@ -131,17 +124,5 @@ struct AlbumView: View {
     private func play(_ track: Track? = nil) {
         guard let bookmark = library.snapshot?.bookmark else { return }
         player.play(album.tracks, startingAt: track, bookmark: bookmark)
-    }
-}
-
-/// The album supplies a backdrop whose visibility follows the title, so disable the
-/// independent system scroll-edge frosting while retaining native navigation controls.
-private struct AlbumScrollEdge: ViewModifier {
-    @ViewBuilder func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            content.scrollEdgeEffectHidden(true, for: .top)
-        } else {
-            content
-        }
     }
 }
