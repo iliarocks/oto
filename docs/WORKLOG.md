@@ -225,3 +225,9 @@ Removed the mini-player's “Opening song…” artist replacement and both play
 Expanded the existing playback checks to cover pausing a pending song, toggling twice before audio-session activation finishes, and skipping while playing or paused.
 
 All 17 library/playback tests and both playback UI flows passed (`work/stable-playback-controls.xcresult`). Signed build 0.1 (20) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.
+
+## Keep custom spacing only in the album library — September 8
+
+Removed the song-row inset override introduced in build 19, restoring native List spacing inside albums. The library's album rows retain their 12-point vertical and 16-point horizontal insets. Updated the architecture notes to distinguish the two.
+
+The existing final-song-clearance UI test passed (`work/default-song-spacing.xcresult`). Signed build 0.1 (21) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone, preserving the existing library.
