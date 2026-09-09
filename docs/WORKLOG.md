@@ -391,3 +391,9 @@ The existing queue UI flow passed (`work/queue-polish.xcresult`), including open
 Replaced the combined scale/fade and queue offset with one persistent artwork overlay, using native matched geometry between the large cover slot and the current-song thumbnail slot. The image stays visible and loaded throughout a half-second, non-bouncing resize in either direction. Supporting text/list content fades without separate offset motion. Reduce Motion disables artwork movement and retains the short supporting fade. Playback controls and settled layouts retain their positions.
 
 The existing queue and large-text UI flows passed (`work/artwork-morph.xcresult`), including reverse toggles, fixed playback-control geometry, direct reorder/remove, paused restoration, and landscape. Inspected settled screenshots and transition frames from `work/artwork-morph.mp4`, confirming continuous artwork resizing in both directions without swapping images. Signed build 1.0 (43), including the Reduce Motion adjustment, succeeded; its packaged version was verified, and it was installed on the connected iPhone.
+
+## Ease artwork motion and soften the queue's bottom edge — September 8
+
+Retuned the continuous artwork resize from a half-second spring to a 0.55-second ease-in/ease-out curve for a gentler start and finish. Added a 24-point transparent fade mask at the bottom of the upcoming List, with matching scroll-content clearance so the final row can move fully above the fade. The mask blends with either appearance and stays separate from the current-song header and playback controls.
+
+The existing queue UI flow passed (`work/queue-edge-fade.xcresult`), covering transitions with fixed controls, native dragging/removal, paused restoration, and landscape. Reviewed the landscape screenshot with a row crossing the fade. Signed build 1.0 (44) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone in normal mode.

@@ -199,7 +199,7 @@ struct NowPlayingView: View {
     private func transport(compact: Bool) -> some View {
         HStack(spacing: 0) {
             modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
-                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.5, extraBounce: 0)) {
+                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .easeInOut(duration: 0.55)) {
                     showingQueue.toggle()
                 }
             }
@@ -318,6 +318,14 @@ struct NowPlayingView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .contentMargins(.bottom, 24, for: .scrollContent)
+                .mask {
+                    VStack(spacing: 0) {
+                        Rectangle()
+                        LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                            .frame(height: 24)
+                    }
+                }
                 .accessibilityIdentifier("upcoming-queue")
             }
         }
