@@ -25,7 +25,7 @@ struct LibraryView: View {
                             .accessibilityIdentifier("library-issues")
                             .listRowSeparator(.hidden)
                         }
-                        ForEach(albumSort.sorted(library.albums, addedAt: library.snapshot?.albumAddedAt ?? [:])) { album in
+                        ForEach(albumSort.sorted(library.albums)) { album in
                             NavigationLink(value: album.id) {
                                 HStack(spacing: 14) {
                                     ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory, size: 64)

@@ -55,6 +55,7 @@ final class OtoUITests: XCTestCase {
         XCTAssertEqual(sort.frame.midY, app.buttons["settings"].frame.midY, accuracy: 2)
         sort.tap()
         attach(app, name: "Album Sort Menu")
+        XCTAssertFalse(app.buttons["Recently Added"].exists)
         app.buttons["Title"].tap()
         XCTAssertEqual(sort.value as? String, "Title")
         XCTAssertLessThan(second.frame.minY, tenth.frame.minY)
@@ -64,17 +65,15 @@ final class OtoUITests: XCTestCase {
         let newest = app.buttons["album-Zebra"]
         XCTAssertTrue(newest.waitForExistence(timeout: 15))
         XCTAssertLessThan(tenth.frame.minY, newest.frame.minY)
-        sort.tap()
-        app.buttons["Recently Added"].tap()
-        XCTAssertLessThan(newest.frame.minY, second.frame.minY)
-        attach(app, name: "Recently Added Albums")
+        attach(app, name: "Albums Sorted By Title")
         app.terminate()
         app.launchArguments = []
         app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
         app.launch()
         XCTAssertTrue(newest.waitForExistence(timeout: 10))
-        XCTAssertEqual(sort.value as? String, "Recently Added")
-        XCTAssertLessThan(newest.frame.minY, second.frame.minY)
+        XCTAssertEqual(sort.value as? String, "Title")
+        XCTAssertLessThan(second.frame.minY, tenth.frame.minY)
+        XCTAssertLessThan(tenth.frame.minY, newest.frame.minY)
     }
 
     @MainActor func testLibraryPlaybackAndRelaunch() throws {

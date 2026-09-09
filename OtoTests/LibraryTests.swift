@@ -47,41 +47,9 @@ final class LibraryTests: XCTestCase {
         let c = Album(id: "c", title: "Album 2", artist: "Beta", tracks: songs)
         let d = Album(id: "d", title: "Album 2", artist: "Beta", tracks: songs)
         let albums = [d, b, a, c]
-        let dates = ["a": Date(timeIntervalSince1970: 2), "b": Date(timeIntervalSince1970: 3)]
-        XCTAssertEqual(AlbumSort.artist.sorted(albums, addedAt: dates).map(\.id), ["a", "c", "d", "b"])
-        XCTAssertEqual(AlbumSort.title.sorted(albums, addedAt: dates).map(\.id), ["c", "d", "b", "a"])
-        XCTAssertEqual(AlbumSort.recentlyAdded.sorted(albums, addedAt: dates).map(\.id), ["b", "a", "c", "d"])
-        XCTAssertEqual(AlbumSort.title.sorted(albums, addedAt: dates).first?.tracks, songs, "Sorting albums must not reorder songs")
-    }
-
-    @MainActor func testAlbumAddedDatesMigrateAndSurviveRefresh() async throws {
-        let music = temporary.appendingPathComponent("Music")
-        try copyFixture("01", "flac", into: music.appendingPathComponent("Existing"))
-        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
-        let scanned = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
-        let oldDate = Date(timeIntervalSince1970: 100)
-        let legacy = LibrarySnapshot(folderName: scanned.folderName, bookmark: scanned.bookmark,
-                                     tracks: scanned.tracks, scannedAt: oldDate, issues: [])
-        try persistence.save(legacy)
-        XCTAssertNil(try persistence.load()?.albumAddedAt)
-        let store = LibraryStore(persistence: persistence)
-        let oldID = try XCTUnwrap(store.albums.first?.id)
-        let newFolder = music.appendingPathComponent("New")
-        try copyFixture("02", "flac", into: newFolder)
-        store.refresh()
-        try await waitUntil { !store.isScanning }
-        let dates = try XCTUnwrap(store.snapshot?.albumAddedAt)
-        let newID = try XCTUnwrap(store.albums.first { $0.id != oldID }?.id)
-        XCTAssertEqual(dates[oldID], oldDate)
-        XCTAssertGreaterThan(try XCTUnwrap(dates[newID]), oldDate)
-        XCTAssertEqual(try persistence.load()?.albumAddedAt, dates)
-        store.refresh()
-        try await waitUntil { !store.isScanning }
-        XCTAssertEqual(store.snapshot?.albumAddedAt, dates)
-        try FileManager.default.removeItem(at: newFolder)
-        store.refresh()
-        try await waitUntil { !store.isScanning }
-        XCTAssertEqual(store.snapshot?.albumAddedAt, [oldID: oldDate])
+        XCTAssertEqual(AlbumSort.artist.sorted(albums).map(\.id), ["a", "c", "d", "b"])
+        XCTAssertEqual(AlbumSort.title.sorted(albums).map(\.id), ["c", "d", "b", "a"])
+        XCTAssertEqual(AlbumSort.title.sorted(albums).first?.tracks, songs, "Sorting albums must not reorder songs")
     }
 
     func testDiscOrderingAndSeparateEditions() {
