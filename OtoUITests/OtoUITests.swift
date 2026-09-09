@@ -278,6 +278,62 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.buttons["queued-First Light"].exists)
     }
 
+    @MainActor func testSwipeActionsWithMonochromeAndBrightArtwork() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        func little(_ value: UInt32) -> Data { withUnsafeBytes(of: value.littleEndian) { Data($0) } }
+        let byteCount = 8_000 * 2 * 60
+        var wav = Data("RIFF".utf8)
+        wav.append(little(UInt32(byteCount + 36)))
+        wav.append(Data("WAVEfmt ".utf8)); wav.append(little(16))
+        wav.append(contentsOf: [1, 0, 1, 0]); wav.append(little(8_000)); wav.append(little(16_000))
+        wav.append(contentsOf: [2, 0, 16, 0]); wav.append(Data("data".utf8)); wav.append(little(UInt32(byteCount)))
+        wav.append(Data(count: byteCount))
+        for (name, color) in [("Monochrome", UIColor.gray), ("Gold", UIColor(red: 1, green: 0.8, blue: 0, alpha: 1))] {
+            let album = folder.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: album, withIntermediateDirectories: true)
+            for title in ["First", "Second"] { try wav.write(to: album.appendingPathComponent(title + ".wav")) }
+            let cover = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 64)).image { context in
+                color.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 64, height: 64))
+            }
+            try XCTUnwrap(cover.pngData()).write(to: album.appendingPathComponent("cover.png"))
+        }
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        for name in ["Monochrome", "Gold"] {
+            app.launch()
+            let album = app.buttons["album-" + name]
+            XCTAssertTrue(album.waitForExistence(timeout: 20))
+            album.swipeLeft()
+            XCTAssertTrue(app.buttons["Add to Queue"].waitForExistence(timeout: 5))
+            attach(app, name: name + " Album Swipe Contrast")
+            app.buttons["Add to Queue"].tap()
+            XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
+            app.buttons["Pause"].tap()
+            album.tap()
+            let song = app.buttons["track-First"]
+            XCTAssertTrue(song.waitForExistence(timeout: 5))
+            song.swipeLeft()
+            XCTAssertTrue(app.buttons["Add to Queue"].waitForExistence(timeout: 5))
+            attach(app, name: name + " Song Swipe Contrast")
+            app.buttons["Add to Queue"].tap()
+            app.buttons["mini-player"].tap()
+            app.buttons["queue-toggle"].tap()
+            let queued = app.buttons["queued-First"]
+            XCTAssertTrue(queued.waitForExistence(timeout: 5))
+            queued.swipeLeft()
+            XCTAssertTrue(app.buttons["Remove"].waitForExistence(timeout: 5))
+            attach(app, name: name + " Remove Swipe Contrast")
+            app.buttons["Remove"].tap()
+            XCTAssertFalse(queued.exists)
+            XCTAssertEqual(app.buttons["now-playing-toggle"].label, "Play")
+            app.terminate()
+        }
+    }
+
     @MainActor func testSourceAndConsumableQueueWithPausedPrevious() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let app = XCUIApplication()

@@ -57,6 +57,28 @@ struct ArtworkTheme: ViewModifier {
     }
 }
 
+/// Native swipe actions otherwise template their symbols white, even on a white
+/// artwork tint. Preserve the chosen ink in an original-rendering symbol image.
+struct ArtworkSwipeAction: View {
+    let title: String
+    let systemImage: String
+    var role: ButtonRole? = nil
+    let action: () -> Void
+    @Environment(\.albumAccent) private var accent
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        let fill = ArtworkColor(uiColor: UIColor(accent), dark: scheme == .dark)
+        Button(role: role, action: action) {
+            if let symbol = UIImage(systemName: systemImage) {
+                Image(uiImage: symbol.withTintColor(UIColor(fill.contrastingInk), renderingMode: .alwaysOriginal))
+            }
+        }
+        .tint(accent)
+        .accessibilityLabel(title)
+    }
+}
+
 /// Interpolate the environment color itself so UIKit's slider and route picker
 /// receive the same intermediate colors as SwiftUI's tinted controls.
 private struct InterpolatedArtworkTint: AnimatableModifier {

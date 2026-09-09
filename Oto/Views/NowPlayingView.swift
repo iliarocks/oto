@@ -409,8 +409,8 @@ struct NowPlayingView: View {
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
             .swipeActions(edge: .trailing) {
-                Button(role: .destructive) { player.removeUpcoming(entry.id) } label: {
-                    Label("Remove", systemImage: "trash").labelStyle(.iconOnly)
+                ArtworkSwipeAction(title: "Remove", systemImage: "trash", role: .destructive) {
+                    player.removeUpcoming(entry.id)
                 }
             }
             .accessibilityAction(named: "Remove from Queue") { player.removeUpcoming(entry.id) }

@@ -101,13 +101,11 @@ struct AlbumView: View {
                             .accessibilityIdentifier("track-\(track.title)")
                             .listRowSeparator(.hidden)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button {
+                                ArtworkSwipeAction(title: "Add to Queue", systemImage: "text.badge.plus") {
                                     if let bookmark = library.snapshot?.bookmark {
                                         player.enqueue([track], bookmark: bookmark)
                                     }
-                                } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
-                                .tint(accent)
-                                .accessibilityLabel("Add to Queue")
+                                }
                             }
                         }
                     } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }

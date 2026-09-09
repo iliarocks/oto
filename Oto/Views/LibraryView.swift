@@ -147,14 +147,13 @@ struct LibraryView: View {
                         .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                         .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button {
+                            ArtworkSwipeAction(title: "Add to Queue", systemImage: "text.badge.plus") {
                                 if let bookmark = library.snapshot?.bookmark {
                                     player.enqueue(album.tracks, bookmark: bookmark)
                                 }
-                            } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
-                            .tint(Color("AccentColor"))
-                            .accessibilityLabel("Add to Queue")
+                            }
                         }
+                        .modifier(ArtworkTheme(key: album.artworkKey, directory: library.persistence.artworkDirectory))
                     }
                     .listSectionSeparator(.hidden)
                 }
