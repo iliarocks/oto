@@ -295,3 +295,9 @@ The UI check confirmed that a populated library becomes empty only for the previ
 Copied Nagare's exact light/dark AccentColor asset values as Oto's default accent. Changed the first-use heading to “Choose a folder,” removed its description, and made the folder-picker action an icon-only folder-plus button with a native large circular shape. Retained its accessible Choose Music Folder label and identifier. Existing album-art-derived accents and the separate No Songs Found state retain their behavior.
 
 The empty-preview UI check passed, including the new heading, absent description, and intact saved library on normal relaunch (`work/simplified-empty-library.xcresult`). Inspected the resulting native empty state. Signed build 1.0 (32) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the temporary empty-preview argument.
+
+## More space above the empty-state action — September 8
+
+Added 16 points of top padding to the first-use folder-plus button, increasing the gap below “Choose a folder.” The native icon, title, button size, and other empty-state actions are unchanged.
+
+Verified the focused layout diff and successful signed build 1.0 (33). Confirmed the packaged build number, installed on the connected iPhone, and reopened the isolated empty-state preview. The saved library remains intact.

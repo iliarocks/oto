@@ -156,6 +156,7 @@ struct LibraryView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .buttonBorderShape(.circle)
+                .padding(.top, 16)
                 .accessibilityIdentifier("choose-folder")
             }
         }
