@@ -491,3 +491,7 @@ Replaced the historical phone image with unedited captures from simulator build 
 Captured both appearances with Feather by Nujabes actively playing, so the floating player and Pause/Next controls are visible. Used a temporary simulator-only launch hook to start playback without UI automation; restored the app source afterward and reinstalled the ordinary simulator build after capture. Reviewed the unedited captures and updated the page's picture sources and alt text. No iPhone app changes.
 
 Changed only the website's dark palette to a true-black background and neutral gray surfaces/text, retaining the existing light palette and brand accent. Page and both new screenshot assets return HTTP 200 locally. No publishing or remote push.
+
+## Near-black website background and soft phone glow — September 8
+
+Adjusted the dark website background to neutral #080808, giving a slight separation from the app's pure black, analogous to the off-white/light-app pairing. Added a broad 4.5%-opacity white glow alongside a soft black shadow around the phone. Light-mode styling is unchanged. Local preview responds successfully; no publishing or remote push.
