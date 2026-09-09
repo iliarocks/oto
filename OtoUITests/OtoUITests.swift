@@ -147,7 +147,7 @@ final class OtoUITests: XCTestCase {
         attach(app, name: "Library with Skipped File")
         issue.tap()
         XCTAssertTrue(app.staticTexts["broken.flac"].waitForExistence(timeout: 10))
-        app.buttons["choose-another-folder"].tap()
+        app.buttons["settings-folder"].tap()
         XCTAssertTrue(app.buttons["Browse"].waitForExistence(timeout: 10) || app.navigationBars["Browse"].exists)
     }
 
@@ -171,7 +171,7 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.links["settings-privacy"].exists)
         XCTAssertTrue(app.links["settings-support"].exists)
         attach(app, name: "Settings With Music Folder")
-        app.buttons["Refresh Library"].tap()
+        app.buttons["settings-refresh"].tap()
         let refresh = app.buttons["refresh-empty-library"]
         XCTAssertTrue(refresh.waitForExistence(timeout: 10))
         attach(app, name: "Empty Selected Folder")

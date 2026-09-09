@@ -249,3 +249,9 @@ The skipped-file/change-folder flow passed (`work/settings.xcresult`). After cor
 Used NagareSettingsView as the reference for the Privacy hand icon, Support life-preserver icon, and the faint trailing external-link symbols. Added a native About section footer showing the current marketing version from CFBundleShortVersionString (currently Version 0.1), so it follows future releases automatically. The external-link symbols are decorative for accessibility and both destinations remain unchanged.
 
 The existing Settings/refresh/recovery check passed with both links discoverable (`work/settings-icons.xcresult`). Inspected the screenshot showing both leading icons, trailing symbols, and Version 0.1 footer. Signed build 0.1 (24) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.
+
+## Simplify Library settings for version 1.0 — September 8
+
+Renamed the Settings section to Library and merged it into two rows. Folder now has a folder icon, keeps the selected name on the right with middle truncation for long names, and opens the native folder picker when tapped. Refresh replaces the timestamp row; removed the Songs and separate Choose Another Folder rows. The footer now reads “Last update [date/time]. Refresh after adding or removing files.” Retained full folder-name accessibility and the scan-time action guards. Set the marketing version to 1.0 for launch while continuing the development build counter at 25.
+
+Both Settings refresh/recovery and issue-details/folder-picker checks passed (`work/compact-library-settings.xcresult`). Inspected the compact Settings screenshot, including long folder-name truncation and Version 1.0. Signed build 1.0 (25) succeeded, both packaged version fields were verified, and it was installed and launched on the connected iPhone with the existing library preserved.

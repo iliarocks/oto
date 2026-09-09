@@ -179,18 +179,28 @@ private struct SettingsView: View {
             Form {
                 if let snapshot = library.snapshot {
                     Section {
-                        LabeledContent("Folder", value: snapshot.folderName)
-                        LabeledContent("Songs", value: "\(snapshot.tracks.count)")
-                        LabeledContent("Last Updated", value: snapshot.scannedAt.formatted(date: .abbreviated, time: .shortened))
+                        Button(action: chooseFolder) {
+                            HStack(spacing: 12) {
+                                Label("Folder", systemImage: "folder")
+                                    .layoutPriority(1)
+                                Text(snapshot.folderName)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Folder")
+                        .accessibilityValue(snapshot.folderName)
+                        .accessibilityHint("Choose another music folder")
+                        .accessibilityIdentifier("settings-folder")
+                        Button("Refresh", systemImage: "arrow.clockwise") { library.refresh(); dismiss() }
+                            .accessibilityIdentifier("settings-refresh")
                     } header: {
-                        Text("Music Folder")
+                        Text("Library")
                     } footer: {
-                        Text("Oto reads your files in place. After adding or removing music in Files, refresh your library. For offline listening, use Keep Downloaded on the music folder in Files.")
-                    }
-                    Section {
-                        Button("Refresh Library", systemImage: "arrow.clockwise") { library.refresh(); dismiss() }
-                        Button("Choose Another Folder", systemImage: "folder") { chooseFolder() }
-                            .accessibilityIdentifier("choose-another-folder")
+                        Text("Last update \(snapshot.scannedAt.formatted(date: .abbreviated, time: .shortened)). Refresh after adding or removing files.")
                     }
                     .disabled(library.isScanning)
                     if !snapshot.issues.isEmpty {
@@ -204,7 +214,7 @@ private struct SettingsView: View {
                         }
                     }
                 } else {
-                    Section("Music Folder") {
+                    Section("Library") {
                         Button("Choose Music Folder", systemImage: "folder.badge.plus") { chooseFolder() }
                             .disabled(library.isScanning)
                             .accessibilityIdentifier("settings-choose-folder")
