@@ -162,7 +162,7 @@ struct LibraryView: View {
                             .lineLimit(1).truncationMode(.middle)
                     }
                 } else { ProgressView().frame(maxWidth: .infinity, alignment: .leading) }
-                Text("Files in iCloud may need a moment to download.").font(.caption).foregroundStyle(.secondary)
+                Text("iCloud Drive files must be downloaded.").font(.caption).foregroundStyle(.secondary)
             }
             .padding(.vertical, 10)
         }
@@ -200,7 +200,7 @@ private struct SettingsView: View {
                     } header: {
                         Text("Library")
                     } footer: {
-                        Text("Last update \(snapshot.scannedAt.formatted(date: .abbreviated, time: .shortened)). Refresh after adding or removing files.")
+                        Text("Last update \(snapshot.scannedAt.formatted(date: .abbreviated, time: .shortened)). Refresh after adding or removing files. iCloud Drive files must be downloaded.")
                     }
                     .disabled(library.isScanning)
                     if !snapshot.issues.isEmpty {

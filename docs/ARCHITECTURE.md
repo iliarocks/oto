@@ -2,7 +2,7 @@
 
 ## Ownership
 
-The selected folder owns the audio. Oto never moves, deletes, converts, or rewrites music files. Application Support contains one atomically written JSON snapshot and bounded-size JPEG artwork. There are no third-party frameworks, analytics, network clients, or app-managed music downloads. Files providers may download selected files as part of coordinated reads.
+The selected folder owns the audio. Oto never moves, deletes, converts, or rewrites music files. Application Support contains one atomically written JSON snapshot and bounded-size JPEG artwork. There are no third-party frameworks, analytics, network clients, or app-managed music downloads. Audio and folder artwork must already be downloaded. Before content coordination, LocalFileAvailability checks fresh iCloud status and the filesystem dataless flag; unavailable or stale iCloud copies prompt a download in Files instead of starting a content read. The check repeats inside the accessor and before AVAsset metadata loading. Directory enumeration uses metadata-only coordination and promised-item metadata APIs to avoid hydrating contents. See Apple’s [metadata-only coordination](https://developer.apple.com/documentation/foundation/nsfilecoordinator/readingoptions/immediatelyavailablemetadataonly) and [download-status semantics](https://developer.apple.com/documentation/foundation/urlubiquitousitemdownloadingstatus/downloaded).
 
 ## Library
 

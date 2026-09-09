@@ -18,6 +18,7 @@ actor LibraryScanner {
         let candidates = try await enumerate(folder)
         var tracks: [Track] = []
         var issues: [ScanIssue] = []
+        var undownloadedCount = 0
         var covers: [String: String] = [:]
         var coverDirectories = Set<String>()
         for (index, url) in candidates.enumerated() {
@@ -52,19 +53,24 @@ actor LibraryScanner {
                                     duration: tags.duration, artworkKey: artworkKey,
                                     fileSize: Int64(values.fileSize ?? 0), modifiedAt: values.contentModificationDate))
             } catch is CancellationError { throw CancellationError() }
+            catch LibraryError.fileNotDownloaded {
+                undownloadedCount += 1
+                issues.append(ScanIssue(path: relative, message: LibraryError.fileNotDownloaded.localizedDescription))
+            }
             catch { issues.append(ScanIssue(path: relative, message: "Couldn't read this audio file. Make sure it is downloaded and plays in Files.")) }
         }
         try Task.checkCancellation()
         await progress(ScanProgress(completed: candidates.count, total: candidates.count, filename: ""))
+        if !candidates.isEmpty, undownloadedCount == candidates.count { throw LibraryError.fileNotDownloaded }
         return LibrarySnapshot(folderName: folder.lastPathComponent, bookmark: bookmark,
                                tracks: tracks.sorted(by: Track.ordered), scannedAt: Date(), issues: issues)
     }
 
     private func enumerate(_ folder: URL) async throws -> [URL] {
-        try await CoordinatedRead.perform(at: folder) { readable in
+        try await CoordinatedRead.perform(at: folder, metadataOnly: true) { readable in
             let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey]
             var failure: Error?
-            guard let enumerator = FileManager.default.enumerator(at: readable, includingPropertiesForKeys: keys,
+            guard let enumerator = FileManager.default.enumerator(at: readable, includingPropertiesForKeys: nil,
                     options: [.skipsHiddenFiles, .skipsPackageDescendants], errorHandler: { _, error in
                         failure = error
                         return false
@@ -72,9 +78,9 @@ actor LibraryScanner {
             var files: [URL] = []
             while let url = enumerator.nextObject() as? URL {
                 try Task.checkCancellation()
-                let values = try url.resourceValues(forKeys: Set(keys))
-                if values.isSymbolicLink == true { enumerator.skipDescendants(); continue }
-                if values.isRegularFile == true && MusicPath.supportedExtensions.contains(url.pathExtension.lowercased()) { files.append(url) }
+                let values = try (url as NSURL).promisedItemResourceValues(forKeys: keys)
+                if values[.isSymbolicLinkKey] as? Bool == true { enumerator.skipDescendants(); continue }
+                if values[.isRegularFileKey] as? Bool == true && MusicPath.supportedExtensions.contains(url.pathExtension.lowercased()) { files.append(url) }
             }
             if let failure { throw failure }
             return files.sorted { $0.path.localizedStandardCompare($1.path) == .orderedAscending }

@@ -71,9 +71,10 @@ struct ScanIssue: Codable, Hashable, Identifiable, Sendable {
 }
 
 enum LibraryError: LocalizedError {
-    case inaccessibleFolder, unreadableIndex, invalidPath, emptyFolder, unsupportedVersion
+    case fileNotDownloaded, inaccessibleFolder, unreadableIndex, invalidPath, emptyFolder, unsupportedVersion
     var errorDescription: String? {
         switch self {
+        case .fileNotDownloaded: "Download the music in Files first (use Keep Downloaded on the folder), then refresh your library."
         case .inaccessibleFolder: "This folder is unavailable. Make sure it is downloaded in Files, then choose it again."
         case .unreadableIndex: "The saved library could not be read. Choose your music folder again to rebuild it. Your music is unchanged."
         case .invalidPath: "This file is outside the selected music folder."

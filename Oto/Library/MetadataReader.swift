@@ -35,6 +35,7 @@ enum MetadataReader {
         }
         // FLAC was handled above. For ID3 and MPEG-4 use the platform's tag reader.
         if url.pathExtension.lowercased() != "flac" {
+            try LocalFileAvailability.requireDownloaded(at: url)
             let asset = AVURLAsset(url: url)
             let metadata = (try? await asset.load(.metadata)) ?? []
             for item in metadata {

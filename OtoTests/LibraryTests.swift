@@ -23,6 +23,23 @@ final class LibraryTests: XCTestCase {
               trackNumber: number, discNumber: disc, duration: 60, artworkKey: nil, fileSize: 1, modifiedAt: nil)
     }
 
+    func testDownloadRequirementDistinguishesLocalFilesAndCloudPlaceholders() throws {
+        try LocalFileAvailability.requireDownloaded(at: fixture("01", "flac"))
+        XCTAssertNoThrow(try LocalFileAvailability.requireDownloaded(isUbiquitous: false, status: nil, isDataless: false))
+        XCTAssertNoThrow(try LocalFileAvailability.requireDownloaded(isUbiquitous: true, status: .current, isDataless: false))
+        let unavailable: [URLUbiquitousItemDownloadingStatus?] = [nil, .notDownloaded, .downloaded]
+        for status in unavailable {
+            XCTAssertThrowsError(try LocalFileAvailability.requireDownloaded(isUbiquitous: true, status: status, isDataless: false)) { error in
+                guard case LibraryError.fileNotDownloaded = error else { return XCTFail("Expected download instruction, got \(error)") }
+            }
+        }
+        // Dataless provider files are unavailable even without iCloud metadata,
+        // or when the resource metadata still claims the current copy is present.
+        XCTAssertThrowsError(try LocalFileAvailability.requireDownloaded(isUbiquitous: false, status: nil, isDataless: true))
+        XCTAssertThrowsError(try LocalFileAvailability.requireDownloaded(isUbiquitous: true, status: .current, isDataless: true))
+        XCTAssertThrowsError(try LocalFileAvailability.requireDownloaded(at: temporary.appendingPathComponent("missing.flac")))
+    }
+
     func testDiscOrderingAndSeparateEditions() {
         let tracks = [track("Album/CD2/01.flac", number: 1, disc: 2), track("Album/CD1/10.flac", number: 10),
                       track("Album/CD1/02.flac", number: 2), track("Deluxe/01.flac", number: 1)]

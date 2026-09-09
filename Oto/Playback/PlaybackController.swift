@@ -197,6 +197,10 @@ private actor AudioSessionController {
                 isLoading = false
                 if wantsPlayback { resume() }
                 else { updateNowPlaying() }
+            } catch LibraryError.fileNotDownloaded {
+                guard !Task.isCancelled, loadID == id else { return }
+                isLoading = false
+                fail("Download “\(track.title)” in Files first, then tap Play again.")
             } catch {
                 guard !Task.isCancelled, loadID == id else { return }
                 isLoading = false

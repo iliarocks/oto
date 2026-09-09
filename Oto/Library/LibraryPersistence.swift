@@ -54,12 +54,12 @@ final class FolderAccess {
 }
 
 enum CoordinatedRead {
-    static func perform<T: Sendable>(at url: URL, _ body: @Sendable (URL) throws -> T) async throws -> T {
+    static func perform<T: Sendable>(at url: URL, metadataOnly: Bool = false, _ body: @Sendable (URL) throws -> T) async throws -> T {
         let operation = FileReadOperation()
         return try await withTaskCancellationHandler {
             do {
                 try Task.checkCancellation()
-                let result = try operation.read(at: url, body)
+                let result = try operation.read(at: url, metadataOnly: metadataOnly, body)
                 try Task.checkCancellation()
                 return result
             } catch {
@@ -80,12 +80,15 @@ private final class FileReadOperation: @unchecked Sendable {
 
     func cancel() { coordinator.cancel() }
 
-    func read<T>(at url: URL, _ body: (URL) throws -> T) throws -> T {
+    func read<T>(at url: URL, metadataOnly: Bool, _ body: (URL) throws -> T) throws -> T {
+        if !metadataOnly { try LocalFileAvailability.requireDownloaded(at: url) }
         var coordinationError: NSError?
         var result: Result<T, Error>?
-        coordinator.coordinate(readingItemAt: url, options: [.withoutChanges], error: &coordinationError) { readable in
+        let options: NSFileCoordinator.ReadingOptions = metadataOnly ? [.withoutChanges, .immediatelyAvailableMetadataOnly] : [.withoutChanges]
+        coordinator.coordinate(readingItemAt: url, options: options, error: &coordinationError) { readable in
             result = Result {
                 try Task.checkCancellation()
+                if !metadataOnly { try LocalFileAvailability.requireDownloaded(at: readable) }
                 return try body(readable)
             }
         }

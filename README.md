@@ -44,7 +44,7 @@ The toolbar shows your album and song count. Browsing stays focused on albums, w
 
 Long titles and artist names stay on one line and scroll horizontally in both players. Short text stays still. Now Playing fits its controls on screen, with artwork adapting to the available space; swipe down to dismiss it. Text motion respects Reduce Motion, and VoiceOver reads the full label.
 
-For offline listening with iCloud Drive, use **Keep Downloaded** on the folder in Files. Oto does not maintain a second copy of your audio. Both players keep the artist and play/pause control visible while songs open. Pause also stops a pending song from starting. Playback errors also offer **Try Again**. Scans show the current filename and can be cancelled without replacing the existing library. Cancellation stops waiting for coordinated access, though a file read that has already started may need to finish.
+iCloud Drive files must be downloaded before Oto can scan or play them. Use **Keep Downloaded** on the folder in Files, wait for it to finish, then refresh Oto. Oto does not maintain a second copy of your audio. Both players keep the artist and play/pause control visible while songs open. Pause also stops a pending song from starting. Playback errors also offer **Try Again**. Scans show the current filename and can be cancelled without replacing the existing library. Cancellation stops waiting for coordinated access, though a file read that has already started may need to finish.
 
 ## Deliberate limits
 
