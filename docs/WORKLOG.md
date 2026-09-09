@@ -301,3 +301,9 @@ The empty-preview UI check passed, including the new heading, absent description
 Added 16 points of top padding to the first-use folder-plus button, increasing the gap below “Choose a folder.” The native icon, title, button size, and other empty-state actions are unchanged.
 
 Verified the focused layout diff and successful signed build 1.0 (33). Confirmed the packaged build number, installed on the connected iPhone, and reopened the isolated empty-state preview. The saved library remains intact.
+
+## Native Settings label colors — September 8
+
+Applied the native plain button style to the Settings form, matching Nagare: row labels use the primary text color (black in light mode, white in dark mode), leading symbols retain the accent, and folder values, external-link symbols, and footers retain their secondary/tertiary styling. This covers both folder-selection states and the About links.
+
+The existing Settings/refresh/recovery UI flow passed (`work/settings-label-colors.xcresult`), and the light-mode screenshot confirmed the requested colors. Signed build 1.0 (34) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the isolated empty-preview argument. The saved library remains intact.

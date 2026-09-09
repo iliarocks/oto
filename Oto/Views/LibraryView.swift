@@ -248,6 +248,7 @@ private struct SettingsView: View {
                     Text("Version \(Self.appVersion)")
                 }
             }
+            .buttonStyle(.plain)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
