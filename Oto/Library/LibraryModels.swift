@@ -46,12 +46,15 @@ struct Album: Identifiable, Hashable {
         Dictionary(grouping: tracks, by: \.albumID).map { id, tracks in
             let ordered = tracks.sorted(by: Track.ordered)
             return Album(id: id, title: ordered[0].albumTitle, artist: ordered[0].albumArtist, tracks: ordered)
-        }.sorted {
-            let comparison = $0.artist.localizedStandardCompare($1.artist)
-            if comparison != .orderedSame { return comparison == .orderedAscending }
-            let titleComparison = $0.title.localizedStandardCompare($1.title)
-            return titleComparison == .orderedSame ? $0.id < $1.id : titleComparison == .orderedAscending
-        }
+        }.sorted(by: orderedByTitle)
+    }
+
+    static func orderedByTitle(_ lhs: Album, _ rhs: Album) -> Bool {
+        let titleComparison = lhs.title.localizedStandardCompare(rhs.title)
+        if titleComparison != .orderedSame { return titleComparison == .orderedAscending }
+        let artistComparison = lhs.artist.localizedStandardCompare(rhs.artist)
+        if artistComparison != .orderedSame { return artistComparison == .orderedAscending }
+        return lhs.id < rhs.id
     }
 }
 

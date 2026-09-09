@@ -68,7 +68,7 @@ final class OtoUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Reading your music…"].exists)
     }
 
-    @MainActor func testAlbumSortingAndPreferenceSurviveRelaunch() throws {
+    @MainActor func testAlbumTitleOrderSurvivesRefreshAndRelaunch() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let app = XCUIApplication()
         defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
@@ -95,15 +95,8 @@ final class OtoUITests: XCTestCase {
         let second = app.buttons["album-Album 2"]
         let tenth = app.buttons["album-Album 10"]
         XCTAssertTrue(second.waitForExistence(timeout: 20))
-        let sort = app.buttons["album-sort"]
-        XCTAssertTrue(sort.isHittable)
-        XCTAssertGreaterThan(sort.frame.midX, app.frame.midX)
-        XCTAssertEqual(sort.frame.midY, app.buttons["settings"].frame.midY, accuracy: 2)
-        sort.tap()
-        attach(app, name: "Album Sort Menu")
-        XCTAssertFalse(app.buttons["Recently Added"].exists)
-        app.buttons["Title"].tap()
-        XCTAssertEqual(sort.value as? String, "Title")
+        XCTAssertFalse(app.buttons["album-sort"].exists)
+        XCTAssertTrue(app.buttons["settings"].isHittable)
         XCTAssertLessThan(second.frame.minY, tenth.frame.minY)
         try addAlbum("Zebra")
         app.buttons["settings"].tap()
@@ -117,7 +110,7 @@ final class OtoUITests: XCTestCase {
         app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
         app.launch()
         XCTAssertTrue(newest.waitForExistence(timeout: 10))
-        XCTAssertEqual(sort.value as? String, "Title")
+        XCTAssertFalse(app.buttons["album-sort"].exists)
         XCTAssertLessThan(second.frame.minY, tenth.frame.minY)
         XCTAssertLessThan(tenth.frame.minY, newest.frame.minY)
     }

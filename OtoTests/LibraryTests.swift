@@ -40,16 +40,15 @@ final class LibraryTests: XCTestCase {
         XCTAssertThrowsError(try LocalFileAvailability.requireDownloaded(at: temporary.appendingPathComponent("missing.flac")))
     }
 
-    func testAlbumSortUsesNaturalOrderAndStableTies() {
+    func testAlbumTitleOrderUsesNaturalComparisonAndStableTies() {
         let songs = [track("02.flac", number: 2), track("01.flac", number: 1)]
         let a = Album(id: "a", title: "Zebra", artist: "Alpha", tracks: songs)
         let b = Album(id: "b", title: "Album 10", artist: "Beta", tracks: songs)
         let c = Album(id: "c", title: "Album 2", artist: "Beta", tracks: songs)
         let d = Album(id: "d", title: "Album 2", artist: "Beta", tracks: songs)
         let albums = [d, b, a, c]
-        XCTAssertEqual(AlbumSort.artist.sorted(albums).map(\.id), ["a", "c", "d", "b"])
-        XCTAssertEqual(AlbumSort.title.sorted(albums).map(\.id), ["c", "d", "b", "a"])
-        XCTAssertEqual(AlbumSort.title.sorted(albums).first?.tracks, songs, "Sorting albums must not reorder songs")
+        XCTAssertEqual(albums.sorted(by: Album.orderedByTitle).map(\.id), ["c", "d", "b", "a"])
+        XCTAssertEqual(albums.sorted(by: Album.orderedByTitle).first?.tracks, songs, "Sorting albums must not reorder songs")
     }
 
     func testDiscOrderingAndSeparateEditions() {

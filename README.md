@@ -44,7 +44,7 @@ Swipe left on an album or song and tap the queue-plus icon to append it to the q
 
 The queue, playback modes, current song, and position are saved. Reopening restores playback paused and does not open an audio file until you tap Play.
 
-The toolbar shows your album and song count. The top-right sort menu offers Artist and Title and remembers your choice. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.
+The toolbar shows your album and song count. Albums are always sorted by title. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.
 
 Long titles and artist names stay on one line and scroll horizontally in both players. Short text stays still. Now Playing fits its controls on screen, with artwork adapting to the available space; swipe down to dismiss it. Text motion respects Reduce Motion, and VoiceOver reads the full label.
 

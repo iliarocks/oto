@@ -433,3 +433,9 @@ Replaced the separate backdrop and UIKit-title animations with one interpolated 
 The header boundary, partial reveal/reversal, playback, dismissal, and final-song-clearance check passed in dark and light appearances. The initial recording showed a fast reverse could still skip the fade. Made the shared progress animation explicit, overriding any inherited suppression from scrolling; the final check passed (`work/header48-reversal-verified.xcresult`), and recorded frames show the intermediate reverse-fade states (`work/header48-reversal-verified.mp4`). Signed build 1.0 (48) succeeded. Existing music and playback data are preserved.
 
 Verified the packaged version and installed and launched build 48 normally on the connected iPhone.
+
+## Always sort albums by title — September 8
+
+Removed the trailing sorting menu and the Artist/Title selection model. Album grouping now returns natural title order directly, with artist and stable album-ID tie breaks; the view simply displays that order. The obsolete saved preference is cleared on launch. Song and playback queue ordering are unchanged.
+
+Natural title ordering/stable ties and disc/edition ordering checks passed, along with the updated UI flow verifying that the sorting button is absent and title order survives refresh and relaunch (`work/title-only49.xcresult`). Reviewed the resulting toolbar screenshot. Signed build 1.0 (49) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with existing library/playback data preserved.
