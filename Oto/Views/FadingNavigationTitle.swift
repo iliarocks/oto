@@ -4,7 +4,7 @@ import UIKit
 /// A persistent native title label avoids toolbar content replacement interrupting fade-out.
 struct FadingNavigationTitle: UIViewRepresentable {
     let title: String
-    let isVisible: Bool
+    let progress: CGFloat
 
     func makeUIView(context: Context) -> TitleLabel {
         let label = TitleLabel()
@@ -22,7 +22,7 @@ struct FadingNavigationTitle: UIViewRepresentable {
         label.font = UIFontMetrics(forTextStyle: .headline).scaledFont(
             for: .systemFont(ofSize: 17, weight: .semibold), maximumPointSize: 20
         )
-        label.setTitleVisible(isVisible)
+        label.setTitleProgress(progress)
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: TitleLabel, context: Context) -> CGSize? {
@@ -31,19 +31,19 @@ struct FadingNavigationTitle: UIViewRepresentable {
     }
 
     final class TitleLabel: UILabel {
-        private var titleVisible: Bool?
+        private var titleProgress: CGFloat?
 
-        func setTitleVisible(_ visible: Bool) {
-            isAccessibilityElement = visible
-            accessibilityElementsHidden = !visible
-            guard titleVisible != visible else { return }
-            let animate = titleVisible != nil && window != nil
-            titleVisible = visible
-            let target: CGFloat = visible ? 1 : 0
+        func setTitleProgress(_ progress: CGFloat) {
+            let target = min(max(progress, 0), 1)
+            isAccessibilityElement = target > 0
+            accessibilityElementsHidden = target == 0
+            guard titleProgress != target else { return }
+            let animate = titleProgress != nil && window != nil
+            titleProgress = target
             guard animate else { alpha = target; return }
-            // Retarget from the visible alpha when a drag reverses during the transition.
-            UIView.animate(withDuration: 0.25, delay: 0,
-                           options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseInOut]) {
+            // Match the backdrop's short easing, while retaining intermediate values on a slow drag.
+            UIView.animate(withDuration: 0.18, delay: 0,
+                           options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]) {
                 self.alpha = target
             }
         }

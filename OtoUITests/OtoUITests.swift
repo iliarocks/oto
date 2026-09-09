@@ -338,6 +338,23 @@ final class OtoUITests: XCTestCase {
         let toolbarTitle = app.navigationBars.staticTexts["Quiet Hours"]
         XCTAssertFalse(toolbarTitle.isHittable)
         attach(app, name: "Album Without Duplicate Toolbar Title")
+        if !largeText {
+            let heading = app.staticTexts["album-main-title"]
+            let bar = app.navigationBars.firstMatch
+            let distance = heading.frame.maxY - (bar.frame.maxY + 40)
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.85))
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -distance)), withVelocity: .slow, thenHoldForDuration: 0.5)
+            attach(app, name: "Heading Before Toolbar Boundary")
+            XCTAssertFalse(toolbarTitle.isHittable, "The header must stay hidden while the main heading is below the navigation bar")
+            let partialDistance = heading.frame.maxY - (bar.frame.maxY - 28)
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -partialDistance)), withVelocity: .slow, thenHoldForDuration: 0.5)
+            attach(app, name: "Header Partly Revealed During Slow Scroll")
+            XCTAssertTrue(toolbarTitle.isHittable)
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: partialDistance)), withVelocity: .slow, thenHoldForDuration: 0.5)
+            attach(app, name: "Header Hidden After Slow Reversal")
+            XCTAssertFalse(toolbarTitle.isHittable)
+
+        }
         let play = app.buttons["play-album"]
         for _ in 0..<4 where !play.isHittable { app.swipeUp() }
         play.tap()

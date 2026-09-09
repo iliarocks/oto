@@ -183,3 +183,17 @@ The principal toolbar slot now holds a persistent native UILabel. Its alpha uses
 Updated the existing UI checks to assert visibility/hittability rather than absence of a retained native label. Both normal and largest-text scroll/playback/dismissal/return checks passed in `work/album-native-title-final.xcresult`. Inspected recorded frames of both directions: each now contains several progressively fainter/darker title frames, including the previously missing fade-out (`work/native-title-in.png`, `work/native-title-out.png`). The earlier SwiftUI-only experiment's passing endpoint tests were insufficient to establish animation behavior; recording inspection caught that before installation. Signed build 0.1 (15) succeeded.
 
 Installed and launched build 15 on the connected iPhone with its existing library preserved.
+
+## Fade the complete album header and correct its scroll boundary — September 8
+
+Inspected the user's September 8 recording and reproduced the early trigger with a slow, held drag. Measured viewport origin and top inset were both 116 points, while the actual navigation bar ended at 116. The previous formula added them, using 232 as the boundary. The new regression failed with the main title still 50 points below the actual bar, reproducing both early appearance and late disappearance.
+
+The boundary now uses the viewport origin once. After the main heading passes it, 56 points of scrolling control a shared reveal amount for the title and a native regular-material backdrop extending over the navigation/status area. Both use short 0.18-second ease-out smoothing for rapid swipes, while a slow or held drag retains its intermediate reveal. The large heading fades as it leaves the content viewport, preventing it from showing through underneath the inline title.
+
+The album hides the independent system navigation background and, on iOS 26+, the [automatic top scroll-edge effect](https://developer.apple.com/documentation/swiftui/view/scrolledgeeffecthidden(_:for:)). Native back controls stay visible and interactive. Bottom player clearance remains unchanged. Added actual slow-drag checks before the boundary, partway through the reveal, and after reversing; screenshots cover those states.
+
+Validation: the boundary regression failed before the fix (`work/header-boundary-probe.xcresult`) and passed afterward. Final normal/maximum-text checks passed in light appearance (`work/header-light-final.xcresult`), and the slow-drag/return flow passed in dark appearance (`work/header-dark-final.xcresult`). Also checked back navigation to the library and Now Playing dismissal in dark appearance (`work/header-dark-fade.xcresult`). Inspected before/partial/reversed/final screenshots in both appearances; the partial state now has only one title. Final-song clearance remains covered.
+
+While checking the install artifact, found that generated Info.plist processing omitted the literal version keys. Set the app target's explicit marketing/build version settings and reference those from the source plist so the installed bundle reliably identifies itself as 0.1 (16). Also captured scalar viewport measurements before the geometry callback to avoid capturing a non-Sendable GeometryProxy.
+
+Signed build succeeded; inspected the packaged version keys as 0.1 (16). Installed and launched it on the connected iPhone, preserving its existing library.

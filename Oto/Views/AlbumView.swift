@@ -7,10 +7,13 @@ struct AlbumView: View {
     let album: Album
     let library: LibraryStore
     let player: PlaybackController
-    @State private var showsNavigationTitle = false
+    @State private var headerProgress: CGFloat = 0
+    @State private var headingOpacity: CGFloat = 1
 
     var body: some View {
         GeometryReader { viewport in
+            let viewportTop = viewport.frame(in: .global).minY
+            let topInset = viewport.safeAreaInsets.top
             List {
                 Section {
                     VStack(spacing: 16) {
@@ -19,10 +22,19 @@ struct AlbumView: View {
                         VStack(spacing: 6) {
                             Text(album.title).font(.title2.bold())
                                 .accessibilityIdentifier("album-main-title")
-                                .onGeometryChange(for: Bool.self) { title in
-                                    let top = viewport.frame(in: .global).minY + viewport.safeAreaInsets.top
-                                    return title.frame(in: .global).maxY <= top
-                                } action: { showsNavigationTitle = $0 }
+                                .opacity(headingOpacity)
+                                .accessibilityHidden(headingOpacity == 0)
+                                .onGeometryChange(for: CGPoint.self) { title in
+                                    // The viewport already starts below the navigation bar. Adding its
+                                    // safe-area inset again moves the trigger a full bar too early.
+                                    let distance = viewportTop - title.frame(in: .global).maxY
+                                    let reveal = min(max(distance / 56, 0), 1)
+                                    let heading = min(max(-distance / max(title.size.height, 1), 0), 1)
+                                    return CGPoint(x: reveal, y: heading)
+                                } action: {
+                                    headerProgress = $0.x
+                                    headingOpacity = $0.y
+                                }
                             Text(album.artist).font(.title3).foregroundStyle(.secondary)
                             Text("\(album.tracks.count) songs · \(MusicTime.summary(album.duration))")
                                 .font(.subheadline).foregroundStyle(.secondary)
@@ -75,13 +87,25 @@ struct AlbumView: View {
                 }
             }
             .listStyle(.plain)
+            .modifier(AlbumScrollEdge())
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(.regularMaterial)
+                    .opacity(headerProgress)
+                    .animation(.easeOut(duration: 0.18), value: headerProgress)
+                    .frame(height: topInset)
+                    .offset(y: -topInset)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                FadingNavigationTitle(title: album.title, isVisible: showsNavigationTitle)
-                    .accessibilityHidden(!showsNavigationTitle)
+                FadingNavigationTitle(title: album.title, progress: headerProgress)
+                    .accessibilityHidden(headerProgress == 0)
             }
         }
     }
@@ -91,5 +115,17 @@ struct AlbumView: View {
     private func play(_ track: Track? = nil) {
         guard let bookmark = library.snapshot?.bookmark else { return }
         player.play(album.tracks, startingAt: track, bookmark: bookmark)
+    }
+}
+
+/// The album supplies a backdrop whose visibility follows the title, so disable the
+/// independent system scroll-edge frosting while retaining native navigation controls.
+private struct AlbumScrollEdge: ViewModifier {
+    @ViewBuilder func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .top)
+        } else {
+            content
+        }
     }
 }
