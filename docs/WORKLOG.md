@@ -397,3 +397,9 @@ The existing queue and large-text UI flows passed (`work/artwork-morph.xcresult`
 Retuned the continuous artwork resize from a half-second spring to a 0.55-second ease-in/ease-out curve for a gentler start and finish. Added a 24-point transparent fade mask at the bottom of the upcoming List, with matching scroll-content clearance so the final row can move fully above the fade. The mask blends with either appearance and stays separate from the current-song header and playback controls.
 
 The existing queue UI flow passed (`work/queue-edge-fade.xcresult`), covering transitions with fixed controls, native dragging/removal, paused restoration, and landscape. Reviewed the landscape screenshot with a row crossing the fade. Signed build 1.0 (44) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone in normal mode.
+
+## Quicken the artwork transition — September 8
+
+Shortened the artwork/queue transition from 0.55 to 0.4 seconds and replaced the symmetric ease-in/ease-out with a custom cubic curve (0.22, 0.8, 0.25, 1). It starts promptly and decelerates into place. Shared artwork geometry, the queue fade, and Reduce Motion behavior are unchanged.
+
+Signed build 1.0 (45) succeeded, its packaged version was verified, and it was installed on the connected iPhone. This timing-only adjustment was build-checked; the existing interaction tests were not rerun.

@@ -199,7 +199,7 @@ struct NowPlayingView: View {
     private func transport(compact: Bool) -> some View {
         HStack(spacing: 0) {
             modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
-                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .easeInOut(duration: 0.55)) {
+                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .timingCurve(0.22, 0.8, 0.25, 1, duration: 0.4)) {
                     showingQueue.toggle()
                 }
             }
