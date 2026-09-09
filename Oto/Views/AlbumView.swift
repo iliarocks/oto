@@ -26,7 +26,13 @@ struct AlbumView: View {
                                     // safe-area inset again moves the trigger a full bar too early.
                                     let distance = viewportTop - title.frame(in: .global).maxY
                                     return min(max(distance / 56, 0), 1)
-                                } action: { headerProgress = $0 }
+                                } action: { progress in
+                                    // Scrolling can disable implicit animations; explicitly animate
+                                    // the shared progress in either direction.
+                                    var transaction = Transaction(animation: .easeInOut(duration: 0.22))
+                                    transaction.disablesAnimations = false
+                                    withTransaction(transaction) { headerProgress = progress }
+                                }
                             Text(album.artist).font(.title3).foregroundStyle(.secondary)
                             Text("\(album.tracks.count) songs · \(MusicTime.summary(album.duration))")
                                 .font(.subheadline).foregroundStyle(.secondary)
@@ -98,24 +104,12 @@ struct AlbumView: View {
             }
             .listStyle(.plain)
             .modifier(FadingHeaderScrollEdge())
-            .overlay(alignment: .top) {
-                NavigationHeaderBackdrop(progress: backdropProgress, height: topInset)
-            }
+            .modifier(AlbumNavigationHeader(title: album.title, progress: headerProgress, height: topInset))
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                FadingNavigationTitle(title: album.title, progress: titleProgress)
-                    .accessibilityHidden(titleProgress == 0)
-            }
-        }
     }
-
-    // Offset the two reveal ranges by a small amount in both scroll directions.
-    private var backdropProgress: CGFloat { min(headerProgress / 0.88, 1) }
-    private var titleProgress: CGFloat { max((headerProgress - 0.12) / 0.88, 0) }
 
     private var discNumbers: [Int] { Set(album.tracks.map { $0.discNumber ?? 1 }).sorted() }
     private var isCurrentAlbum: Bool { player.currentTrack?.albumID == album.id }

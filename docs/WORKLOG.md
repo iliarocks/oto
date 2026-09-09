@@ -425,3 +425,11 @@ The library now reveals its background over the first 56 points of scrolling, us
 The player hit-target/dismissal and album header/reversal/final-song checks passed in dark mode (`work/header-player47-dark.xcresult`). Temporary library inspection captures cover hidden, partial, and full material states. Signed build 1.0 (47) succeeded. No playback or library data migration is involved.
 
 Light-mode album reveal/reversal/clearance also passed (`work/header47-light.xcresult`). Reviewed library material captures in both appearances and confirmed returning from an album preserves the library's scrolled backdrop, which fades away again at the top (`work/header47-library-return-final.xcresult`). The temporary capture-only test was removed afterward. Build 47's packaged version was verified, installed, and launched normally on the connected iPhone, preserving the existing library and playback state.
+
+## Make the album header reveal reversible — September 8
+
+Replaced the separate backdrop and UIKit-title animations with one interpolated album-header progress value. Both layers derive their opacity from the same 12%-staggered ranges; a symmetric 220-millisecond ease-in/ease-out curve makes the reverse sequence retrace the forward one. The title now applies that interpolated alpha directly, without its own delay or animation. The library retains its existing backdrop behavior.
+
+The header boundary, partial reveal/reversal, playback, dismissal, and final-song-clearance check passed in dark and light appearances. The initial recording showed a fast reverse could still skip the fade. Made the shared progress animation explicit, overriding any inherited suppression from scrolling; the final check passed (`work/header48-reversal-verified.xcresult`), and recorded frames show the intermediate reverse-fade states (`work/header48-reversal-verified.mp4`). Signed build 1.0 (48) succeeded. Existing music and playback data are preserved.
+
+Verified the packaged version and installed and launched build 48 normally on the connected iPhone.
