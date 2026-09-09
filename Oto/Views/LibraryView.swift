@@ -9,15 +9,36 @@ struct LibraryView: View {
     @State private var showingPlayer = false
     @State private var path: [String] = []
     @State private var chooseAfterSettingsDismisses = false
+    @State private var previewingRefresh: Bool = {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--preview-refresh-library")
+        #else
+        false
+        #endif
+    }()
+
+    private var showingScanProgress: Bool { library.isScanning || previewingRefresh }
+
+    private var displayedProgress: ScanProgress? {
+        #if DEBUG
+        if previewingRefresh && !library.isScanning {
+            let tracks = library.tracks
+            let completed = tracks.count / 2
+            return ScanProgress(completed: completed, total: tracks.count,
+                filename: tracks.isEmpty ? "" : (tracks[completed].relativePath as NSString).lastPathComponent)
+        }
+        #endif
+        return library.progress
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
             Group {
-                if library.albums.isEmpty && !library.isScanning { emptyLibrary }
+                if library.albums.isEmpty && !showingScanProgress { emptyLibrary }
                 else {
                     List {
-                        if library.isScanning { scanProgress }
-                        if !library.isScanning, let issues = library.snapshot?.issues, !issues.isEmpty {
+                        if showingScanProgress { scanProgress }
+                        if !showingScanProgress, let issues = library.snapshot?.issues, !issues.isEmpty {
                             Button { showingSettings = true } label: {
                                 Label(issues.count == 1 ? "1 file needs attention" : "\(issues.count) files need attention", systemImage: "exclamationmark.circle")
                                     .font(.subheadline)
@@ -107,6 +128,9 @@ struct LibraryView: View {
         .sheet(isPresented: $showingPlayer) {
             NowPlayingView(player: player)
         }
+        .onChange(of: library.isScanning) { _, scanning in
+            if scanning { previewingRefresh = false }
+        }
         .onChange(of: library.folderPath) { old, new in
             if old != new {
                 player.stop()
@@ -168,10 +192,13 @@ struct LibraryView: View {
                 HStack {
                     Text(library.isCancelling ? "Cancelling…" : "Reading your music…").font(.headline)
                     Spacer()
-                    Button("Cancel") { library.cancelScan() }.font(.subheadline)
+                    Button("Cancel") {
+                        previewingRefresh = false
+                        library.cancelScan()
+                    }.font(.subheadline)
                         .disabled(library.isCancelling)
                 }
-                if let progress = library.progress, progress.total > 0 {
+                if let progress = displayedProgress, progress.total > 0 {
                     ProgressView(value: Double(progress.completed), total: Double(progress.total))
                     Text("\(progress.completed) of \(progress.total) songs").font(.caption).foregroundStyle(.secondary)
                     if !progress.filename.isEmpty {

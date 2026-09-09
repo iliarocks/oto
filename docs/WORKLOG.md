@@ -313,3 +313,9 @@ The existing Settings/refresh/recovery UI flow passed (`work/settings-label-colo
 Replaced the trailing Done button with a native leading xmark button, matching Nagare, with an accessible “Close” label and the existing dismissal action.
 
 The Settings/refresh/recovery UI flow passed (`work/settings-close-button.xcresult`), and the screenshot confirmed the leading circular close button and retained label colors. Signed build 1.0 (35) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the isolated empty-preview argument.
+
+## Temporary refresh-banner preview — September 8
+
+Added a Debug-only `--preview-refresh-library` launch argument that keeps the existing scan banner visible over the saved library with representative halfway progress and a real indexed filename. It changes presentation only: no scan, persistence write, or music-file read is started. Cancel dismisses the preview, and starting an actual scan switches back to real progress. A normal launch has no preview.
+
+The focused UI flow passed (`work/refresh-library-preview.xcresult`), checking the populated library alongside the banner, Cancel dismissal, and normal relaunch with the library preserved. Inspected the banner screenshot. Signed build 1.0 (36) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone using the refresh-preview argument instead of the empty-preview argument, restoring the normal saved library for inspection.

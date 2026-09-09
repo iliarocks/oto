@@ -45,6 +45,30 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 10))
     }
 
+    @MainActor func testRefreshPreviewKeepsLibraryAndCanBeDismissed() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 20))
+        app.terminate()
+        app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
+        app.launchArguments = ["--preview-refresh-library"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Reading your music…"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].exists)
+        attach(app, name: "Temporary Refresh Library Preview")
+        app.buttons["Cancel"].tap()
+        XCTAssertFalse(app.staticTexts["Reading your music…"].exists)
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].exists)
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Reading your music…"].exists)
+    }
+
     @MainActor func testAlbumSortingAndPreferenceSurviveRelaunch() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let app = XCUIApplication()
