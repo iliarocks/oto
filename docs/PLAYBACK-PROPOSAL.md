@@ -7,7 +7,7 @@ Status: accepted and implemented; validation and device delivery are recorded in
 - Album pages: one prominent Play/Pause button follows the album artwork accent.
 - Now Playing: place smaller queue and repeat controls on either side of the existing previous/play/next controls, with full-sized touch targets. Active modes use the artwork accent and a subtle selected background, so selection does not depend on color alone. Repeat One adds the familiar “1.”
 - Center AirPlay below the playback controls in Now Playing. The mini player stays as it is.
-- The queue button switches the same modal into a queue view, rather than stacking another modal. Artwork and metadata become a compact current-song row, the upcoming list occupies the middle, and the two views crossfade while playback controls remain fixed. Tapping the queue button again restores the artwork view. Only the queue list scrolls.
+- The queue button switches the same modal into a queue view, rather than stacking another modal. Artwork and metadata become a compact current-song row, the upcoming list occupies the middle, and the artwork continuously resizes into the current-song thumbnail while playback controls remain fixed. Tapping the queue button again restores the artwork view. Only the queue list scrolls.
 
 ## Starting playback
 

@@ -89,6 +89,7 @@ struct NowPlayingView: View {
     @State private var seekPosition: Double = 0
     @State private var isSeeking = false
     @State private var showingQueue = false
+    @Namespace private var artworkTransition
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -99,13 +100,19 @@ struct NowPlayingView: View {
                     if showingQueue {
                         queueContent(compact: compact)
                             .padding(.top, compact ? 8 : 36)
-                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 12)))
+                            .transition(.opacity)
                     } else {
                         artworkContent(compact: compact)
-                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                            .transition(.opacity)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay {
+                    artwork
+                        .matchedGeometryEffect(id: "current-artwork", in: artworkTransition, isSource: false)
+                        .transaction { if reduceMotion { $0.animation = nil } }
+                        .allowsHitTesting(false)
+                }
                 .clipped()
                 .layoutPriority(-1)
                 playbackControls(compact: compact)
@@ -134,16 +141,23 @@ struct NowPlayingView: View {
         ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory)
     }
 
+    private var artworkSlot: some View {
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .matchedGeometryEffect(id: "current-artwork", in: artworkTransition)
+            .accessibilityHidden(true)
+    }
+
     @ViewBuilder private func artworkContent(compact: Bool) -> some View {
         if compact {
             HStack(spacing: 24) {
-                artwork.frame(maxWidth: 180, maxHeight: .infinity)
+                artworkSlot.frame(maxWidth: 180, maxHeight: .infinity)
                 metadata.frame(maxWidth: 440)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             VStack(spacing: 20) {
-                artwork.frame(maxWidth: 360, maxHeight: .infinity)
+                artworkSlot.frame(maxWidth: 360, maxHeight: .infinity)
                     .layoutPriority(-1)
                 metadata
             }
@@ -185,7 +199,7 @@ struct NowPlayingView: View {
     private func transport(compact: Bool) -> some View {
         HStack(spacing: 0) {
             modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
-                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .easeInOut(duration: 0.32)) {
+                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.5, extraBounce: 0)) {
                     showingQueue.toggle()
                 }
             }
@@ -252,7 +266,7 @@ struct NowPlayingView: View {
     private func queueContent(compact: Bool) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: compact ? 40 : 56)
+                artworkSlot.frame(width: compact ? 40 : 56, height: compact ? 40 : 56)
                 VStack(alignment: .leading, spacing: 4) {
                     MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", style: .headline, weight: .semibold)
                     MarqueeText(text: player.currentTrack?.artist ?? "", style: .subheadline, color: .secondaryLabel)

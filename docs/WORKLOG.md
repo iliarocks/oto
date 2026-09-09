@@ -385,3 +385,9 @@ Made the queue's native Remove swipe action icon-only while retaining its access
 Changed the artwork/queue transition to an eased 0.32-second fade with a subtle artwork scale and 12-point queue movement. Both directions use the same timing, the shared playback controls remain fixed, and Reduce Motion retains a short opacity-only transition.
 
 The existing queue UI flow passed (`work/queue-polish.xcresult`), including opening/closing geometry, dragging, icon-only removal, duplicates, paused restoration, and landscape. Reviewed the swipe-action and settled-spacing screenshots and captured the simulator transition. Signed build 1.0 (42) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone in normal mode.
+
+## Continuously resize artwork into the queue — September 8
+
+Replaced the combined scale/fade and queue offset with one persistent artwork overlay, using native matched geometry between the large cover slot and the current-song thumbnail slot. The image stays visible and loaded throughout a half-second, non-bouncing resize in either direction. Supporting text/list content fades without separate offset motion. Reduce Motion disables artwork movement and retains the short supporting fade. Playback controls and settled layouts retain their positions.
+
+The existing queue and large-text UI flows passed (`work/artwork-morph.xcresult`), including reverse toggles, fixed playback-control geometry, direct reorder/remove, paused restoration, and landscape. Inspected settled screenshots and transition frames from `work/artwork-morph.mp4`, confirming continuous artwork resizing in both directions without swapping images. Signed build 1.0 (43), including the Reduce Motion adjustment, succeeded; its packaged version was verified, and it was installed on the connected iPhone.
