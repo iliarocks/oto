@@ -83,7 +83,7 @@ struct AlbumView: View {
             .overlay(alignment: .top) {
                 Rectangle()
                     .fill(.regularMaterial)
-                    .opacity(headerProgress)
+                    .opacity(backdropProgress)
                     .animation(.easeOut(duration: 0.18), value: headerProgress)
                     .frame(height: topInset)
                     .offset(y: -topInset)
@@ -96,11 +96,15 @@ struct AlbumView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                FadingNavigationTitle(title: album.title, progress: headerProgress)
-                    .accessibilityHidden(headerProgress == 0)
+                FadingNavigationTitle(title: album.title, progress: titleProgress)
+                    .accessibilityHidden(titleProgress == 0)
             }
         }
     }
+
+    // Offset the two reveal ranges by a small amount in both scroll directions.
+    private var backdropProgress: CGFloat { min(headerProgress / 0.88, 1) }
+    private var titleProgress: CGFloat { max((headerProgress - 0.12) / 0.88, 0) }
 
     private var discNumbers: [Int] { Set(album.tracks.map { $0.discNumber ?? 1 }).sorted() }
     private func isCurrent(_ track: Track) -> Bool { player.currentTrack == track }

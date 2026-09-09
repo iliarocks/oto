@@ -203,3 +203,9 @@ Signed build succeeded; inspected the packaged version keys as 0.1 (16). Install
 Removed the main heading's scroll-linked opacity and accessibility hiding at the user's request. It now stays at its normal opacity as it scrolls under the header. The toolbar title/backdrop reveal still uses the same corrected boundary, range, and easing; simplified geometry observation back to the reveal amount alone.
 
 The existing slow-scroll, reversal, playback, dismissal, and final-song-clearance check passed (`work/main-heading-visible.xcresult`). Signed build 0.1 (17) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.
+
+## Slightly stagger the header fades — September 8
+
+Offset the two scroll-driven reveal ranges by 12% of the existing 56-point range (about 7 points). Frosting reveals over 0–88% and title text over 12–100%, so the background begins first and remains a little longer on reversal. Most of the fades overlap. The title's accessibility visibility follows its own reveal amount. Main album text stays at full opacity; the existing easing and corrected scroll boundary are retained.
+
+The existing slow-scroll/reversal/playback/dismissal/clearance check passed (`work/header-stagger.xcresult`). Signed build 0.1 (18) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with existing app data preserved.
