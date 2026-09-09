@@ -53,7 +53,7 @@ struct AlbumView: View {
                                 HStack(spacing: 14) {
                                     Group {
                                         if isCurrent(track) {
-                                            Image(systemName: player.isPlaying ? "speaker.wave.2.fill" : "speaker.fill").font(.caption)
+                                            Image(systemName: player.wantsPlayback ? "speaker.wave.2.fill" : "speaker.fill").font(.caption)
                                         } else { Text(track.trackNumber.map(String.init) ?? "–").font(.subheadline).monospacedDigit() }
                                     }
                                     .foregroundStyle(isCurrent(track) ? accent : Color.secondary)
@@ -70,7 +70,7 @@ struct AlbumView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("\(track.title), \(MusicTime.clock(track.duration))")
-                            .accessibilityValue(isCurrent(track) ? (player.isPlaying ? "Playing" : "Paused") : "")
+                            .accessibilityValue(isCurrent(track) ? (player.wantsPlayback ? "Playing" : "Paused") : "")
                             .accessibilityIdentifier("track-\(track.title)")
                             .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                             .listRowSeparator(.hidden)

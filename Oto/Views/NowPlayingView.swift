@@ -45,7 +45,7 @@ struct MiniPlayer: View {
                     ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: 36)
                     VStack(alignment: .leading, spacing: 3) {
                         MarqueeText(text: player.currentTrack?.title ?? "", style: .subheadline, weight: .medium)
-                        MarqueeText(text: player.isLoading ? "Opening song…" : player.currentTrack?.artist ?? "", style: .caption1, color: .secondaryLabel)
+                        MarqueeText(text: player.currentTrack?.artist ?? "", style: .caption1, color: .secondaryLabel)
                     }
                 }
                 .contentShape(Rectangle())
@@ -53,11 +53,11 @@ struct MiniPlayer: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Now Playing: \(player.currentTrack?.title ?? "")")
             .accessibilityIdentifier("mini-player")
-            Button { if player.isLoading { player.cancelLoading() } else { player.toggle() } } label: {
-                Image(systemName: player.isLoading ? "xmark" : player.isPlaying ? "pause.fill" : "play.fill")
+            Button { player.toggle() } label: {
+                Image(systemName: player.wantsPlayback ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .semibold)).frame(width: 48, height: 48)
             }
-            .accessibilityLabel(player.isLoading ? "Cancel Loading" : player.isPlaying ? "Pause" : "Play")
+            .accessibilityLabel(player.wantsPlayback ? "Pause" : "Play")
             Button { player.next() } label: {
                 Image(systemName: "forward.fill").font(.system(size: 20, weight: .semibold)).frame(width: 44, height: 48)
             }
@@ -176,14 +176,12 @@ struct NowPlayingView: View {
         HStack(spacing: compact ? 12 : 38) {
             Button { player.previous() } label: { Image(systemName: "backward.fill").font(.system(size: 28)).frame(width: 52, height: 60) }
                 .accessibilityLabel("Previous Song")
-            Button { if player.isLoading { player.cancelLoading() } else { player.toggle() } } label: {
-                Group {
-                    if player.isLoading { Image(systemName: "xmark").font(.system(size: 36)) }
-                    else { Image(systemName: player.isPlaying ? "pause.fill" : "play.fill").font(.system(size: 44)) }
-                }
-                .frame(width: 64, height: 64)
+            Button { player.toggle() } label: {
+                Image(systemName: player.wantsPlayback ? "pause.fill" : "play.fill")
+                    .font(.system(size: 44))
+                    .frame(width: 64, height: 64)
             }
-            .accessibilityLabel(player.isLoading ? "Cancel Loading" : player.isPlaying ? "Pause" : "Play")
+            .accessibilityLabel(player.wantsPlayback ? "Pause" : "Play")
             .accessibilityIdentifier("now-playing-toggle")
             Button { player.next() } label: { Image(systemName: "forward.fill").font(.system(size: 28)).frame(width: 52, height: 60) }
                 .accessibilityLabel("Next Song").disabled(!player.hasNext)

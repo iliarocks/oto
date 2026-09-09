@@ -45,6 +45,8 @@ private actor AudioSessionController {
 @MainActor @Observable final class PlaybackController: NSObject, AVAudioPlayerDelegate {
     private(set) var currentTrack: Track?
     private(set) var isPlaying = false
+    // Transport intent stays stable while preparing a song or activating audio.
+    private(set) var wantsPlayback = false
     private(set) var isLoading = false
     private(set) var elapsed: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
@@ -63,7 +65,6 @@ private actor AudioSessionController {
     @ObservationIgnored private var bookmark: Data?
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var loadID = UUID()
-    @ObservationIgnored private var wantsPlayback = false
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var notifications: [NSObjectProtocol] = []
@@ -86,7 +87,7 @@ private actor AudioSessionController {
     }
 
     func toggle() {
-        if isPlaying || (isLoading && wantsPlayback) { pause() }
+        if wantsPlayback { pause() }
         else { resume() }
     }
 
@@ -164,16 +165,6 @@ private actor AudioSessionController {
         duration = 0
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         Task { await session.deactivate() }
-    }
-
-    func cancelLoading() {
-        guard isLoading else { return }
-        loadID = UUID()
-        loadTask?.cancel()
-        loadTask = nil
-        isLoading = false
-        pause()
-        // Keep the selected song visible so Play is a clear retry action.
     }
 
     private func loadCurrent(autoplay: Bool = true) {

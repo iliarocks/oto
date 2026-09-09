@@ -14,7 +14,6 @@ struct PlaybackSlider: UIViewRepresentable {
         view.player = player
         view.active = active
         view.tintColor = UIColor(accent)
-        view.isEnabled = !player.isLoading
         view.maximumValue = Float(max(player.duration, 1))
         view.preview = { preview = $0 }
         view.editing = { seeking = $0 }
@@ -77,7 +76,7 @@ final class PlaybackSliderView: UISlider {
     }
 
     override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        guard super.beginTracking(touch, with: event) else { return false }
+        guard player?.isLoading == false, super.beginTracking(touch, with: event) else { return false }
         scrubbing = true
         seekingTrackID = player?.currentTrack?.id
         stopDisplayLink()
@@ -114,7 +113,7 @@ final class PlaybackSliderView: UISlider {
     override func accessibilityIncrement() { adjustAccessibility(by: 5) }
     override func accessibilityDecrement() { adjustAccessibility(by: -5) }
     private func adjustAccessibility(by delta: Double) {
-        guard isEnabled, let player else { return }
+        guard let player, !player.isLoading else { return }
         player.seek(to: player.preciseElapsed + delta)
         refresh()
     }

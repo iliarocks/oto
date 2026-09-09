@@ -217,3 +217,11 @@ Compared the earlier compact-layout commit (017ab52) and its reversal (b0d2c04).
 Normal and largest-text scroll/playback/dismissal/final-song-clearance checks passed (`work/roomier-compact-lists.xcresult`). Inspected the song list and a four-album library preview, including a wrapped title. The preview uses locally retagged copies of the original test fixture under ignored `work/spacing-preview`, not the user's music. Signed build 0.1 (19) succeeded and the packaged build number was verified.
 
 Installed and launched build 19 on the connected iPhone, preserving its existing library.
+
+## Stable playback controls — September 8
+
+Removed the mini-player's “Opening song…” artist replacement and both players' temporary X/cancel controls. Play/pause and the album-row speaker now follow observable playback intent, so preparing a song or activating the audio session doesn't briefly show a paused state. Pause remains available during preparation and prevents autoplay; tapping again resumes. The scrubber retains its normal appearance during preparation while still guarding premature seeks. Library scan/Refresh Library progress is preserved. Removed the unused playback-cancellation action and updated the usage notes.
+
+Expanded the existing playback checks to cover pausing a pending song, toggling twice before audio-session activation finishes, and skipping while playing or paused.
+
+All 17 library/playback tests and both playback UI flows passed (`work/stable-playback-controls.xcresult`). Signed build 0.1 (20) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.

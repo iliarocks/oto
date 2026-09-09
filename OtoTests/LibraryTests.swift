@@ -171,9 +171,12 @@ final class LibraryTests: XCTestCase {
         defer { player.stop() }
         player.play(snapshot.tracks, bookmark: snapshot.bookmark)
         try await waitUntil { player.isPlaying }
-        player.pause()
         player.next()
+        XCTAssertTrue(player.wantsPlayback, "Pause stays visible when advancing during playback")
+        player.toggle()
+        XCTAssertFalse(player.wantsPlayback)
         player.previous()
+        XCTAssertFalse(player.wantsPlayback, "Skipping while paused must keep Play visible")
         try await waitUntil { !player.isLoading }
         XCTAssertEqual(player.currentTrack?.title, "First Light")
         XCTAssertFalse(player.isPlaying)
@@ -284,7 +287,7 @@ final class LibraryTests: XCTestCase {
         XCTAssertFalse(player.isLoading)
     }
 
-    @MainActor func testCancelledLoadingCanRetrySelectedSong() async throws {
+    @MainActor func testToggleDuringLoadingPreservesPauseAndCanResume() async throws {
         let music = temporary.appendingPathComponent("Music")
         try copyFixture("01", "flac", into: music)
         let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
@@ -293,14 +296,25 @@ final class LibraryTests: XCTestCase {
         defer { player.stop() }
         player.play(snapshot.tracks, bookmark: snapshot.bookmark)
         XCTAssertTrue(player.isLoading)
-        player.cancelLoading()
-        XCTAssertFalse(player.isLoading)
+        XCTAssertTrue(player.wantsPlayback)
+        player.toggle()
+        XCTAssertTrue(player.isLoading)
+        XCTAssertFalse(player.wantsPlayback)
         XCTAssertEqual(player.currentTrack?.title, "First Light")
+        try await waitUntil { !player.isLoading }
+        XCTAssertFalse(player.isPlaying)
+        XCTAssertFalse(player.wantsPlayback)
+        XCTAssertNil(player.errorMessage)
+        player.toggle()
+        XCTAssertTrue(player.wantsPlayback)
+        // A second tap must pause even before audio-session activation completes.
+        player.toggle()
+        XCTAssertFalse(player.wantsPlayback)
         try await Task.sleep(for: .milliseconds(200))
         XCTAssertFalse(player.isPlaying)
-        XCTAssertNil(player.errorMessage)
-        player.resume()
+        player.toggle()
         try await waitUntil { player.isPlaying }
+        XCTAssertTrue(player.wantsPlayback)
         XCTAssertEqual(player.currentTrack?.title, "First Light")
     }
 
