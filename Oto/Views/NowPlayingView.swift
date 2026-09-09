@@ -98,6 +98,7 @@ struct NowPlayingView: View {
                 ZStack {
                     if showingQueue {
                         queueContent(compact: compact)
+                            .padding(.top, compact ? 8 : 36)
                             .transition(.opacity)
                     } else {
                         artworkContent(compact: compact)

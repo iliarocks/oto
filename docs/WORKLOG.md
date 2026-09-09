@@ -371,3 +371,9 @@ Moved Queue into the former shuffle position to the left of Previous, opposite R
 All 41 unit/integration tests and four focused UI flows passed (`work/remove-shuffle.xcresult`). Coverage includes ordered starts and repeat cycles, dropping the old saved mode, queue restoration, dragging/removal, one correctly positioned queue button, fixed control geometry, album Play/Pause, landscape, and large text. Reviewed the updated Now Playing screenshot. Updated current behavior documentation.
 
 Signed build 1.0 (40) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone without preview arguments.
+
+## Give the queue more top padding — September 8
+
+Added 36 points of top padding inside the queue content area in portrait, bringing the current-song row down to approximately the artwork's top edge at the standard phone size. Landscape uses a smaller 8-point addition to preserve list space. The shared scrubber and transport retain their positions when switching views.
+
+The existing queue UI flow passed (`work/queue-top-padding.xcresult`), including fixed control geometry, direct dragging, removal, paused restoration, and landscape. Reviewed the settled queue screenshot. Signed build 1.0 (41) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone in normal mode.
