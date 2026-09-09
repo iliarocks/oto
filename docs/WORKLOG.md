@@ -485,3 +485,9 @@ The App Store button retains Nagare's normal download presentation, with a clear
 ## Replace website screenshots with current build — September 8
 
 Replaced the historical phone image with unedited captures from simulator build 1.0 (53), using the actual eight-album library after a fresh scan. Verified both captures show the current Settings-only toolbar and title ordering. The page now selects a matching light/dark screenshot via `picture`; new asset filenames avoid retaining the old image in browser caches. Page and both images return HTTP 200, and the existing local preview was refreshed. No app code changes, publishing, or remote push.
+
+## Playing-state website imagery and true-black dark palette — September 8
+
+Captured both appearances with Feather by Nujabes actively playing, so the floating player and Pause/Next controls are visible. Used a temporary simulator-only launch hook to start playback without UI automation; restored the app source afterward and reinstalled the ordinary simulator build after capture. Reviewed the unedited captures and updated the page's picture sources and alt text. No iPhone app changes.
+
+Changed only the website's dark palette to a true-black background and neutral gray surfaces/text, retaining the existing light palette and brand accent. Page and both new screenshot assets return HTTP 200 locally. No publishing or remote push.
