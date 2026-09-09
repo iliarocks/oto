@@ -35,6 +35,9 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["choose-folder"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["album-Quiet Hours"].exists)
+        XCTAssertTrue(app.staticTexts["Choose a folder"].exists)
+        XCTAssertFalse(app.staticTexts["Your music, right here"].exists)
+        XCTAssertFalse(app.staticTexts["Choose a folder of songs or albums from Files. Your music stays in its folder."].exists)
         attach(app, name: "Temporary Empty Library Preview")
         app.terminate()
         app.launchArguments = []

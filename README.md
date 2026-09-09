@@ -35,7 +35,7 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 
 ## Using Oto
 
-1. Tap **Choose Music Folder**, navigate to your folder in Files, and tap **Open**.
+1. Tap the **folder-plus** button, navigate to your folder in Files, and tap **Open**.
 2. Open an album, then tap **Play** or an individual song. Playback continues in album order and stops after the final song.
 3. Tap the floating player for seeking, previous/next, and AirPlay. Swipe down to dismiss Now Playing. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
 4. After changing the contents of your folder, pull to refresh or use **Settings → Refresh**. A notice in the library links to any files that couldn't be read. **Settings**, opened from the gear at the top left, shows the selected folder; tap its **Folder** row to choose another. Its About section links to Privacy and Support.

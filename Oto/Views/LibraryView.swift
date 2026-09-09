@@ -133,12 +133,10 @@ struct LibraryView: View {
 
     private var emptyLibrary: some View {
         ContentUnavailableView {
-            Label(library.snapshot == nil ? "Your music, right here" : "No Songs Found", systemImage: "music.note")
+            Label(library.snapshot == nil ? "Choose a folder" : "No Songs Found", systemImage: "music.note")
         } description: {
             if let snapshot = library.snapshot {
                 Text("Add music to “\(snapshot.folderName)” in Files, then refresh your library.")
-            } else {
-                Text("Choose a folder of songs or albums from Files. Your music stays in its folder.")
             }
         } actions: {
             if library.snapshot != nil {
@@ -154,7 +152,10 @@ struct LibraryView: View {
                     Label("Choose Music Folder", systemImage: "folder.badge.plus")
                         .foregroundStyle(Color(uiColor: .systemBackground))
                 }
+                .labelStyle(.iconOnly)
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .buttonBorderShape(.circle)
                 .accessibilityIdentifier("choose-folder")
             }
         }

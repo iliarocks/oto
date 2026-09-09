@@ -289,3 +289,9 @@ Rendered real SF Symbol alternatives for review in `work/sort-icon-options.png`.
 Added a Debug-only `--preview-empty-library` launch argument. It opens the real empty-library UI using a unique temporary persistence directory, preserving the user's saved library, bookmark, cached artwork, and preference. Folder selection remains interactive within the temporary store. A normal fresh launch uses the original library again. Release builds ignore this argument.
 
 The UI check confirmed that a populated library becomes empty only for the preview launch and returns intact on the next normal launch (`work/empty-library-preview.xcresult`). Inspected the empty-state screenshot. Signed build 1.0 (31) succeeded, its packaged build number was verified, and it was installed on the connected iPhone and launched with the preview argument.
+
+## Simplify the first-use empty state — September 8
+
+Copied Nagare's exact light/dark AccentColor asset values as Oto's default accent. Changed the first-use heading to “Choose a folder,” removed its description, and made the folder-picker action an icon-only folder-plus button with a native large circular shape. Retained its accessible Choose Music Folder label and identifier. Existing album-art-derived accents and the separate No Songs Found state retain their behavior.
+
+The empty-preview UI check passed, including the new heading, absent description, and intact saved library on normal relaunch (`work/simplified-empty-library.xcresult`). Inspected the resulting native empty state. Signed build 1.0 (32) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the temporary empty-preview argument.
