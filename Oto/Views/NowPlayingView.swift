@@ -6,13 +6,18 @@ struct PlayerBar: ViewModifier {
     // receives the bar's safe-area inset when scrolling to the final row.
     let player: PlaybackController
     let open: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.safeAreaBar(edge: .bottom, spacing: 0) { bar }
-        } else {
-            content.safeAreaInset(edge: .bottom, spacing: 0) { bar }
+        Group {
+            if #available(iOS 26, *) {
+                content.safeAreaBar(edge: .bottom, spacing: 0) { bar }
+            } else {
+                content.safeAreaInset(edge: .bottom, spacing: 0) { bar }
+            }
         }
+        .animation(reduceMotion ? .easeOut(duration: 0.2) : .smooth(duration: 0.35, extraBounce: 0),
+                   value: player.currentTrack != nil)
     }
 
     @ViewBuilder private var bar: some View {
@@ -31,7 +36,24 @@ struct PlayerBar: ViewModifier {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
                 }
+                .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
         }
+    }
+}
+
+/// Replacing the symbol's identity avoids the system's play/pause glyph morph.
+struct PlaybackSymbol: View {
+    let isPlaying: Bool
+    var body: some View {
+        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+            .id(isPlaying)
+            .contentTransition(.identity)
+            .transition(.identity)
+            .transaction { transaction in
+                transaction.animation = nil
+                transaction.disablesAnimations = true
+            }
+            .accessibilityHidden(true)
     }
 }
 
@@ -48,26 +70,32 @@ struct MiniPlayer: View {
                         MarqueeText(text: player.currentTrack?.artist ?? "", style: .caption1, color: .secondaryLabel)
                     }
                 }
+                .padding(.vertical, 10)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Now Playing: \(player.currentTrack?.title ?? "")")
             .accessibilityIdentifier("mini-player")
             Button { player.toggle() } label: {
-                Image(systemName: player.wantsPlayback ? "pause.fill" : "play.fill")
-                    .font(.system(size: 20, weight: .semibold)).frame(width: 48, height: 48)
+                PlaybackSymbol(isPlaying: player.wantsPlayback)
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: 56, height: 68)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel(player.wantsPlayback ? "Pause" : "Play")
+            .accessibilityIdentifier("mini-player-toggle")
             Button { player.next() } label: {
-                Image(systemName: "forward.fill").font(.system(size: 20, weight: .semibold)).frame(width: 44, height: 48)
+                Image(systemName: "forward.fill").font(.system(size: 20, weight: .semibold))
+                    .frame(width: 44, height: 68)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Next Song")
+            .accessibilityIdentifier("mini-player-next")
             .disabled(!player.hasNext)
         }
         .buttonStyle(.plain)
         .tint(.primary)
         .padding(.horizontal, 18)
-        .padding(.vertical, 10)
         .modifier(PlayerGlass())
     }
 }
@@ -211,9 +239,10 @@ struct NowPlayingView: View {
             .accessibilityLabel("Previous Song")
             Spacer(minLength: 0)
             Button { player.toggle() } label: {
-                Image(systemName: player.wantsPlayback ? "pause.fill" : "play.fill")
+                PlaybackSymbol(isPlaying: player.wantsPlayback)
                     .font(.system(size: compact ? 34 : 42))
                     .frame(width: 60, height: compact ? 56 : 64)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel(player.wantsPlayback ? "Pause" : "Play")
             .accessibilityIdentifier("now-playing-toggle")

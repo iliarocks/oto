@@ -80,6 +80,7 @@ struct LibraryView: View {
             .modifier(PlayerBar(player: player) { showingPlayer = true })
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.bar, for: .navigationBar)
             .navigationDestination(for: String.self) { id in
                 if let album = library.albums.first(where: { $0.id == id }) {
                     AlbumView(album: album, library: library, player: player)

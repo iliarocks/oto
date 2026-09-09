@@ -27,7 +27,11 @@ struct OtoApp: App {
         #endif
         let library = LibraryStore(persistence: persistence)
         _library = State(initialValue: library)
-        _player = State(initialValue: PlaybackController(artworkDirectory: persistence.artworkDirectory, library: library.snapshot))
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory, library: library.snapshot)
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--clear-playback") { player.stop() }
+        #endif
+        _player = State(initialValue: player)
     }
 
     var body: some Scene {

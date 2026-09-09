@@ -403,3 +403,15 @@ The existing queue UI flow passed (`work/queue-edge-fade.xcresult`), covering tr
 Shortened the artwork/queue transition from 0.55 to 0.4 seconds and replaced the symmetric ease-in/ease-out with a custom cubic curve (0.22, 0.8, 0.25, 1). It starts promptly and decelerates into place. Shared artwork geometry, the queue fade, and Reduce Motion behavior are unchanged.
 
 Signed build 1.0 (45) succeeded, its packaged version was verified, and it was installed on the connected iPhone. This timing-only adjustment was build-checked; the existing interaction tests were not rerun.
+
+## Refine transport controls, player entrance, and header materials — September 8
+
+PlaybackSymbol now replaces the Play/Pause glyph's identity without a content transition or implicit animation, covering both players and the album button. The album action is an icon-only 240-point capsule, with an explicit Play/Pause accessibility label. Mini-player Play/Pause has an explicit 56×68-point rectangular hit region; Next uses a separate 44×68-point region. The bar retains its normal overall height, with metadata free to grow for accessibility sizes.
+
+Added a short, non-bouncing entrance to the mini player's safe-area insertion, with a fade-only Reduce Motion alternative. Added a Debug-only clear-playback launch argument using the existing stop/checkpoint path; it clears the playback session without touching library data or music files.
+
+The header discrepancy came from the album's custom regular-material overlay versus the library's native navigation-bar material. Both now use the bar material while retaining the album's existing scroll-driven backdrop/title reveal. Updated architecture notes accordingly.
+
+Dark-mode UI checks passed for edge taps, modal dismissal, large text, final-song clearance, gradual header reveal/reversal, playback restoration, and clearing playback without losing the library. Reviewed dark screenshots and recorded frames confirming the player entrance and direct glyph changes. Signed build 1.0 (46) succeeded, its packaged version was verified, and it was installed on the connected iPhone. Launched once with clear-playback, then relaunched normally so the user can select a song and inspect the first entrance.
+
+The player hit-target/dismissal and header/final-song flows also passed in light mode (`work/player-interactions-light.xcresult`); reviewed the light-mode album/player screenshot. Dark results are in `work/player-interactions-dark.xcresult`. No playback-engine changes were required.

@@ -36,15 +36,18 @@ struct AlbumView: View {
                             if isCurrentAlbum { player.toggle() }
                             else { play() }
                         } label: {
-                            Label(albumIsPlaying ? "Pause" : "Play", systemImage: albumIsPlaying ? "pause.fill" : "play.fill")
+                            PlaybackSymbol(isPlaying: albumIsPlaying)
+                                .font(.title3.weight(.semibold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 5)
                                 .foregroundStyle(accentInk)
                         }
                         .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.capsule)
+                        .accessibilityLabel(albumIsPlaying ? "Pause" : "Play")
                         .accessibilityIdentifier("play-album")
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
-                        .frame(maxWidth: 280)
+                        .frame(maxWidth: 240)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -97,7 +100,7 @@ struct AlbumView: View {
             .modifier(AlbumScrollEdge())
             .overlay(alignment: .top) {
                 Rectangle()
-                    .fill(.regularMaterial)
+                    .fill(.bar)
                     .opacity(backdropProgress)
                     .animation(.easeOut(duration: 0.18), value: headerProgress)
                     .frame(height: topInset)

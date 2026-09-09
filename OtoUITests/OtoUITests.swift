@@ -162,6 +162,16 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.buttons["mini-player"].exists)
         app.buttons["mini-player"].tap()
         XCTAssertEqual(app.buttons["now-playing-toggle"].label, "Play")
+        app.terminate()
+        app.launchArguments = ["--clear-playback"]
+        app.launch()
+        XCTAssertTrue(album.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["mini-player"].exists)
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(album.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["mini-player"].exists, "Clearing playback must persist without removing the library")
     }
 
     @MainActor func testSwipeQueueModesEditingAndPausedRestoration() async throws {
@@ -345,8 +355,23 @@ final class OtoUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Library"].exists)
         XCTAssertEqual(app.staticTexts["library-summary"].label, "1 album · 2 songs")
         app.buttons["album-Quiet Hours"].tap()
-        app.buttons["track-Second Light"].tap()
+        XCTAssertFalse(app.buttons["mini-player"].exists)
+        app.buttons["track-First Light"].tap()
         XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
+        let miniToggle = app.buttons["mini-player-toggle"]
+        let next = app.buttons["mini-player-next"]
+        XCTAssertGreaterThanOrEqual(miniToggle.frame.width, 56)
+        XCTAssertGreaterThanOrEqual(miniToggle.frame.height, 68)
+        XCTAssertLessThanOrEqual(miniToggle.frame.maxX, next.frame.minX)
+        miniToggle.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.1)).tap()
+        XCTAssertEqual(miniToggle.label, "Play")
+        XCTAssertFalse(app.buttons["now-playing-toggle"].exists)
+        XCTAssertTrue(app.buttons["mini-player"].label.contains("First Light"))
+        miniToggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.9)).tap()
+        XCTAssertEqual(miniToggle.label, "Pause")
+        XCTAssertTrue(app.buttons["mini-player"].label.contains("First Light"))
+        next.tap()
+        XCTAssertTrue(app.buttons["mini-player"].label.contains("Second Light"))
         attach(app, name: "Floating Player on Album")
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.staticTexts["library-summary"].waitForExistence(timeout: 10))
