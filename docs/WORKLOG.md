@@ -325,3 +325,7 @@ The focused UI flow passed (`work/refresh-library-preview.xcresult`), checking t
 Removed the download notice and Cancel button from the refresh banner, leaving its heading, progress bar, song count, and filename. Download availability checks and existing per-file issues/playback errors remain intact, as does the separately requested Settings footer. The inspection preview now ends on a normal relaunch or when a real scan begins.
 
 Updated the existing preview UI check to verify the removed controls and preserved library on normal relaunch; it passed (`work/simplified-refresh-banner.xcresult`). Inspected the simplified banner screenshot. Signed build 1.0 (37) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the refresh-preview argument for continued inspection.
+
+## Restore normal mode and propose playback features — September 8
+
+Relaunched the installed build 1.0 (37) on the connected iPhone without preview arguments, restoring the ordinary library and refresh behavior. Wrote `docs/PLAYBACK-PROPOSAL.md` for review: proposed control placement, shuffle/repeat semantics, queue insertion/editing, paused restoration, and implementation order. No playback features were implemented or app build changed in this step.
