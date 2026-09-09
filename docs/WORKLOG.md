@@ -307,3 +307,9 @@ Verified the focused layout diff and successful signed build 1.0 (33). Confirmed
 Applied the native plain button style to the Settings form, matching Nagare: row labels use the primary text color (black in light mode, white in dark mode), leading symbols retain the accent, and folder values, external-link symbols, and footers retain their secondary/tertiary styling. This covers both folder-selection states and the About links.
 
 The existing Settings/refresh/recovery UI flow passed (`work/settings-label-colors.xcresult`), and the light-mode screenshot confirmed the requested colors. Signed build 1.0 (34) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the isolated empty-preview argument. The saved library remains intact.
+
+## Match the Settings close button — September 8
+
+Replaced the trailing Done button with a native leading xmark button, matching Nagare, with an accessible “Close” label and the existing dismissal action.
+
+The Settings/refresh/recovery UI flow passed (`work/settings-close-button.xcresult`), and the screenshot confirmed the leading circular close button and retained label colors. Signed build 1.0 (35) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the isolated empty-preview argument.
