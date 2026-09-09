@@ -176,8 +176,8 @@ final class LibraryTests: XCTestCase {
         controller.previous()
         XCTAssertEqual(controller.elapsed, 0, accuracy: 0.1)
         controller.next()
-        try await waitUntil { !controller.isLoading && controller.currentTrack?.title == "Second Light" }
-        XCTAssertFalse(controller.isPlaying, "Skipping from pause must not unexpectedly start audio")
+        try await waitUntil { controller.isPlaying && controller.currentTrack?.title == "Second Light" }
+        XCTAssertTrue(controller.wantsPlayback, "Next deliberately starts playback from pause")
         XCTAssertFalse(controller.hasNext)
         controller.resume()
         try await waitUntil { controller.isPlaying }
@@ -189,7 +189,7 @@ final class LibraryTests: XCTestCase {
         XCTAssertLessThan(controller.elapsed, 1)
     }
 
-    @MainActor func testPreviousAndRapidSkippingRespectPause() async throws {
+    @MainActor func testPreviousAtZeroDuringRapidSkippingStartsPreviousSourceTrack() async throws {
         let music = temporary.appendingPathComponent("Music")
         try copyFixture("01", "flac", into: music)
         try copyFixture("02", "flac", into: music)
@@ -204,11 +204,11 @@ final class LibraryTests: XCTestCase {
         player.toggle()
         XCTAssertFalse(player.wantsPlayback)
         player.previous()
-        XCTAssertFalse(player.wantsPlayback, "Skipping while paused must keep Play visible")
+        XCTAssertTrue(player.wantsPlayback, "Previous at zero changes tracks and starts playback")
         try await waitUntil { !player.isLoading }
         XCTAssertEqual(player.currentTrack?.title, "First Light")
-        XCTAssertFalse(player.isPlaying)
-        XCTAssertEqual(player.elapsed, 0, accuracy: 0.1)
+        try await waitUntil { player.isPlaying }
+        XCTAssertLessThan(player.preciseElapsed, 0.5)
     }
 
     @MainActor func testFailedFolderReplacementKeepsLibrary() async throws {
@@ -405,7 +405,7 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(player.currentTrack, snapshot.tracks[0])
         player.next()
         try await waitUntil { player.isPlaying && player.currentTrack == snapshot.tracks[1] }
-        player.setRepeat(.all)
+        XCTAssertEqual(player.repeatMode, .all)
         XCTAssertTrue(player.hasNext)
         XCTAssertTrue(MPRemoteCommandCenter.shared().nextTrackCommand.isEnabled)
         player.seek(to: 7.7)
@@ -413,7 +413,9 @@ final class LibraryTests: XCTestCase {
         player.pause()
         player.enqueue([snapshot.tracks[0]], bookmark: snapshot.bookmark)
         XCTAssertFalse(player.wantsPlayback)
-        XCTAssertEqual(player.upcoming.last?.track, snapshot.tracks[0])
+        XCTAssertEqual(player.upcoming.first?.track, snapshot.tracks[0])
+        player.next()
+        try await waitUntil { player.isPlaying && player.playbackQueue.isCurrentQueued }
         try FileManager.default.removeItem(at: music.appendingPathComponent("02.flac"))
         player.next()
         try await waitUntil { player.errorMessage != nil && !player.isLoading }
@@ -421,6 +423,104 @@ final class LibraryTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(200))
         XCTAssertFalse(player.wantsPlayback, "Repeat must stop on an unavailable file rather than retry forever")
         XCTAssertEqual(player.currentEntryID, failedID)
+    }
+
+    @MainActor func testPreviousPausedResetAndTrackChangeHaveDifferentRepeatRules() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        try copyFixture("02", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        defer { player.stop() }
+        player.play(snapshot.tracks, startingAt: snapshot.tracks[1], bookmark: snapshot.bookmark)
+        try await waitUntil { player.isPlaying }
+        player.setRepeat(.one)
+        player.seek(to: 4)
+        player.previous()
+        XCTAssertEqual(player.currentTrack, snapshot.tracks[1])
+        XCTAssertTrue(player.wantsPlayback)
+        XCTAssertEqual(player.repeatMode, .one, "Restarting a playing song retains Repeat One")
+        player.pause()
+        player.seek(to: 0.2)
+        player.previous()
+        XCTAssertEqual(player.preciseElapsed, 0, accuracy: 0.001)
+        XCTAssertEqual(player.currentTrack, snapshot.tracks[1])
+        XCTAssertFalse(player.wantsPlayback)
+        XCTAssertEqual(player.repeatMode, .one, "Even below three seconds, paused Previous first resets only")
+        player.previous()
+        try await waitUntil { player.isPlaying }
+        XCTAssertEqual(player.currentTrack, snapshot.tracks[0])
+        XCTAssertEqual(player.repeatMode, .all)
+        player.pause()
+        player.seek(to: 0)
+        player.setRepeat(.one)
+        player.previous()
+        XCTAssertEqual(player.repeatMode, .one, "No previous source track means no mode change")
+        XCTAssertFalse(player.wantsPlayback)
+    }
+
+    @MainActor func testRestoredPausedPreviousResetsUnloadedSongBeforeGoingBack() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        try copyFixture("02", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        var original: PlaybackController? = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        original!.play(snapshot.tracks, startingAt: snapshot.tracks[1], bookmark: snapshot.bookmark)
+        try await waitUntil { original!.isPlaying }
+        original!.pause()
+        original!.seek(to: 2)
+        original!.setRepeat(.one)
+        original = nil
+        let restored = PlaybackController(artworkDirectory: persistence.artworkDirectory, library: snapshot)
+        defer { restored.stop() }
+        restored.previous()
+        XCTAssertFalse(restored.wantsPlayback)
+        try await waitUntil { !restored.isLoading }
+        XCTAssertEqual(restored.preciseElapsed, 0, accuracy: 0.001)
+        XCTAssertEqual(restored.currentTrack, snapshot.tracks[1])
+        XCTAssertEqual(restored.repeatMode, .one)
+        restored.previous()
+        try await waitUntil { restored.isPlaying }
+        XCTAssertEqual(restored.currentTrack, snapshot.tracks[0])
+        XCTAssertEqual(restored.repeatMode, .all)
+    }
+
+    @MainActor func testConsumableFinishResumesSourceAndPreviousSkipsDetour() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        try copyFixture("02", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        defer { player.stop() }
+        player.play(snapshot.tracks, bookmark: snapshot.bookmark)
+        let sourceFirst = player.currentEntryID
+        try await waitUntil { player.isPlaying }
+        player.pause()
+        player.enqueue([snapshot.tracks[0]], bookmark: snapshot.bookmark)
+        let detourID = player.queued[0].id
+        player.setRepeat(.one)
+        player.next()
+        try await waitUntil { player.isPlaying }
+        XCTAssertEqual(player.currentEntryID, detourID)
+        XCTAssertEqual(player.repeatMode, .all)
+        player.seek(to: 7.7)
+        try await waitUntil { player.isPlaying && player.currentTrack == snapshot.tracks[1] }
+        XCTAssertTrue(player.queued.isEmpty)
+        player.pause()
+        player.seek(to: 0)
+        player.previous()
+        try await waitUntil { player.isPlaying }
+        XCTAssertEqual(player.currentEntryID, sourceFirst)
+        XCTAssertNotEqual(player.currentEntryID, detourID)
+        player.pause()
+        player.setRepeat(.one)
+        player.jump(to: player.sourceUpcoming[0].id)
+        try await waitUntil { player.isPlaying }
+        XCTAssertEqual(player.currentTrack, snapshot.tracks[1])
+        XCTAssertEqual(player.repeatMode, .all)
     }
 
     @MainActor private func waitUntil(_ condition: () -> Bool) async throws {

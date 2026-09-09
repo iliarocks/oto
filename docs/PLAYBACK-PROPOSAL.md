@@ -1,52 +1,43 @@
-# Repeat and queue behavior
+# Source, repeat, and consumable queue behavior
 
-Status: accepted and implemented; validation and device delivery are recorded in WORKLOG.md.
+The album being played is the stable playback source. Explicit additions form a separate, temporary queue that runs before the remaining source tracks.
 
-## Where the controls live
+## Starting and adding music
 
-- Album pages: one prominent Play/Pause button follows the album artwork accent.
-- Now Playing: place smaller queue and repeat controls on either side of the existing previous/play/next controls, with full-sized touch targets. Active modes use the artwork accent and a subtle selected background, so selection does not depend on color alone. Repeat One adds the familiar “1.”
-- Center AirPlay below the playback controls in Now Playing. The mini player stays as it is.
-- The queue button switches the same modal into a queue view, rather than stacking another modal. Artwork and metadata become a compact current-song row, the upcoming list occupies the middle, and the artwork continuously resizes into the current-song thumbnail while playback controls remain fixed. Tapping the queue button again restores the artwork view. Only the queue list scrolls.
+- Play on a different album starts its first track immediately and replaces the source. Pending manual additions survive; a currently playing manual entry is consumed when left.
+- Play/Pause on the active source album toggles the current playback session, preserving position and additions. A queued song from another album does not make that other album the active source.
+- Selecting a song in an album starts the source at that song, retaining earlier source tracks for Previous and repeat.
+- Add to Queue appends after other pending manual additions, before the source remainder. Adding an album preserves its track order. If playback is paused, adding leaves it paused. With nothing loaded, an addition starts playback without establishing an album source.
+- Duplicate additions have distinct identities and can be edited independently.
 
-## Starting playback
+Example: while playing Dusk, add Care and then a Takeo Ōnuki song. Playback proceeds Dusk → Care → Takeo song → The Last Dance → the remaining Lamp tracks. Once left, the manual entries disappear from the session rather than becoming source history.
 
-Play starts the album in its original disc/track order. If the current song belongs to the displayed album, the main button reflects Play/Pause and pauses or resumes that song without replacing the queue. Tapping a song starts an album queue from that song onward.
+## Next, Previous, and repeat
 
-Starting another album or tapping a song in an album replaces the previous playback queue. Adding music without replacing it uses the trailing Add to Queue swipe action.
+Next starts playback even when previously paused. A successful manual Next changes Repeat One to Repeat All. Selecting an upcoming entry also starts playback and exits Repeat One; entries passed over in the manual queue are consumed.
 
-Previous follows actual listening history. Add to Queue appends after everything already queued.
+Previous follows the source sequence:
 
-## Repeat
+| State | Previous action | Repeat mode |
+| --- | --- | --- |
+| Paused, position greater than zero | Reset the current song to zero; stay paused | Unchanged |
+| Paused at zero | Move to the previous source song and play | One becomes All only if a track changes |
+| Playing, more than three seconds in | Restart the current song and keep playing | Unchanged |
+| Playing, near the start | Move to the previous source song and play | One becomes All only if a track changes |
 
-One button cycles through Off → Repeat All → Repeat One → Off. Its accessibility label announces the current mode.
+Near the start of a manual entry, Previous consumes that entry and returns to the most recent source song; remaining manual additions stay pending. At the beginning of the source, or with no source, Previous restarts the current song without changing the repeat mode or starting a paused song. Returning from a manual detour does not recreate consumed entries. After returning from The Last Dance to Dusk, Next goes to The Last Dance unless there are still pending manual additions.
 
-- Off: stop at the end of the queue.
-- Repeat All: replay the full current playback queue, including manually added entries. Preserve queue order each cycle.
-- Repeat One: replay the current song when it finishes. Manually pressing Next still advances; Repeat One then applies to that song.
+- Repeat Off stops after the source and pending additions end.
+- Repeat All cycles the source only, including its edited order. Manual additions play once. A queue without a source does not loop under Repeat All.
+- Repeat One repeats the current song on natural completion, including a manual entry, until the user leaves it.
+- An unavailable song stops with the existing error; repeat never creates an automatic error/retry loop.
 
-Starting another album preserves the chosen repeat mode. An unavailable file still surfaces the existing error; repeat must not create an endless error/retry loop.
+## Queue view and editing
 
-## Building and editing the queue
+Keep the accepted artwork-to-queue transition and fixed transport controls. The queue view separates Queued from Next from [album]. Clear removes pending manual additions only. Reorder and remove entries within each section; removing a source entry also removes it from subsequent repeat cycles. Reordering never interrupts audio. Swiping a song or album offers the existing icon-only Add to Queue action; queued rows retain icon-only removal.
 
-Swiping left on a song or album row reveals one native trailing action: an icon-only queue-plus button. Tapping it appends the song or entire album after everything already queued. The visible action has no text; VoiceOver announces “Add to Queue.” A swipe reveals the button rather than automatically adding on a full swipe.
+## Restoration
 
-There is no Play Next action or long-press queue menu. Moving something nearer the front remains available through reordering in the queue view.
+Save the source, its position, the active entry, pending manual additions, repeat mode, folder, and elapsed time. Restore paused without opening audio. Previous must also reset an unloaded restored song correctly. Refresh updates surviving entries and preserves the source resume point; replacing a removed current song remains paused. Switching folders clears playback.
 
-An added album stays in track order at insertion. If nothing is loaded, Add to Queue starts the selected music. If playback is paused, adding music leaves it paused. Intentional duplicate entries are allowed and independently editable.
-
-The queue view has a compact current-song row and a Playing Next list. Upcoming rows show artwork, song title, and artist, with native touch-and-hold dragging and swipe-to-remove, without an Edit mode. Tapping an upcoming entry jumps to it, passing over preceding entries. A Clear action removes upcoming entries while allowing the current song to finish; those removed entries must not return through repeat. An empty upcoming list says “Nothing queued.”
-
-Queue order is the source of truth: Next follows exactly the displayed list. Reordering does not interrupt audio. No saved playlists, automatic recommendations, or separate history screen are proposed.
-
-## Remembering playback
-
-Repeat defaults to Off and retains the user's choice. Save the current queue, song, and position so reopening Oto can restore them paused; never start audio merely because the app launched. Switching music folders clears the old queue. Removed files are reconciled on refresh without leaving broken queue entries.
-
-## Suggested implementation order
-
-1. Establish one playback-order model and add repeat, including lock-screen and headphone controls.
-2. Add the trailing Add to Queue swipe action and the editable queue view.
-3. Add paused restoration and validate interactions among manual ordering, repeat, refresh, and unavailable files.
-
-The user accepted the overall proposal and refined queue insertion to a single trailing icon-only swipe action that appends to the queue.
+The prior flat saved queue contains no source/manual provenance. Preserve its current entry and remaining order as a legacy source until an album is selected, rather than guessing which entries the user added. New saves contain explicit source and manual state.

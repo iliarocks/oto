@@ -112,7 +112,7 @@ struct AlbumView: View {
     }
 
     private var discNumbers: [Int] { Set(album.tracks.map { $0.discNumber ?? 1 }).sorted() }
-    private var isCurrentAlbum: Bool { player.currentTrack?.albumID == album.id }
+    private var isCurrentAlbum: Bool { player.sourceAlbumID == album.id && player.currentTrack != nil }
     private var albumIsPlaying: Bool { isCurrentAlbum && player.wantsPlayback }
     private func isCurrent(_ track: Track) -> Bool { player.currentTrack == track }
     private func play(_ track: Track? = nil) {

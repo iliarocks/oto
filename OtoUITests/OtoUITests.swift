@@ -140,10 +140,7 @@ final class OtoUITests: XCTestCase {
         XCTAssertEqual(toggle.label, "Play")
         app.buttons["now-playing-next"].tap()
         XCTAssertTrue(app.staticTexts["Second Light"].waitForExistence(timeout: 10))
-        XCTAssertEqual(toggle.label, "Play")
-        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: toggle)
-        waitForExpectations(timeout: 10)
-        toggle.tap()
+        XCTAssertEqual(toggle.label, "Pause")
         expectation(for: playing, evaluatedWith: toggle)
         waitForExpectations(timeout: 15)
         toggle.tap()
@@ -199,7 +196,7 @@ final class OtoUITests: XCTestCase {
         let transportFrame = toggle.frame
         let queueButtonFrame = app.buttons["queue-toggle"].frame
         app.buttons["queue-toggle"].tap()
-        XCTAssertTrue(app.staticTexts["Playing Next"].exists)
+        XCTAssertTrue(app.staticTexts["Queued"].exists)
         XCTAssertFalse(app.buttons["edit-queue"].exists)
         XCTAssertEqual(app.sliders["playback-position"].frame.minY, sliderFrame.minY, accuracy: 1)
         XCTAssertEqual(toggle.frame.minY, transportFrame.minY, accuracy: 1)
@@ -278,6 +275,82 @@ final class OtoUITests: XCTestCase {
         XCTAssertEqual(app.buttons["now-playing-toggle"].label, "Play")
         app.buttons["queue-toggle"].tap()
         XCTAssertTrue(app.buttons["queued-First Light"].exists)
+    }
+
+    @MainActor func testSourceAndConsumableQueueWithPausedPrevious() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        func little(_ value: UInt32) -> Data { withUnsafeBytes(of: value.littleEndian) { Data($0) } }
+        let byteCount = 44_100 * 2 * 60
+        var wav = Data("RIFF".utf8)
+        wav.append(little(UInt32(byteCount + 36)))
+        wav.append(Data("WAVEfmt ".utf8)); wav.append(little(16))
+        wav.append(contentsOf: [1, 0, 1, 0]); wav.append(little(44_100)); wav.append(little(88_200))
+        wav.append(contentsOf: [2, 0, 16, 0]); wav.append(Data("data".utf8)); wav.append(little(UInt32(byteCount)))
+        wav.append(Data(count: byteCount))
+        for (name, songs) in [("Album A", ["First", "Second"]), ("Album B", ["Detour"]), ("Album C", ["Other", "Remaining"])] {
+            let albumFolder = folder.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: albumFolder, withIntermediateDirectories: true)
+            for song in songs { try wav.write(to: albumFolder.appendingPathComponent(song + ".wav")) }
+        }
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        XCTAssertTrue(app.buttons["album-Album A"].waitForExistence(timeout: 20))
+        app.buttons["album-Album A"].tap()
+        app.buttons["play-album"].tap()
+        app.buttons["mini-player-toggle"].tap()
+        app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["album-Album B"].swipeLeft()
+        app.buttons["Add to Queue"].tap()
+        app.buttons["mini-player"].tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertEqual(toggle.label, "Play")
+        app.buttons["queue-toggle"].tap()
+        XCTAssertTrue(app.staticTexts["Queued"].exists)
+        XCTAssertTrue(app.staticTexts["Next from Album A"].exists)
+        XCTAssertLessThan(app.buttons["queued-Detour"].frame.minY, app.buttons["queued-Second"].frame.minY)
+        attach(app, name: "Manual Queue Above Album Source")
+        app.buttons["clear-queue"].tap()
+        XCTAssertFalse(app.buttons["queued-Detour"].exists)
+        XCTAssertTrue(app.buttons["queued-Second"].exists)
+        XCTAssertFalse(app.buttons["clear-queue"].exists)
+        app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
+            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
+        app.buttons["album-Album B"].swipeLeft()
+        app.buttons["Add to Queue"].tap()
+        app.buttons["album-Album C"].tap()
+        app.buttons["play-album"].tap()
+        app.buttons["mini-player"].tap()
+        app.buttons["queue-toggle"].tap()
+        XCTAssertTrue(app.buttons["queued-Detour"].exists)
+        XCTAssertTrue(app.staticTexts["Next from Album C"].exists)
+        XCTAssertFalse(app.buttons["queued-Second"].exists)
+        attach(app, name: "New Album Preserves Manual Queue")
+        toggle.tap()
+        app.buttons["repeat-toggle"].tap()
+        app.buttons["repeat-toggle"].tap()
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat One")
+        app.buttons["now-playing-next"].tap()
+        XCTAssertEqual(toggle.label, "Pause")
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat All")
+        app.buttons["now-playing-next"].tap()
+        XCTAssertFalse(app.buttons["queued-Detour"].exists)
+        toggle.tap()
+        app.buttons["repeat-toggle"].tap()
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat One")
+        app.sliders["playback-position"].adjust(toNormalizedSliderPosition: 0.3)
+        app.buttons["Previous Song"].tap()
+        XCTAssertEqual(toggle.label, "Play")
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat One")
+        app.buttons["Previous Song"].tap()
+        XCTAssertEqual(toggle.label, "Pause")
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat All")
+        XCTAssertTrue(app.buttons["queued-Remaining"].exists)
+        XCTAssertFalse(app.buttons["queued-Detour"].exists)
+        attach(app, name: "Previous Returns To Source Without Consumed Detour")
     }
 
     @MainActor func testAlbumPlayPausePreservesCurrentSongAndQueue() throws {

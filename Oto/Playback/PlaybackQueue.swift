@@ -15,117 +15,192 @@ struct QueueEntry: Identifiable, Codable, Equatable, Sendable {
     init(track: Track) { id = UUID(); self.track = track }
 }
 
-/// Canonical entries define playback/repeat order; history records actual listening.
-/// Each insertion has its own identity, including repeated copies of the same song.
+/// Source entries are stable; manual additions are consumed when left.
 struct PlaybackQueue: Codable, Sendable {
-    private(set) var entries: [QueueEntry] = []
-    private(set) var currentID: UUID?
-    private(set) var upcomingIDs: [UUID] = []
-    private(set) var history: [UUID] = []
+    private(set) var source: [QueueEntry] = []
+    private(set) var sourcePosition = -1
+    private(set) var queued: [QueueEntry] = []
+    private(set) var current: QueueEntry?
     var repeatMode: RepeatMode = .off
 
-    var current: QueueEntry? { entries.first { $0.id == currentID } }
-    var upcoming: [QueueEntry] {
-        let byID = Dictionary(uniqueKeysWithValues: entries.map { ($0.id, $0) })
-        return upcomingIDs.compactMap { byID[$0] }
+    var currentID: UUID? { current?.id }
+    var sourceAlbumID: String? {
+        guard let first = source.first, source.allSatisfy({ $0.track.albumID == first.track.albumID }) else { return nil }
+        return first.track.albumID
     }
-    var canAdvance: Bool { !upcomingIDs.isEmpty || (repeatMode == .all && currentID != nil) }
+    var sourceTitle: String? {
+        guard let first = source.first else { return nil }
+        return sourceAlbumID != nil ? first.track.albumTitle : "Previous Queue"
+    }
+    var sourceUpcoming: [QueueEntry] { Array(source.dropFirst(sourcePosition + 1)) }
+    var upcoming: [QueueEntry] { queued + sourceUpcoming }
+    var isCurrentQueued: Bool { current != nil && !source.contains { $0.id == currentID } }
+    var canAdvance: Bool {
+        current != nil && (!queued.isEmpty || !sourceUpcoming.isEmpty || (repeatMode != .off && !source.isEmpty))
+    }
 
     mutating func start(_ tracks: [Track], at track: Track? = nil) {
-        entries = tracks.map(QueueEntry.init)
-        history = []
-        guard !entries.isEmpty else { currentID = nil; upcomingIDs = []; return }
-        let index = track.flatMap { track in entries.firstIndex { $0.track.id == track.id } } ?? 0
-        currentID = entries[index].id
-        upcomingIDs = Array(entries.dropFirst(index + 1).map(\.id))
+        guard !tracks.isEmpty else { return }
+        source = tracks.map(QueueEntry.init)
+        sourcePosition = track.flatMap { selected in source.firstIndex { $0.track.id == selected.id } } ?? 0
+        current = source[sourcePosition]
+        // Pending additions survive choosing a new source. An active addition is consumed.
     }
 
     mutating func append(_ tracks: [Track]) {
-        let added = tracks.map(QueueEntry.init)
-        entries += added
-        upcomingIDs += added.map(\.id)
-        if currentID == nil && !upcomingIDs.isEmpty { currentID = upcomingIDs.removeFirst() }
+        queued += tracks.map(QueueEntry.init)
+        if current == nil && !queued.isEmpty { current = queued.removeFirst() }
     }
 
     @discardableResult mutating func advance(automatically: Bool = false) -> Bool {
-        guard let currentID else { return false }
+        guard current != nil else { return false }
         if automatically && repeatMode == .one { return true }
-        if upcomingIDs.isEmpty {
-            guard repeatMode == .all else { return false }
-            upcomingIDs = entries.map(\.id)
+        guard canAdvance else {
+            if automatically && isCurrentQueued { current = nil }
+            return false
         }
-        guard !upcomingIDs.isEmpty else { return false }
-        history.append(currentID)
-        // Retain useful listening history without growing forever during repeat.
-        if history.count > 1000 { history.removeFirst(history.count - 1000) }
-        self.currentID = upcomingIDs.removeFirst()
+        if !automatically && repeatMode == .one { repeatMode = .all }
+        if !queued.isEmpty { current = queued.removeFirst() }
+        else {
+            sourcePosition = sourcePosition + 1 < source.count ? sourcePosition + 1 : 0
+            current = source[sourcePosition]
+        }
         return true
     }
 
+    /// Previous follows source order, never consumed manual additions.
     @discardableResult mutating func previous() -> Bool {
-        guard let previous = history.popLast() else { return false }
-        if let currentID {
-            upcomingIDs.removeAll { $0 == currentID }
-            upcomingIDs.insert(currentID, at: 0)
-        }
-        // A repeat boundary can put a history entry back into the upcoming cycle.
-        upcomingIDs.removeAll { $0 == previous }
-        currentID = previous
+        guard current != nil else { return false }
+        let destination = isCurrentQueued ? sourcePosition : sourcePosition - 1
+        guard source.indices.contains(destination) else { return false }
+        sourcePosition = destination
+        current = source[destination]
+        if repeatMode == .one { repeatMode = .all }
         return true
     }
 
     @discardableResult mutating func jump(to id: UUID) -> Bool {
-        guard let index = upcomingIDs.firstIndex(of: id) else { return false }
-        if let currentID { history.append(currentID) }
-        currentID = id
-        upcomingIDs.removeFirst(index + 1)
+        if let index = queued.firstIndex(where: { $0.id == id }) {
+            current = queued[index]
+            queued.removeFirst(index + 1)
+        } else if let index = source.firstIndex(where: { $0.id == id }), index > sourcePosition {
+            // Selecting a later displayed row skips everything preceding it.
+            queued.removeAll()
+            sourcePosition = index
+            current = source[index]
+        } else { return false }
+        if repeatMode == .one { repeatMode = .all }
         return true
     }
 
     mutating func remove(_ ids: Set<UUID>) {
-        let removable = ids.subtracting(currentID.map { [$0] } ?? [])
-        entries.removeAll { removable.contains($0.id) }
-        upcomingIDs.removeAll { removable.contains($0) }
-        history.removeAll { removable.contains($0) }
+        queued.removeAll { ids.contains($0.id) }
+        let removable = Set(sourceUpcoming.map(\.id)).intersection(ids)
+        source.removeAll { removable.contains($0.id) }
     }
 
-    mutating func clearUpcoming() { remove(Set(upcomingIDs)) }
+    mutating func clearUpcoming() { queued.removeAll() }
 
-    mutating func move(from offsets: IndexSet, to destination: Int) {
-        let moving = offsets.sorted().compactMap { upcomingIDs.indices.contains($0) ? upcomingIDs[$0] : nil }
-        let remaining = upcomingIDs.enumerated().filter { !offsets.contains($0.offset) }.map(\.element)
-        let index = min(max(0, destination - offsets.filter { $0 < destination }.count), remaining.count)
-        upcomingIDs = Array(remaining.prefix(index)) + moving + Array(remaining.dropFirst(index))
-        let reordered = upcoming
-        let ids = Set(upcomingIDs)
-        entries = entries.filter { !ids.contains($0.id) } + reordered
+    mutating func moveQueued(from offsets: IndexSet, to destination: Int) {
+        queued = Self.moving(queued, from: offsets, to: destination)
     }
 
-    /// A refresh updates metadata and removes missing entries; never resumes by itself.
+    mutating func moveSourceUpcoming(from offsets: IndexSet, to destination: Int) {
+        source = Array(source.prefix(sourcePosition + 1)) + Self.moving(sourceUpcoming, from: offsets, to: destination)
+    }
+
+    private static func moving(_ entries: [QueueEntry], from offsets: IndexSet, to destination: Int) -> [QueueEntry] {
+        let valid = offsets.filter { entries.indices.contains($0) }
+        let moved = valid.sorted().map { entries[$0] }
+        let remaining = entries.enumerated().filter { !valid.contains($0.offset) }.map(\.element)
+        let index = min(max(0, destination - valid.filter { $0 < destination }.count), remaining.count)
+        return Array(remaining.prefix(index)) + moved + Array(remaining.dropFirst(index))
+    }
+
+    /// Refresh metadata and discard missing files without resurrecting consumed entries.
     mutating func reconcile(with tracks: [Track]) {
-        let byPath = Dictionary(tracks.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        entries = entries.compactMap { entry in
-            guard let track = byPath[entry.track.id] else { return nil }
-            var updated = entry; updated.track = track; return updated
+        let byID = Dictionary(tracks.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        func updated(_ entry: QueueEntry) -> QueueEntry? {
+            guard let track = byID[entry.track.id] else { return nil }
+            var result = entry; result.track = track; return result
         }
-        let valid = Set(entries.map(\.id))
-        upcomingIDs.removeAll { !valid.contains($0) }
-        history.removeAll { !valid.contains($0) }
-        if let currentID, !valid.contains(currentID) {
-            self.currentID = upcomingIDs.isEmpty ? nil : upcomingIDs.removeFirst()
+        let survivingPrefix = source.prefix(sourcePosition + 1).compactMap(updated).count
+        let previous = current
+        source = source.compactMap(updated)
+        sourcePosition = survivingPrefix - 1
+        queued = queued.compactMap(updated)
+        current = current.flatMap(updated)
+        if previous != nil && current == nil {
+            if !queued.isEmpty { current = queued.removeFirst() }
+            else if sourcePosition + 1 < source.count {
+                sourcePosition += 1
+                current = source[sourcePosition]
+            }
         }
-        if currentID == nil { entries = []; upcomingIDs = []; history = [] }
+        if current == nil { clear() }
     }
 
     mutating func clear() {
-        entries = []; currentID = nil; upcomingIDs = []; history = []
+        source = []; sourcePosition = -1; queued = []; current = nil
     }
 
     var isValid: Bool {
-        let ids = Set(entries.map(\.id))
-        return ids.count == entries.count && Set(upcomingIDs).count == upcomingIDs.count
-            && upcomingIDs.allSatisfy(ids.contains) && history.allSatisfy(ids.contains)
-            && (currentID.map(ids.contains) ?? entries.isEmpty)
+        let ids = (source + queued).map(\.id)
+        guard Set(ids).count == ids.count, sourcePosition >= -1, sourcePosition < source.count else { return false }
+        guard let current else { return source.isEmpty && queued.isEmpty }
+        guard !queued.contains(where: { $0.id == current.id }) else { return false }
+        if let index = source.firstIndex(where: { $0.id == current.id }) { return index == sourcePosition }
+        return true
+    }
+
+    init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case source, sourcePosition, queued, current, repeatMode
+        case entries, currentID, upcomingIDs
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        repeatMode = try values.decode(RepeatMode.self, forKey: .repeatMode)
+        if values.contains(.source) {
+            source = try values.decode([QueueEntry].self, forKey: .source)
+            sourcePosition = try values.decode(Int.self, forKey: .sourcePosition)
+            queued = try values.decode([QueueEntry].self, forKey: .queued)
+            current = try values.decodeIfPresent(QueueEntry.self, forKey: .current)
+        } else {
+            // The old flat queue has no provenance. Preserve its next-song order as
+            // a legacy source until the user chooses an album, rather than guessing.
+            let entries = try values.decode([QueueEntry].self, forKey: .entries)
+            let id = try values.decodeIfPresent(UUID.self, forKey: .currentID)
+            let upcoming = try values.decode([UUID].self, forKey: .upcomingIDs)
+            let byID = Dictionary(entries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            guard Set(entries.map(\.id)).count == entries.count,
+                  Set(upcoming).count == upcoming.count, upcoming.allSatisfy({ byID[$0] != nil }),
+                  !upcoming.contains(where: { $0 == id }) else {
+                throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Invalid saved queue"))
+            }
+            current = id.flatMap { byID[$0] }
+            if let current {
+                source = entries.filter { $0.id != id && !upcoming.contains($0.id) } + [current]
+                sourcePosition = source.count - 1
+                source += upcoming.compactMap { byID[$0] }
+            } else if !entries.isEmpty {
+                throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Missing current entry"))
+            }
+        }
+        guard isValid else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Invalid saved source or queue"))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(source, forKey: .source)
+        try values.encode(sourcePosition, forKey: .sourcePosition)
+        try values.encode(queued, forKey: .queued)
+        try values.encodeIfPresent(current, forKey: .current)
+        try values.encode(repeatMode, forKey: .repeatMode)
     }
 }
 

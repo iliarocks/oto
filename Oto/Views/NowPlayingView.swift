@@ -296,9 +296,9 @@ struct NowPlayingView: View {
                 }
             }
             HStack(spacing: 16) {
-                Text("Playing Next").font(.headline)
+                Text(player.queued.isEmpty ? sourceQueueHeading : "Queued").font(.headline)
                 Spacer()
-                if !player.upcoming.isEmpty {
+                if !player.queued.isEmpty {
                     Button("Clear") { player.clearUpcoming() }
                         .accessibilityIdentifier("clear-queue")
                 }
@@ -312,32 +312,25 @@ struct NowPlayingView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(player.upcoming) { entry in
-                        Button { player.jump(to: entry.id) } label: {
-                            HStack(spacing: 12) {
-                                ArtworkView(key: entry.track.artworkKey, directory: player.artworkDirectory, size: 40)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(entry.track.title).font(.subheadline.weight(.medium)).foregroundStyle(.primary)
-                                    Text(entry.track.artist).font(.caption).foregroundStyle(.secondary)
-                                }
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .contentShape(Rectangle())
+                    if !player.queued.isEmpty {
+                        Section {
+                            queueRows(player.queued) { player.moveQueued(from: $0, to: $1) }
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("queued-" + entry.track.title)
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { player.removeUpcoming(entry.id) } label: {
-                                Label("Remove", systemImage: "trash").labelStyle(.iconOnly)
-                            }
-                        }
-                        .accessibilityAction(named: "Remove from Queue") { player.removeUpcoming(entry.id) }
+                        .listSectionSeparator(.hidden)
                     }
-                    .onMove { player.moveUpcoming(from: $0, to: $1) }
+                    if !player.sourceUpcoming.isEmpty {
+                        Section {
+                            queueRows(player.sourceUpcoming) { player.moveSourceUpcoming(from: $0, to: $1) }
+                        } header: {
+                            if !player.queued.isEmpty {
+                                Text(sourceQueueHeading)
+                                    .font(.headline).foregroundStyle(.primary)
+                                    .textCase(nil)
+                                    .padding(.vertical, 6)
+                            }
+                        }
+                        .listSectionSeparator(.hidden)
+                    }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
@@ -353,6 +346,39 @@ struct NowPlayingView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var sourceQueueHeading: String {
+        player.sourceTitle.map { "Next from \($0)" } ?? "Queued"
+    }
+
+    private func queueRows(_ entries: [QueueEntry], move: @escaping (IndexSet, Int) -> Void) -> some View {
+        ForEach(entries) { entry in
+            Button { player.jump(to: entry.id) } label: {
+                HStack(spacing: 12) {
+                    ArtworkView(key: entry.track.artworkKey, directory: player.artworkDirectory, size: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(entry.track.title).font(.subheadline.weight(.medium)).foregroundStyle(.primary)
+                        Text(entry.track.artist).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("queued-" + entry.track.title)
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) { player.removeUpcoming(entry.id) } label: {
+                    Label("Remove", systemImage: "trash").labelStyle(.iconOnly)
+                }
+            }
+            .accessibilityAction(named: "Remove from Queue") { player.removeUpcoming(entry.id) }
+        }
+        .onMove(perform: move)
     }
 
 }

@@ -53,6 +53,10 @@ private actor AudioSessionController {
     var errorMessage: String?
     private(set) var playbackQueue = PlaybackQueue()
     var upcoming: [QueueEntry] { playbackQueue.upcoming }
+    var queued: [QueueEntry] { playbackQueue.queued }
+    var sourceUpcoming: [QueueEntry] { playbackQueue.sourceUpcoming }
+    var sourceTitle: String? { playbackQueue.sourceTitle }
+    var sourceAlbumID: String? { playbackQueue.sourceAlbumID }
     var currentEntryID: UUID? { playbackQueue.currentID }
     var repeatMode: RepeatMode { playbackQueue.repeatMode }
     var preciseElapsed: TimeInterval { audio?.player.currentTime ?? elapsed }
@@ -113,14 +117,16 @@ private actor AudioSessionController {
     }
 
     func setRepeat(_ mode: RepeatMode) { playbackQueue.repeatMode = mode; queueChanged() }
-    func moveUpcoming(from offsets: IndexSet, to destination: Int) {
-        playbackQueue.move(from: offsets, to: destination); queueChanged()
+    func moveQueued(from offsets: IndexSet, to destination: Int) {
+        playbackQueue.moveQueued(from: offsets, to: destination); queueChanged()
+    }
+    func moveSourceUpcoming(from offsets: IndexSet, to destination: Int) {
+        playbackQueue.moveSourceUpcoming(from: offsets, to: destination); queueChanged()
     }
     func removeUpcoming(_ id: UUID) { playbackQueue.remove([id]); queueChanged() }
     func clearUpcoming() { playbackQueue.clearUpcoming(); queueChanged() }
     func jump(to id: UUID) {
-        let autoplay = wantsPlayback
-        if playbackQueue.jump(to: id) { loadCurrent(autoplay: autoplay) }
+        if playbackQueue.jump(to: id) { loadCurrent() }
     }
 
     private func queueChanged() { updateNowPlaying(); checkpoint() }
@@ -209,17 +215,31 @@ private actor AudioSessionController {
     }
 
     func next() {
-        let autoplay = wantsPlayback
         guard playbackQueue.advance() else { return }
-        loadCurrent(autoplay: autoplay)
+        loadCurrent()
     }
 
     func previous() {
-        if preciseElapsed > 3 { seek(to: 0) }
+        guard currentTrack != nil else { return }
+        let position = preciseElapsed
+        if !wantsPlayback && position > 0 {
+            restartCurrent(autoplay: false)
+        } else if wantsPlayback && position > 3 {
+            restartCurrent(autoplay: true)
+        } else if playbackQueue.previous() {
+            loadCurrent()
+        } else {
+            restartCurrent(autoplay: wantsPlayback)
+        }
+    }
+
+    private func restartCurrent(autoplay: Bool) {
+        // Reloading is needed for a restored or still-preparing track: an in-flight
+        // loader must not later restore the old position over the requested zero.
+        if audio == nil || isLoading { loadCurrent(autoplay: autoplay) }
         else {
-            let autoplay = wantsPlayback
-            if playbackQueue.previous() { loadCurrent(autoplay: autoplay) }
-            else { seek(to: 0) }
+            seek(to: 0)
+            if autoplay { resume() }
         }
     }
 
@@ -322,6 +342,7 @@ private actor AudioSessionController {
             if flag && shouldContinue && self.playbackQueue.advance(automatically: true) {
                 self.loadCurrent()
             }
+            else if flag && self.playbackQueue.current == nil { self.stop() }
             else if !flag { self.fail("Playback stopped because this audio file could not be decoded.") }
             else { self.updateNowPlaying(); self.checkpoint() }
         }
