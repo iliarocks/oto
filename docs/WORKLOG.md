@@ -377,3 +377,11 @@ Signed build 1.0 (40) succeeded, its packaged version was verified, and it was i
 Added 36 points of top padding inside the queue content area in portrait, bringing the current-song row down to approximately the artwork's top edge at the standard phone size. Landscape uses a smaller 8-point addition to preserve list space. The shared scrubber and transport retain their positions when switching views.
 
 The existing queue UI flow passed (`work/queue-top-padding.xcresult`), including fixed control geometry, direct dragging, removal, paused restoration, and landscape. Reviewed the settled queue screenshot. Signed build 1.0 (41) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone in normal mode.
+
+## Refine queue spacing, removal, and transition — September 8
+
+Made the queue's native Remove swipe action icon-only while retaining its accessible label and destructive action. Balanced spacing around Playing Next by accounting for the first row's own 10-point top inset: the portrait header now has 16 points above and an effective 16 below; landscape uses 10 on each side.
+
+Changed the artwork/queue transition to an eased 0.32-second fade with a subtle artwork scale and 12-point queue movement. Both directions use the same timing, the shared playback controls remain fixed, and Reduce Motion retains a short opacity-only transition.
+
+The existing queue UI flow passed (`work/queue-polish.xcresult`), including opening/closing geometry, dragging, icon-only removal, duplicates, paused restoration, and landscape. Reviewed the swipe-action and settled-spacing screenshots and captured the simulator transition. Signed build 1.0 (42) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone in normal mode.

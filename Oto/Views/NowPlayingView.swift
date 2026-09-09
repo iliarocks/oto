@@ -99,10 +99,10 @@ struct NowPlayingView: View {
                     if showingQueue {
                         queueContent(compact: compact)
                             .padding(.top, compact ? 8 : 36)
-                            .transition(.opacity)
+                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 12)))
                     } else {
                         artworkContent(compact: compact)
-                            .transition(.opacity)
+                            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -185,7 +185,7 @@ struct NowPlayingView: View {
     private func transport(compact: Bool) -> some View {
         HStack(spacing: 0) {
             modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
-                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.35, extraBounce: 0)) {
+                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .easeInOut(duration: 0.32)) {
                     showingQueue.toggle()
                 }
             }
@@ -250,7 +250,7 @@ struct NowPlayingView: View {
     }
 
     private func queueContent(compact: Bool) -> some View {
-        VStack(spacing: compact ? 4 : 12) {
+        VStack(spacing: 0) {
             HStack(spacing: 12) {
                 ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: compact ? 40 : 56)
                 VStack(alignment: .leading, spacing: 4) {
@@ -266,6 +266,9 @@ struct NowPlayingView: View {
                         .accessibilityIdentifier("clear-queue")
                 }
             }
+            .padding(.top, compact ? 10 : 16)
+            // The first queue row contributes another 10 points above its artwork.
+            .padding(.bottom, compact ? 0 : 6)
             if player.upcoming.isEmpty {
                 Text("Nothing queued")
                     .foregroundStyle(.secondary)
@@ -292,7 +295,7 @@ struct NowPlayingView: View {
                         .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) { player.removeUpcoming(entry.id) } label: {
-                                Label("Remove", systemImage: "trash")
+                                Label("Remove", systemImage: "trash").labelStyle(.iconOnly)
                             }
                         }
                         .accessibilityAction(named: "Remove from Queue") { player.removeUpcoming(entry.id) }

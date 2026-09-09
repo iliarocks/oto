@@ -229,6 +229,7 @@ final class OtoUITests: XCTestCase {
         attach(app, name: "Queue Reordered Without Edit Mode")
         XCTAssertLessThan(first.frame.minY, seconds.firstMatch.frame.minY)
         first.swipeLeft()
+        attach(app, name: "Queue Icon Only Remove Action")
         app.buttons["Remove"].tap()
         XCTAssertFalse(first.exists)
         XCTAssertEqual(seconds.count, 2)
