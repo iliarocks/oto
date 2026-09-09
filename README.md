@@ -40,7 +40,7 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 3. Tap the floating player for seeking, previous/next, and AirPlay. Swipe down to dismiss Now Playing. Previous restarts the song after three seconds; otherwise it moves back one track. Skipping while paused stays paused.
 4. After changing the contents of your folder, pull to refresh or use **Settings → Refresh**. A notice in the library links to any files that couldn't be read. **Settings**, opened from the gear at the top left, shows the selected folder; tap its **Folder** row to choose another. Its About section links to Privacy and Support.
 
-The toolbar shows your album and song count. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.
+The toolbar shows your album and song count. The top-right sort menu offers Artist, Title, and Recently Added and remembers your choice. Recently Added tracks when Oto first indexes an album; existing libraries without that history use their last saved scan as a common starting date. Browsing stays focused on albums, without search. The compact player uses native Liquid Glass on iOS 26 and later, with a material capsule on older supported versions.
 
 Long titles and artist names stay on one line and scroll horizontally in both players. Short text stays still. Now Playing fits its controls on screen, with artwork adapting to the available space; swipe down to dismiss it. Text motion respects Reduce Motion, and VoiceOver reads the full label.
 

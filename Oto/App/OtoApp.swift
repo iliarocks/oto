@@ -11,6 +11,7 @@ struct OtoApp: App {
         if ProcessInfo.processInfo.environment["OTO_UI_TEST"] == "1" {
             persistence = LibraryPersistence(directory: URL.applicationSupportDirectory.appendingPathComponent("OtoUITests"))
             if ProcessInfo.processInfo.arguments.contains("--reset-library") {
+                UserDefaults.standard.removeObject(forKey: "albumSort")
                 try? FileManager.default.removeItem(at: persistence.directory)
             }
         }

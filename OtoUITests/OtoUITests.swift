@@ -22,6 +22,61 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Browse"].waitForExistence(timeout: 10) || app.buttons["Browse"].exists)
     }
 
+    @MainActor func testAlbumSortingAndPreferenceSurviveRelaunch() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let app = XCUIApplication()
+        defer { app.terminate(); try? FileManager.default.removeItem(at: folder) }
+        // Original, short silent WAVs let folder names supply distinct album titles.
+        func little(_ value: UInt32) -> Data { withUnsafeBytes(of: value.littleEndian) { Data($0) } }
+        let byteCount = 44_100 * 2
+        var wav = Data("RIFF".utf8)
+        wav.append(little(UInt32(byteCount + 36)))
+        wav.append(Data("WAVEfmt ".utf8)); wav.append(little(16))
+        wav.append(contentsOf: [1, 0, 1, 0]); wav.append(little(44_100)); wav.append(little(88_200))
+        wav.append(contentsOf: [2, 0, 16, 0]); wav.append(Data("data".utf8)); wav.append(little(UInt32(byteCount)))
+        wav.append(Data(count: byteCount))
+        func addAlbum(_ title: String) throws {
+            let album = folder.appendingPathComponent(title)
+            try FileManager.default.createDirectory(at: album, withIntermediateDirectories: true)
+            try wav.write(to: album.appendingPathComponent("Tone.wav"))
+        }
+        try addAlbum("Album 10")
+        try addAlbum("Album 2")
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        let second = app.buttons["album-Album 2"]
+        let tenth = app.buttons["album-Album 10"]
+        XCTAssertTrue(second.waitForExistence(timeout: 20))
+        let sort = app.buttons["album-sort"]
+        XCTAssertTrue(sort.isHittable)
+        XCTAssertGreaterThan(sort.frame.midX, app.frame.midX)
+        XCTAssertEqual(sort.frame.midY, app.buttons["settings"].frame.midY, accuracy: 2)
+        sort.tap()
+        attach(app, name: "Album Sort Menu")
+        app.buttons["Title"].tap()
+        XCTAssertEqual(sort.value as? String, "Title")
+        XCTAssertLessThan(second.frame.minY, tenth.frame.minY)
+        try addAlbum("Zebra")
+        app.buttons["settings"].tap()
+        app.buttons["settings-refresh"].tap()
+        let newest = app.buttons["album-Zebra"]
+        XCTAssertTrue(newest.waitForExistence(timeout: 15))
+        XCTAssertLessThan(tenth.frame.minY, newest.frame.minY)
+        sort.tap()
+        app.buttons["Recently Added"].tap()
+        XCTAssertLessThan(newest.frame.minY, second.frame.minY)
+        attach(app, name: "Recently Added Albums")
+        app.terminate()
+        app.launchArguments = []
+        app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
+        app.launch()
+        XCTAssertTrue(newest.waitForExistence(timeout: 10))
+        XCTAssertEqual(sort.value as? String, "Recently Added")
+        XCTAssertLessThan(newest.frame.minY, second.frame.minY)
+    }
+
     @MainActor func testLibraryPlaybackAndRelaunch() throws {
         let app = XCUIApplication()
         app.launchEnvironment["OTO_UI_TEST"] = "1"

@@ -81,9 +81,20 @@ import Foundation
                         tracks: newSnapshot.tracks + retained, scannedAt: newSnapshot.scannedAt, issues: newSnapshot.issues)
                 }
                 guard isSameFolder || !committed.tracks.isEmpty else { throw LibraryError.emptyFolder }
+                let updatedAlbums = Album.grouped(committed.tracks)
+                let previousIDs = isSameFolder ? Set(albums.map(\.id)) : []
+                committed.albumAddedAt = Dictionary(uniqueKeysWithValues: updatedAlbums.map { album in
+                    let date: Date
+                    if previousIDs.contains(album.id), let previous = snapshot {
+                        date = previous.albumAddedAt?[album.id] ?? previous.scannedAt
+                    } else {
+                        date = committed.scannedAt
+                    }
+                    return (album.id, date)
+                })
                 try persistence.save(committed)
                 snapshot = committed
-                albums = Album.grouped(committed.tracks)
+                albums = updatedAlbums
                 folderPath = access.url.standardizedFileURL.path
             } catch is CancellationError { }
             catch { errorMessage = error.localizedDescription }

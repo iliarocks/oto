@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LibraryView: View {
+    @AppStorage("albumSort") private var albumSort: AlbumSort = .artist
     @Bindable var library: LibraryStore
     @Bindable var player: PlaybackController
     @State private var showingPicker = false
@@ -24,7 +25,7 @@ struct LibraryView: View {
                             .accessibilityIdentifier("library-issues")
                             .listRowSeparator(.hidden)
                         }
-                        ForEach(library.albums) { album in
+                        ForEach(albumSort.sorted(library.albums, addedAt: library.snapshot?.albumAddedAt ?? [:])) { album in
                             NavigationLink(value: album.id) {
                                 HStack(spacing: 14) {
                                     ArtworkView(key: album.artworkKey, directory: library.persistence.artworkDirectory, size: 64)
@@ -68,6 +69,20 @@ struct LibraryView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Settings", systemImage: "gearshape") { showingSettings = true }
                         .accessibilityIdentifier("settings")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("Sort Albums", selection: $albumSort) {
+                            ForEach(AlbumSort.allCases) { sort in
+                                Text(sort.label).tag(sort)
+                            }
+                        }
+                    } label: {
+                        Label("Sort Albums", systemImage: "arrow.up.arrow.down")
+                    }
+                    .accessibilityIdentifier("album-sort")
+                    .accessibilityValue(albumSort.label)
+                    .disabled(library.albums.isEmpty)
                 }
             }
         }

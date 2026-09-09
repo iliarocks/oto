@@ -269,3 +269,11 @@ All 18 library/playback tests and both playback/refresh UI flows passed (`work/d
 Changed the shared file-not-downloaded error to the requested exact wording: Use "Keep Downloaded" on the folder, then refresh your library. This updates the refresh alert and matching per-file issue text without changing download checks.
 
 Signed build 1.0 (27) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the existing library preserved. This copy-only edit was verified through the diff and build; no additional behavior tests were needed.
+
+## Album sorting — September 8
+
+Added a top-right sort button aligned with Settings. Its native picker menu offers Artist, Title (as requested), and Recently Added; the selection persists across launches. Artist remains the default. Alphabetical choices use natural localized ordering and stable tie breaks; Recently Added puts the newest first. Album sorting leaves song order and playback queues alone.
+
+Introduced optional first-seen dates in the library snapshot, preserving backward compatibility. Refresh keeps existing dates, timestamps new albums, and removes deleted albums’ entries. Existing libraries have no historical import dates, so their last saved scan serves as a shared baseline on the next refresh. Test-only library reset also resets the sorting preference.
+
+All 20 library/playback tests and the new sorting/refresh/relaunch UI flow passed (`work/album-sorting.xcresult`). Verified natural ordering, stable ties, unchanged track order, legacy-index migration, retained first-seen dates, removal cleanup, menu placement, selection persistence, and recently added ordering. Inspected the native menu and library screenshots. Signed build 1.0 (28) succeeded, its packaged build number was verified, and it was installed on the connected iPhone with the existing library preserved. Automatic launch was denied because the phone was locked.

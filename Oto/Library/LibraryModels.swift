@@ -62,6 +62,8 @@ struct LibrarySnapshot: Codable, Sendable {
     let tracks: [Track]
     let scannedAt: Date
     let issues: [ScanIssue]
+    // Optional for compatibility with libraries saved before album sorting.
+    var albumAddedAt: [String: Date]? = nil
 }
 
 struct ScanIssue: Codable, Hashable, Identifiable, Sendable {
