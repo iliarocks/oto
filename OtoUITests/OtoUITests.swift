@@ -45,7 +45,7 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 10))
     }
 
-    @MainActor func testRefreshPreviewKeepsLibraryAndCanBeDismissed() throws {
+    @MainActor func testRefreshPreviewKeepsLibraryAndNormalLaunchClearsIt() throws {
         let app = XCUIApplication()
         app.launchEnvironment["OTO_UI_TEST"] = "1"
         app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
@@ -58,10 +58,9 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts["Reading your music…"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["album-Quiet Hours"].exists)
+        XCTAssertFalse(app.buttons["Cancel"].exists)
+        XCTAssertFalse(app.staticTexts["iCloud Drive files must be downloaded."].exists)
         attach(app, name: "Temporary Refresh Library Preview")
-        app.buttons["Cancel"].tap()
-        XCTAssertFalse(app.staticTexts["Reading your music…"].exists)
-        XCTAssertTrue(app.buttons["album-Quiet Hours"].exists)
         app.terminate()
         app.launchArguments = []
         app.launch()

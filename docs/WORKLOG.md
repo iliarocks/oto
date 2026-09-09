@@ -319,3 +319,9 @@ The Settings/refresh/recovery UI flow passed (`work/settings-close-button.xcresu
 Added a Debug-only `--preview-refresh-library` launch argument that keeps the existing scan banner visible over the saved library with representative halfway progress and a real indexed filename. It changes presentation only: no scan, persistence write, or music-file read is started. Cancel dismisses the preview, and starting an actual scan switches back to real progress. A normal launch has no preview.
 
 The focused UI flow passed (`work/refresh-library-preview.xcresult`), checking the populated library alongside the banner, Cancel dismissal, and normal relaunch with the library preserved. Inspected the banner screenshot. Signed build 1.0 (36) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone using the refresh-preview argument instead of the empty-preview argument, restoring the normal saved library for inspection.
+
+## Simplify the refresh banner — September 8
+
+Removed the download notice and Cancel button from the refresh banner, leaving its heading, progress bar, song count, and filename. Download availability checks and existing per-file issues/playback errors remain intact, as does the separately requested Settings footer. The inspection preview now ends on a normal relaunch or when a real scan begins.
+
+Updated the existing preview UI check to verify the removed controls and preserved library on normal relaunch; it passed (`work/simplified-refresh-banner.xcresult`). Inspected the simplified banner screenshot. Signed build 1.0 (37) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the refresh-preview argument for continued inspection.

@@ -189,15 +189,7 @@ struct LibraryView: View {
     private var scanProgress: some View {
         Section {
             VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text(library.isCancelling ? "Cancelling…" : "Reading your music…").font(.headline)
-                    Spacer()
-                    Button("Cancel") {
-                        previewingRefresh = false
-                        library.cancelScan()
-                    }.font(.subheadline)
-                        .disabled(library.isCancelling)
-                }
+                Text("Reading your music…").font(.headline)
                 if let progress = displayedProgress, progress.total > 0 {
                     ProgressView(value: Double(progress.completed), total: Double(progress.total))
                     Text("\(progress.completed) of \(progress.total) songs").font(.caption).foregroundStyle(.secondary)
@@ -206,7 +198,6 @@ struct LibraryView: View {
                             .lineLimit(1).truncationMode(.middle)
                     }
                 } else { ProgressView().frame(maxWidth: .infinity, alignment: .leading) }
-                Text("iCloud Drive files must be downloaded.").font(.caption).foregroundStyle(.secondary)
             }
             .padding(.vertical, 10)
         }
