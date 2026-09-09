@@ -16,6 +16,14 @@ struct OtoApp: App {
             }
         }
         #endif
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--preview-empty-library") {
+            // A separate, temporary store lets the real empty state stay interactive
+            // without reading or replacing the user's saved music library.
+            persistence = LibraryPersistence(directory: FileManager.default.temporaryDirectory
+                .appendingPathComponent("OtoEmptyPreview-\(UUID().uuidString)", isDirectory: true))
+        }
+        #endif
         _library = State(initialValue: LibraryStore(persistence: persistence))
         _player = State(initialValue: PlaybackController(artworkDirectory: persistence.artworkDirectory))
     }

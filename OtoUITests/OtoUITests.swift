@@ -22,6 +22,26 @@ final class OtoUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Browse"].waitForExistence(timeout: 10) || app.buttons["Browse"].exists)
     }
 
+    @MainActor func testEmptyPreviewPreservesSavedLibrary() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 20))
+        app.terminate()
+        app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
+        app.launchArguments = ["--preview-empty-library"]
+        app.launch()
+        XCTAssertTrue(app.buttons["choose-folder"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["album-Quiet Hours"].exists)
+        attach(app, name: "Temporary Empty Library Preview")
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 10))
+    }
+
     @MainActor func testAlbumSortingAndPreferenceSurviveRelaunch() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let app = XCUIApplication()
