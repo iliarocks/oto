@@ -13,11 +13,11 @@ Status: proposal for review; no feature implementation yet.
 
 Play starts the album in its original disc/track order and turns shuffle off. Shuffle starts the entire album in a randomized order and turns shuffle on. Tapping a song starts an album queue from that song; if shuffle is already on, that song plays first and the other album tracks are randomized after it.
 
-Starting an album or tapping a song in an album replaces the previous playback queue. Adding music without replacing it uses Play Next or Play Last.
+Starting an album or tapping a song in an album replaces the previous playback queue. Adding music without replacing it uses the trailing Add to Queue swipe action.
 
 Switching shuffle on during playback randomizes the upcoming songs without restarting the current song or replaying completed entries. Switching it off restores the remaining queue's original sequence. Previous follows actual listening history, including while shuffled.
 
-Play Next and Play Last insert at the requested position even when shuffle is on. A subsequent deliberate shuffle toggle may rearrange those entries along with the rest of the upcoming queue. Album and song lists themselves never change order because of shuffle.
+Add to Queue appends after everything already queued, even when shuffle is on. A subsequent deliberate shuffle toggle may rearrange those entries along with the rest of the upcoming queue. Album and song lists themselves never change order because of shuffle.
 
 ## Repeat
 
@@ -31,12 +31,11 @@ Starting another album preserves the chosen repeat mode. An unavailable file sti
 
 ## Building and editing the queue
 
-Long-pressing a song or album exposes two native context-menu actions:
+Swiping left on a song or album row reveals one native trailing action: an icon-only queue-plus button. Tapping it appends the song or entire album after everything already queued. The visible action has no text; VoiceOver announces “Add to Queue.” A swipe reveals the button rather than automatically adding on a full swipe.
 
-- Play Next: insert immediately after the current song. The most recent Play Next request takes priority over earlier ones.
-- Play Last: append after everything already queued.
+There is no Play Next action or long-press queue menu. Moving something nearer the front remains available through reordering in the queue view.
 
-An added album stays in track order at insertion, even during shuffled playback. If nothing is loaded, either action starts the selected music. If playback is paused, adding music leaves it paused. Intentional duplicate entries are allowed and independently editable.
+An added album stays in track order at insertion, even during shuffled playback. If nothing is loaded, Add to Queue starts the selected music. If playback is paused, adding music leaves it paused. Intentional duplicate entries are allowed and independently editable.
 
 The queue view has a compact current-song row and a Playing Next list. Upcoming rows show artwork, song title, and artist, with drag handles for reordering and swipe-to-remove. Tapping an upcoming entry jumps to it, passing over preceding entries. A Clear action removes upcoming entries while allowing the current song to finish; those removed entries must not return through repeat. An empty upcoming list says “Nothing queued.”
 
@@ -49,7 +48,7 @@ Shuffle and repeat default to Off and retain the user's choice. Save the current
 ## Suggested implementation order
 
 1. Establish one playback-order model and add shuffle/repeat, including lock-screen and headphone controls.
-2. Add Play Next / Play Last and the editable queue view.
+2. Add the trailing Add to Queue swipe action and the editable queue view.
 3. Add paused restoration and validate interactions among manual ordering, shuffle, repeat, refresh, and unavailable files.
 
-The main review decision is the proposed in-place queue view and whether Play Last should append after the complete album queue, as described here.
+The user accepted the overall proposal and refined queue insertion to a single trailing icon-only swipe action that appends to the queue.

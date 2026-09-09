@@ -329,3 +329,7 @@ Updated the existing preview UI check to verify the removed controls and preserv
 ## Restore normal mode and propose playback features — September 8
 
 Relaunched the installed build 1.0 (37) on the connected iPhone without preview arguments, restoring the ordinary library and refresh behavior. Wrote `docs/PLAYBACK-PROPOSAL.md` for review: proposed control placement, shuffle/repeat semantics, queue insertion/editing, paused restoration, and implementation order. No playback features were implemented or app build changed in this step.
+
+## Refine the queue proposal — September 8
+
+Replaced the proposed Play Next / Play Last long-press menu with one trailing icon-only Add to Queue swipe action on album and song rows. It appends to the end; albums retain track order at insertion. The proposal preserves an accessible action label and queue reordering for changing what plays sooner. No feature implementation or device build changed.
