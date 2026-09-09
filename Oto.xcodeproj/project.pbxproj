@@ -122,7 +122,7 @@
 				"GENERATE_INFOPLIST_FILE" = "YES";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
 				"INFOPLIST_FILE" = "Oto/Info.plist";
-				"CURRENT_PROJECT_VERSION" = "16";
+				"CURRENT_PROJECT_VERSION" = "17";
 				"MARKETING_VERSION" = "0.1";
 				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = "YES";
@@ -149,7 +149,7 @@
 				"GENERATE_INFOPLIST_FILE" = "YES";
 				"SWIFT_EMIT_LOC_STRINGS" = "YES";
 				"INFOPLIST_FILE" = "Oto/Info.plist";
-				"CURRENT_PROJECT_VERSION" = "16";
+				"CURRENT_PROJECT_VERSION" = "17";
 				"MARKETING_VERSION" = "0.1";
 				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = "YES";

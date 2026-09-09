@@ -8,7 +8,6 @@ struct AlbumView: View {
     let library: LibraryStore
     let player: PlaybackController
     @State private var headerProgress: CGFloat = 0
-    @State private var headingOpacity: CGFloat = 1
 
     var body: some View {
         GeometryReader { viewport in
@@ -22,19 +21,12 @@ struct AlbumView: View {
                         VStack(spacing: 6) {
                             Text(album.title).font(.title2.bold())
                                 .accessibilityIdentifier("album-main-title")
-                                .opacity(headingOpacity)
-                                .accessibilityHidden(headingOpacity == 0)
-                                .onGeometryChange(for: CGPoint.self) { title in
+                                .onGeometryChange(for: CGFloat.self) { title in
                                     // The viewport already starts below the navigation bar. Adding its
                                     // safe-area inset again moves the trigger a full bar too early.
                                     let distance = viewportTop - title.frame(in: .global).maxY
-                                    let reveal = min(max(distance / 56, 0), 1)
-                                    let heading = min(max(-distance / max(title.size.height, 1), 0), 1)
-                                    return CGPoint(x: reveal, y: heading)
-                                } action: {
-                                    headerProgress = $0.x
-                                    headingOpacity = $0.y
-                                }
+                                    return min(max(distance / 56, 0), 1)
+                                } action: { headerProgress = $0 }
                             Text(album.artist).font(.title3).foregroundStyle(.secondary)
                             Text("\(album.tracks.count) songs · \(MusicTime.summary(album.duration))")
                                 .font(.subheadline).foregroundStyle(.secondary)

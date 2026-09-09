@@ -197,3 +197,9 @@ Validation: the boundary regression failed before the fix (`work/header-boundary
 While checking the install artifact, found that generated Info.plist processing omitted the literal version keys. Set the app target's explicit marketing/build version settings and reference those from the source plist so the installed bundle reliably identifies itself as 0.1 (16). Also captured scalar viewport measurements before the geometry callback to avoid capturing a non-Sendable GeometryProxy.
 
 Signed build succeeded; inspected the packaged version keys as 0.1 (16). Installed and launched it on the connected iPhone, preserving its existing library.
+
+## Keep the main album heading visible — September 8
+
+Removed the main heading's scroll-linked opacity and accessibility hiding at the user's request. It now stays at its normal opacity as it scrolls under the header. The toolbar title/backdrop reveal still uses the same corrected boundary, range, and easing; simplified geometry observation back to the reveal amount alone.
+
+The existing slow-scroll, reversal, playback, dismissal, and final-song-clearance check passed (`work/main-heading-visible.xcresult`). Signed build 0.1 (17) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.
