@@ -311,6 +311,8 @@ final class OtoUITests: XCTestCase {
         app.buttons["queue-toggle"].tap()
         XCTAssertTrue(app.staticTexts["Queued"].exists)
         XCTAssertTrue(app.staticTexts["Next from Album A"].exists)
+        XCTAssertEqual(app.staticTexts["Next from Album A"].frame.minX,
+                       app.staticTexts["Queued"].frame.minX, accuracy: 1)
         XCTAssertLessThan(app.buttons["queued-Detour"].frame.minY, app.buttons["queued-Second"].frame.minY)
         attach(app, name: "Manual Queue Above Album Source")
         app.buttons["clear-queue"].tap()

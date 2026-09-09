@@ -327,12 +327,14 @@ struct NowPlayingView: View {
                                     .font(.headline).foregroundStyle(.primary)
                                     .textCase(nil)
                                     .padding(.vertical, 6)
+                                    .listRowInsets(EdgeInsets())
                             }
                         }
                         .listSectionSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)
+                .scrollIndicators(.hidden)
                 .scrollContentBackground(.hidden)
                 .contentMargins(.bottom, 24, for: .scrollContent)
                 .mask {

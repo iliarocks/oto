@@ -68,11 +68,23 @@ struct AlbumView: View {
                                 HStack(spacing: 14) {
                                     Group {
                                         if isCurrent(track) {
-                                            Image(systemName: player.wantsPlayback ? "speaker.wave.2.fill" : "speaker.fill").font(.caption)
-                                        } else { Text(track.trackNumber.map(String.init) ?? "–").font(.subheadline).monospacedDigit() }
+                                            Image(systemName: player.wantsPlayback ? "speaker.wave.2.fill" : "speaker.fill")
+                                                .font(.caption)
+                                                .id(player.wantsPlayback)
+                                                .contentTransition(.identity)
+                                                .transition(.identity)
+                                        } else {
+                                            Text(track.trackNumber.map(String.init) ?? "–")
+                                                .font(.subheadline).monospacedDigit()
+                                                .transition(.identity)
+                                        }
                                     }
                                     .foregroundStyle(isCurrent(track) ? accent : Color.secondary)
                                     .frame(width: 26)
+                                    .transaction {
+                                        $0.animation = nil
+                                        $0.disablesAnimations = true
+                                    }
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(track.title).foregroundStyle(isCurrent(track) ? textAccent : Color.primary)
                                         if track.artist != album.artist { Text(track.artist).font(.caption).foregroundStyle(.secondary) }

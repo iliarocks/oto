@@ -449,3 +449,9 @@ Saved state now records the source cursor and manual additions explicitly. Legac
 UI validation passed the new source/manual section and paused-Previous flow, switching albums with pending additions, clearing only additions, source Play/Pause, playback relaunch, duplicate entries, drag reordering, icon-only removal, and landscape control placement (`work/source-queue50-ui.xcresult`, four UI tests). Reviewed screenshots of both sections and the preserved additions after choosing a new album. Tightened the terminal manual-entry case so finishing after the source ends clears the exhausted session atomically; its model and actual-audio completion checks passed (`work/source-queue50-terminal.xcresult`). Updated the usage guide to the new rules. Final signed build 1.0 (50) succeeds.
 
 Verified the packaged build number and installed and launched build 50 on the connected iPhone. Preserved the existing library and saved playback; choosing an album establishes the new source/manual distinction for a fresh session.
+
+## Align queue headings and make song indicators immediate — September 8
+
+Removed the native section-header inset from “Next from…” so it shares the leading edge of “Queued,” and hid the queue's scroll indicators while retaining scrolling, its bottom fade, and independent section reordering. The song speaker had no explicit animation; disabled implicit content/replacement animations for both its playing/paused glyph and its swap with the track number.
+
+The source/manual queue flow now asserts the two header leading edges match within one point. It and the floating-player/modal playback interaction check passed (`work/queue51-ui.xcresult`, two UI tests). Reviewed the aligned queue screenshot. Signed build 1.0 (51) succeeded, its packaged version was verified, and it was installed and launched normally on the connected iPhone, preserving library and playback data.
