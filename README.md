@@ -57,3 +57,13 @@ One music folder at a time, with recursive album folders. No saved playlists, ac
 FLAC Vorbis comments and embedded pictures are parsed with bounded reads. MP3/M4A metadata uses AVFoundation. Untagged songs fall back to filenames and folder names. Album grouping uses folder, album title, and album artist; compilations work best with ALBUMARTIST tags. Separate CD/Disc subfolders with the same album tags are combined and ordered by disc then track. Malformed metadata may fall back to filenames rather than report an audio error.
 
 The implementation and validation record lives in `docs/WORKLOG.md`.
+
+## Website
+
+The static site lives in `docs/index.html`, following Nagare's website layout. Preview it locally with:
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory docs
+```
+
+Open `http://127.0.0.1:8765/`. The App Store button currently has a placeholder destination; replace it with Oto's listing URL before launch. No hosting configuration is included.

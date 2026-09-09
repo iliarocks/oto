@@ -475,3 +475,9 @@ Limited this change to the swipe-action findings from the color audit. Album Add
 Existing song/album playback and queue editing/restoration UI checks passed in dark mode (`work/swipe-contrast-dark.xcresult`). Added a focused rendered-state exercise with generated monochrome and bright gold artwork, covering all three swipe actions and their add/remove behavior; it passed in both appearances (`work/swipe-contrast-extremes-dark.xcresult`, `work/swipe-contrast-light.xcresult`). The light run also passed the existing queue editing/restoration flow. Reviewed screenshots confirming black icons on white/gold fills in dark mode, white icons on black fallback fills in light mode, and black icons on a sampled green fill in both. The library action matches its album page's theme. Signed build 1.0 (53) succeeded and its packaged version was verified.
 
 Installed and launched build 53 normally on the connected iPhone, preserving its existing library and saved playback.
+
+## Local Oto website based on Nagare — September 8
+
+Adapted Nagare's static website into `docs/index.html`, preserving its responsive layout, typography, light/dark colors, screenshot treatment, and Privacy/Support sections. Used the supplied Oto library screenshot without editing it, Oto branding (音), the Oto source-repository link, and the confirmed `support@oto.page` address. Privacy copy reflects local indexing, artwork/playback data, original music remaining in its selected folder, and iCloud Drive file ownership.
+
+The App Store button retains Nagare's normal download presentation, with a clearly marked placeholder href for the listing URL to be added before launch. Verified HTML nesting, section anchors, contact links, branding, and the screenshot asset. Both page and screenshot return HTTP 200 from the localhost-only preview at `http://127.0.0.1:8765/`, opened for review. No publishing, remote push, domain configuration, or app changes were performed.
