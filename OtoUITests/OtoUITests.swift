@@ -104,6 +104,7 @@ final class OtoUITests: XCTestCase {
         attach(app, name: "Simplified Library with Floating Player")
         app.buttons["mini-player"].tap()
         XCTAssertTrue(app.buttons["now-playing-toggle"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Now Playing"].exists)
         XCTAssertFalse(app.buttons["now-playing-album"].exists)
         XCTAssertFalse(app.staticTexts["Opening song…"].exists)
         attach(app, name: "Artwork Accents in Now Playing")
@@ -111,7 +112,7 @@ final class OtoUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
         waitForExpectations(timeout: 10)
         toggle.tap()
-        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         XCTAssertTrue(app.staticTexts["library-summary"].waitForExistence(timeout: 10))
         app.buttons["album-Quiet Hours"].tap()
@@ -229,7 +230,7 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts["200 albums · 400 songs"].waitForExistence(timeout: 60))
         app.swipeUp()
-        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         app.buttons["album-Quiet Hours"].firstMatch.tap()
         app.buttons["track-Second Light"].tap()
@@ -303,7 +304,7 @@ final class OtoUITests: XCTestCase {
         landscape.lifetime = .keepAlways
         add(landscape)
         XCUIDevice.shared.orientation = .portrait
-        app.navigationBars["Now Playing"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         XCTAssertTrue(mini.waitForExistence(timeout: 10))
     }
@@ -378,10 +379,9 @@ final class OtoUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label == 'Pause'"), evaluatedWith: toggle)
         waitForExpectations(timeout: 10)
         toggle.tap()
-        let sheetBar = app.navigationBars["Now Playing"]
-        // Start at the sheet grabber; a drag on the large navigation title can be ignored.
-        sheetBar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
-            .withOffset(CGVector(dx: 0, dy: -10))
+        let sheetContent = app.buttons["Sheet Grabber"]
+        // Start at the top of the sheet, above its playback controls.
+        sheetContent.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         XCTAssertTrue(toggle.waitForNonExistence(timeout: 5), "Dismiss the sheet before checking the album title")
         let mainTitle = app.staticTexts["album-main-title"]

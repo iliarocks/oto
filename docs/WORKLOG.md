@@ -231,3 +231,9 @@ All 17 library/playback tests and both playback UI flows passed (`work/stable-pl
 Removed the song-row inset override introduced in build 19, restoring native List spacing inside albums. The library's album rows retain their 12-point vertical and 16-point horizontal insets. Updated the architecture notes to distinguish the two.
 
 The existing final-song-clearance UI test passed (`work/default-song-spacing.xcresult`). Signed build 0.1 (21) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone, preserving the existing library.
+
+## Remove the playback modal header — September 8
+
+Removed the Now Playing navigation title and its unused NavigationStack, reclaiming the header's space for the artwork and controls. The native sheet grabber and accessibility escape dismissal remain. Updated dismissal checks to drag the native Sheet Grabber instead of the removed navigation bar. An initial test-container identifier propagated to child controls; removed it and targeted the existing system grabber directly.
+
+Normal and largest-text playback/dismissal checks passed (`work/no-player-header-verified.xcresult`), and the header-free modal screenshot was inspected. Signed build 0.1 (22) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.

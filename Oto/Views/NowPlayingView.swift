@@ -90,32 +90,28 @@ struct NowPlayingView: View {
     @State private var isSeeking = false
 
     var body: some View {
-        NavigationStack {
-            GeometryReader { geometry in
-                if geometry.size.width > geometry.size.height {
-                    HStack(spacing: 24) {
-                        artwork.frame(width: min(220, geometry.size.height - 24))
-                        details(compact: true)
-                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    VStack(spacing: 20) {
-                        artwork.frame(maxWidth: 360, maxHeight: .infinity)
-                            .layoutPriority(-1)
-                        details(compact: false)
-                    }
-                    .frame(maxWidth: 440)
-                    .padding(.horizontal, 30)
-                    .padding(.top, 12)
-                    .padding(.bottom, 24)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        GeometryReader { geometry in
+            if geometry.size.width > geometry.size.height {
+                HStack(spacing: 24) {
+                    artwork.frame(width: min(220, geometry.size.height - 24))
+                    details(compact: true)
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack(spacing: 20) {
+                    artwork.frame(maxWidth: 360, maxHeight: .infinity)
+                        .layoutPriority(-1)
+                    details(compact: false)
+                }
+                .frame(maxWidth: 440)
+                .padding(.horizontal, 30)
+                .padding(.top, 12)
+                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .navigationTitle("Now Playing")
-            .navigationBarTitleDisplayMode(.inline)
         }
         .modifier(ArtworkTheme(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory))
         .presentationDragIndicator(.visible)
