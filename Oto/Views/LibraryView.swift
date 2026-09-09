@@ -61,6 +61,15 @@ struct LibraryView: View {
                             .accessibilityIdentifier("album-\(album.title)")
                             .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                             .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button {
+                                    if let bookmark = library.snapshot?.bookmark {
+                                        player.enqueue(album.tracks, bookmark: bookmark)
+                                    }
+                                } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
+                                .tint(Color.accentColor)
+                                .accessibilityLabel("Add to Queue")
+                            }
                         }
                         .listSectionSeparator(.hidden)
                     }
@@ -133,10 +142,15 @@ struct LibraryView: View {
         }
         .onChange(of: library.folderPath) { old, new in
             if old != new {
-                player.stop()
                 showingPlayer = false
                 path = []
             }
+        }
+        .onChange(of: library.snapshot?.scannedAt) { _, _ in
+            if let snapshot = library.snapshot { player.reconcile(with: snapshot) }
+        }
+        .onChange(of: player.currentEntryID) { _, id in
+            if id == nil { showingPlayer = false }
         }
         .alert("Couldn't Update Library", isPresented: Binding(get: { library.errorMessage != nil }, set: { if !$0 { library.errorMessage = nil } })) {
             Button("OK", role: .cancel) { library.errorMessage = nil }

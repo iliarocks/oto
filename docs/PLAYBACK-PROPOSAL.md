@@ -1,6 +1,6 @@
 # Shuffle, repeat, and queue proposal
 
-Status: proposal for review; no feature implementation yet.
+Status: accepted and implemented; validation and device delivery are recorded in WORKLOG.md.
 
 ## Where the controls live
 
@@ -37,7 +37,7 @@ There is no Play Next action or long-press queue menu. Moving something nearer t
 
 An added album stays in track order at insertion, even during shuffled playback. If nothing is loaded, Add to Queue starts the selected music. If playback is paused, adding music leaves it paused. Intentional duplicate entries are allowed and independently editable.
 
-The queue view has a compact current-song row and a Playing Next list. Upcoming rows show artwork, song title, and artist, with drag handles for reordering and swipe-to-remove. Tapping an upcoming entry jumps to it, passing over preceding entries. A Clear action removes upcoming entries while allowing the current song to finish; those removed entries must not return through repeat. An empty upcoming list says “Nothing queued.”
+The queue view has a compact current-song row and a Playing Next list. Upcoming rows show artwork, song title, and artist, with native drag handles available through Edit and swipe-to-remove in normal mode. Tapping an upcoming entry jumps to it, passing over preceding entries. A Clear action removes upcoming entries while allowing the current song to finish; those removed entries must not return through repeat. An empty upcoming list says “Nothing queued.”
 
 Queue order is the source of truth: Next follows exactly the displayed list. Reordering does not interrupt audio. No saved playlists, automatic recommendations, or separate history screen are proposed.
 

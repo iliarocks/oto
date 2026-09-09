@@ -339,3 +339,15 @@ Replaced the proposed Play Next / Play Last long-press menu with one trailing ic
 Implemented a shared playback-order model with independent identities for duplicates, canonical ordering, listening history, shuffle, repeat-all/one, append, jump, move, remove, clear, and library reconciliation. The player and remote commands now consume that model. Added playback-state persistence within the selected library store, restoring paused without opening audio files and saving position during playback and app lifecycle changes. Folder replacement clears the old queue while preserving playback modes.
 
 All 41 unit/integration tests passed (`work/playback-queue-unit.xcresult`), including ten queue model tests and new real-audio checks for repeat transitions, paused restoration at the saved position, append while paused, removal on refresh, and folder replacement. Interface implementation and device validation are in progress.
+
+## Shuffle, repeat, and editable queue interface — September 8
+
+Added artwork-colored Play/Shuffle album actions, mode buttons in Now Playing, and an in-place queue view with compact current-song metadata. Album and song rows expose the requested trailing icon-only Add to Queue action, with full swipe disabled. The queue supports duplicate entries, tapping to jump, native reorder handles through Edit, swipe-to-remove, and Clear. Its controls remain available while the upcoming List scrolls. Active modes inherit the artwork tint; album actions stack only at accessibility text sizes. The mini player keeps its existing design.
+
+Connected library refresh to playback reconciliation and close the modal when no current entry remains. A temporarily unresolvable folder bookmark no longer clears saved playback. Updated user and architecture documentation to describe the implemented behavior, including paused restoration and removal of the scan Cancel UI.
+
+All 41 unit/integration tests passed, along with nine distinct UI flows across `work/playback-queue-ui.xcresult` and `work/playback-final-regression.xcresult`. Checks covered both swipe entry points, duplicates, reorder/remove/clear, shuffle/repeat state, paused relaunch, long-title motion, portrait/landscape controls, accessibility sizes, final-song clearance, and missing-file retry. The queue flow also passed in dark mode (`work/playback-queue-dark.xcresult`). Screenshot review caught and corrected large-text label wrapping and mode-button tint inheritance. Physical headphone/AirPlay route interaction was not exercised; remote-command state and audio-session interruption behavior were checked through integration tests.
+
+Signed build 1.0 (38) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone without preview arguments.
+
+A final queue run (`work/playback-queue-rotation-final.xcresult`) passed after adjusting the screenshot capture to wait for rotation and capture the whole screen. Inspected the settled landscape layout and final light/dark selected controls.

@@ -4,12 +4,15 @@ struct AlbumView: View {
     @Environment(\.albumAccent) private var accent
     @Environment(\.albumAccentInk) private var accentInk
     @Environment(\.albumTextAccent) private var textAccent
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let album: Album
     let library: LibraryStore
     let player: PlaybackController
     @State private var headerProgress: CGFloat = 0
 
     var body: some View {
+        let actionLayout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(spacing: 12))
         GeometryReader { viewport in
             let viewportTop = viewport.frame(in: .global).minY
             let topInset = viewport.safeAreaInsets.top
@@ -32,13 +35,22 @@ struct AlbumView: View {
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                         .multilineTextAlignment(.center)
-                        Button { play() } label: {
-                            Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
-                                .foregroundStyle(accentInk)
+                        actionLayout {
+                            Button { play(shuffled: false) } label: {
+                                Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
+                                    .foregroundStyle(accentInk)
+                            }
+                            .accessibilityIdentifier("play-album")
+                            Button { play(shuffled: true) } label: {
+                                Label("Shuffle", systemImage: "shuffle").frame(maxWidth: .infinity).padding(.vertical, 5)
+                                    .foregroundStyle(accentInk)
+                            }
+                            .accessibilityIdentifier("shuffle-album")
                         }
                         .buttonStyle(.borderedProminent)
-                        .accessibilityIdentifier("play-album")
-                        .frame(maxWidth: 280)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                        .frame(maxWidth: 340)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -73,6 +85,15 @@ struct AlbumView: View {
                             .accessibilityValue(isCurrent(track) ? (player.wantsPlayback ? "Playing" : "Paused") : "")
                             .accessibilityIdentifier("track-\(track.title)")
                             .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button {
+                                    if let bookmark = library.snapshot?.bookmark {
+                                        player.enqueue([track], bookmark: bookmark)
+                                    }
+                                } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
+                                .tint(accent)
+                                .accessibilityLabel("Add to Queue")
+                            }
                         }
                     } header: { if discNumbers.count > 1 { Text("Disc \(disc)") } }
                     .listSectionSeparator(.hidden)
@@ -108,9 +129,9 @@ struct AlbumView: View {
 
     private var discNumbers: [Int] { Set(album.tracks.map { $0.discNumber ?? 1 }).sorted() }
     private func isCurrent(_ track: Track) -> Bool { player.currentTrack == track }
-    private func play(_ track: Track? = nil) {
+    private func play(_ track: Track? = nil, shuffled: Bool? = nil) {
         guard let bookmark = library.snapshot?.bookmark else { return }
-        player.play(album.tracks, startingAt: track, bookmark: bookmark)
+        player.play(album.tracks, startingAt: track, bookmark: bookmark, shuffled: shuffled)
     }
 }
 

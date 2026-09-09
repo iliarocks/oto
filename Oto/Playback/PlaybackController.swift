@@ -141,11 +141,11 @@ private actor AudioSessionController {
 
     func reconcile(with snapshot: LibrarySnapshot) {
         let newPath = (try? FolderAccess(bookmark: snapshot.bookmark))?.url.standardizedFileURL.path
-        if folderPath != nil && newPath != folderPath { stop(); return }
+        if let newPath, let folderPath, newPath != folderPath { stop(); return }
         let previousID = playbackQueue.currentID
         playbackQueue.reconcile(with: snapshot.tracks)
         bookmark = snapshot.bookmark
-        folderPath = newPath
+        folderPath = newPath ?? folderPath
         if playbackQueue.currentID != previousID {
             let replacement = playbackQueue.current
             loadID = UUID(); loadTask?.cancel(); loadTask = nil

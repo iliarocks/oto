@@ -417,6 +417,13 @@ final class LibraryTests: XCTestCase {
         player.enqueue([snapshot.tracks[0]], bookmark: snapshot.bookmark)
         XCTAssertFalse(player.wantsPlayback)
         XCTAssertEqual(player.upcoming.last?.track, snapshot.tracks[0])
+        try FileManager.default.removeItem(at: music.appendingPathComponent("02.flac"))
+        player.next()
+        try await waitUntil { player.errorMessage != nil && !player.isLoading }
+        let failedID = player.currentEntryID
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertFalse(player.wantsPlayback, "Repeat must stop on an unavailable file rather than retry forever")
+        XCTAssertEqual(player.currentEntryID, failedID)
     }
 
     @MainActor private func waitUntil(_ condition: () -> Bool) async throws {

@@ -88,10 +88,15 @@ struct NowPlayingView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var seekPosition: Double = 0
     @State private var isSeeking = false
+    @State private var showingQueue = false
+    @State private var queueEditMode: EditMode = .inactive
 
     var body: some View {
         GeometryReader { geometry in
-            if geometry.size.width > geometry.size.height {
+            if showingQueue {
+                queueView(compact: geometry.size.width > geometry.size.height)
+                    .dynamicTypeSize(...(geometry.size.width > geometry.size.height ? DynamicTypeSize.xxxLarge : .accessibility5))
+            } else if geometry.size.width > geometry.size.height {
                 HStack(spacing: 24) {
                     artwork.frame(width: min(220, geometry.size.height - 24))
                     details(compact: true)
@@ -116,7 +121,7 @@ struct NowPlayingView: View {
         .modifier(ArtworkTheme(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory))
         .presentationDragIndicator(.visible)
         .accessibilityAction(.escape) { dismiss() }
-        .onChange(of: player.currentTrack?.id) { _, _ in isSeeking = false; seekPosition = 0 }
+        .onChange(of: player.currentEntryID) { _, _ in isSeeking = false; seekPosition = 0 }
         .alert("Couldn't Play", isPresented: Binding(get: { player.errorMessage != nil }, set: { if !$0 { player.errorMessage = nil } })) {
             if player.currentTrack != nil {
                 Button("Try Again") { player.errorMessage = nil; player.resume() }
@@ -134,13 +139,7 @@ struct NowPlayingView: View {
             metadata
             seeking
             transport(compact: compact)
-            if !compact {
-                VStack(spacing: 7) {
-                    RoutePicker().frame(width: 52, height: 44)
-                    Text(player.currentTrack?.fileExtension ?? "")
-                        .font(.caption.weight(.medium)).foregroundStyle(.tertiary)
-                }
-            }
+            accessories(compact: compact)
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -169,22 +168,148 @@ struct NowPlayingView: View {
     }
 
     private func transport(compact: Bool) -> some View {
-        HStack(spacing: compact ? 12 : 38) {
-            Button { player.previous() } label: { Image(systemName: "backward.fill").font(.system(size: 28)).frame(width: 52, height: 60) }
-                .accessibilityLabel("Previous Song")
+        HStack(spacing: 0) {
+            modeButton(symbol: "shuffle", selected: player.isShuffled, label: "Shuffle", value: player.isShuffled ? "On" : "Off") {
+                player.setShuffle(!player.isShuffled)
+            }
+            .accessibilityIdentifier("shuffle-toggle")
+            Spacer(minLength: 0)
+            Button { player.previous() } label: {
+                Image(systemName: "backward.fill").font(.system(size: 26)).frame(width: 48, height: 56)
+            }
+            .accessibilityLabel("Previous Song")
+            Spacer(minLength: 0)
             Button { player.toggle() } label: {
                 Image(systemName: player.wantsPlayback ? "pause.fill" : "play.fill")
-                    .font(.system(size: 44))
-                    .frame(width: 64, height: 64)
+                    .font(.system(size: compact ? 34 : 42))
+                    .frame(width: 60, height: compact ? 56 : 64)
             }
             .accessibilityLabel(player.wantsPlayback ? "Pause" : "Play")
             .accessibilityIdentifier("now-playing-toggle")
-            Button { player.next() } label: { Image(systemName: "forward.fill").font(.system(size: 28)).frame(width: 52, height: 60) }
-                .accessibilityLabel("Next Song").disabled(!player.hasNext)
-                .accessibilityIdentifier("now-playing-next")
-            if compact { RoutePicker().frame(width: 44, height: 44) }
+            Spacer(minLength: 0)
+            Button { player.next() } label: {
+                Image(systemName: "forward.fill").font(.system(size: 26)).frame(width: 48, height: 56)
+            }
+            .accessibilityLabel("Next Song").disabled(!player.hasNext)
+            .accessibilityIdentifier("now-playing-next")
+            Spacer(minLength: 0)
+            modeButton(symbol: player.repeatMode.symbol, selected: player.repeatMode != .off,
+                       label: "Repeat", value: player.repeatMode.label) {
+                player.setRepeat(player.repeatMode.next)
+            }
+            .accessibilityIdentifier("repeat-toggle")
         }
         .buttonStyle(.plain)
+    }
+
+    private func modeButton(symbol: String, selected: Bool, label: String, value: String,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(selected ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+                .frame(width: 36, height: 32)
+                .background {
+                    RoundedRectangle(cornerRadius: 9).fill(.tint).opacity(selected ? 0.15 : 0)
+                }
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func accessories(compact: Bool) -> some View {
+        HStack(alignment: .top) {
+            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+            Spacer()
+            VStack(spacing: 0) {
+                RoutePicker().frame(width: 52, height: 44)
+                if !compact {
+                    Text(player.currentTrack?.fileExtension ?? "")
+                        .font(.caption.weight(.medium)).foregroundStyle(.tertiary)
+                }
+            }
+            Spacer()
+            modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
+                showingQueue.toggle()
+                queueEditMode = .inactive
+            }
+            .accessibilityIdentifier("queue-toggle")
+        }
+    }
+
+    private func queueView(compact: Bool) -> some View {
+        VStack(spacing: compact ? 4 : 12) {
+            HStack(spacing: 12) {
+                ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: compact ? 40 : 56)
+                VStack(alignment: .leading, spacing: 4) {
+                    MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", style: .headline, weight: .semibold)
+                    MarqueeText(text: player.currentTrack?.artist ?? "", style: .subheadline, color: .secondaryLabel)
+                }
+            }
+            .padding(.horizontal, 24)
+            HStack(spacing: 16) {
+                Text("Playing Next").font(.headline)
+                Spacer()
+                if !player.upcoming.isEmpty {
+                    Button("Clear") { player.clearUpcoming(); queueEditMode = .inactive }
+                        .accessibilityIdentifier("clear-queue")
+                    Button(queueEditMode.isEditing ? "Done" : "Edit") {
+                        withAnimation { queueEditMode = queueEditMode.isEditing ? .inactive : .active }
+                    }
+                    .accessibilityIdentifier("edit-queue")
+                }
+            }
+            .padding(.horizontal, 24)
+            if player.upcoming.isEmpty {
+                Text("Nothing queued")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(player.upcoming) { entry in
+                        Button { player.jump(to: entry.id) } label: {
+                            HStack(spacing: 12) {
+                                ArtworkView(key: entry.track.artworkKey, directory: player.artworkDirectory, size: 40)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(entry.track.title).font(.subheadline.weight(.medium)).foregroundStyle(.primary)
+                                    Text(entry.track.artist).font(.caption).foregroundStyle(.secondary)
+                                }
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("queued-" + entry.track.title)
+                        .listRowSeparator(.hidden)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { player.removeUpcoming(entry.id) } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
+                        .accessibilityAction(named: "Remove from Queue") { player.removeUpcoming(entry.id) }
+                    }
+                    .onMove { player.moveUpcoming(from: $0, to: $1) }
+                }
+                .listStyle(.plain)
+                .environment(\.editMode, $queueEditMode)
+                .accessibilityIdentifier("upcoming-queue")
+            }
+            VStack(spacing: compact ? 0 : 8) {
+                if !compact { seeking }
+                transport(compact: compact)
+                accessories(compact: compact)
+            }
+            .frame(maxWidth: 440)
+            .padding(.horizontal, 24)
+        }
+        .padding(.top, 16)
+        .padding(.bottom, compact ? 8 : 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
 }

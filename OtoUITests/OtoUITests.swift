@@ -159,7 +159,109 @@ final class OtoUITests: XCTestCase {
         app.launchArguments = []
         app.launch()
         XCTAssertTrue(album.waitForExistence(timeout: 10))
-        XCTAssertFalse(app.buttons["mini-player"].exists)
+        XCTAssertTrue(app.buttons["mini-player"].exists)
+        app.buttons["mini-player"].tap()
+        XCTAssertEqual(app.buttons["now-playing-toggle"].label, "Play")
+    }
+
+    @MainActor func testSwipeQueueModesEditingAndPausedRestoration() async throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        let album = app.buttons["album-Quiet Hours"]
+        XCTAssertTrue(album.waitForExistence(timeout: 20))
+        album.swipeLeft()
+        let add = app.buttons["Add to Queue"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        attach(app, name: "Album Add to Queue Swipe")
+        add.tap()
+        XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
+        app.buttons["Pause"].tap()
+        album.swipeLeft()
+        add.tap()
+        app.buttons["mini-player"].tap()
+        let toggle = app.buttons["now-playing-toggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        XCTAssertEqual(toggle.label, "Play")
+        app.buttons["shuffle-toggle"].tap()
+        XCTAssertEqual(app.buttons["shuffle-toggle"].value as? String, "On")
+        app.buttons["shuffle-toggle"].tap()
+        app.buttons["repeat-toggle"].tap()
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat All")
+        attach(app, name: "Now Playing Shuffle Repeat Queue Controls")
+        app.buttons["queue-toggle"].tap()
+        XCTAssertTrue(app.staticTexts["Playing Next"].exists)
+        let first = app.buttons["queued-First Light"]
+        let seconds = app.buttons.matching(identifier: "queued-Second Light")
+        XCTAssertEqual(seconds.count, 2)
+        XCTAssertTrue(first.exists)
+        attach(app, name: "Playing Next with Duplicate Songs")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertGreaterThan(app.frame.width, app.frame.height)
+        XCTAssertTrue(app.buttons["queue-toggle"].isHittable)
+        XCTAssertTrue(toggle.isHittable)
+        let landscape = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        landscape.name = "Landscape Queue"
+        landscape.lifetime = .keepAlways
+        self.add(landscape)
+        XCUIDevice.shared.orientation = .portrait
+        try await Task.sleep(for: .seconds(1))
+        defer { XCUIDevice.shared.orientation = .portrait }
+        app.buttons["edit-queue"].tap()
+        attach(app, name: "Native Queue Reorder Handles")
+        let handle = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Reorder'"))
+        XCTAssertTrue(handle.firstMatch.waitForExistence(timeout: 5))
+        let start = handle.element(boundBy: 1).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let end = handle.element(boundBy: 0).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
+        start.press(forDuration: 0.5, thenDragTo: end)
+        app.buttons["edit-queue"].tap()
+        XCTAssertLessThan(first.frame.minY, seconds.firstMatch.frame.minY)
+        first.swipeLeft()
+        app.buttons["Remove"].tap()
+        XCTAssertFalse(first.exists)
+        XCTAssertEqual(seconds.count, 2)
+        XCTAssertEqual(toggle.label, "Play")
+        app.terminate()
+        app.launchArguments = []
+        app.launchEnvironment.removeValue(forKey: "OTO_MUSIC_FOLDER")
+        app.launch()
+        XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
+        app.buttons["mini-player"].tap()
+        XCTAssertEqual(toggle.label, "Play")
+        XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat All")
+        app.buttons["queue-toggle"].tap()
+        XCTAssertEqual(seconds.count, 2)
+        app.buttons["clear-queue"].tap()
+        XCTAssertTrue(app.staticTexts["Nothing queued"].exists)
+        XCTAssertEqual(toggle.label, "Play")
+        attach(app, name: "Empty Upcoming Queue")
+    }
+
+    @MainActor func testSongSwipeAndAlbumShuffle() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["OTO_UI_TEST"] = "1"
+        app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
+        app.launchArguments = ["--reset-library"]
+        app.launch()
+        XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 20))
+        app.buttons["album-Quiet Hours"].tap()
+        XCTAssertTrue(app.buttons["shuffle-album"].waitForExistence(timeout: 5))
+        attach(app, name: "Album Play and Shuffle")
+        app.buttons["shuffle-album"].tap()
+        XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
+        app.buttons["Pause"].tap()
+        app.buttons["track-First Light"].swipeLeft()
+        XCTAssertTrue(app.buttons["Add to Queue"].waitForExistence(timeout: 5))
+        attach(app, name: "Song Add to Queue Swipe")
+        app.buttons["Add to Queue"].tap()
+        app.buttons["mini-player"].tap()
+        XCTAssertEqual(app.buttons["shuffle-toggle"].value as? String, "On")
+        XCTAssertEqual(app.buttons["now-playing-toggle"].label, "Play")
+        app.buttons["queue-toggle"].tap()
+        XCTAssertTrue(app.buttons["queued-First Light"].exists)
     }
 
     @MainActor func testLargeTextLibraryAndAlbum() throws {
@@ -415,7 +517,7 @@ final class OtoUITests: XCTestCase {
         let landscape = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         landscape.name = "Fixed Landscape Now Playing"
         landscape.lifetime = .keepAlways
-        add(landscape)
+        self.add(landscape)
         XCUIDevice.shared.orientation = .portrait
         app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
