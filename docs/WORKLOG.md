@@ -351,3 +351,13 @@ All 41 unit/integration tests passed, along with nine distinct UI flows across `
 Signed build 1.0 (38) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone without preview arguments.
 
 A final queue run (`work/playback-queue-rotation-final.xcresult`) passed after adjusting the screenshot capture to wait for rotation and capture the whole screen. Inspected the settled landscape layout and final light/dark selected controls.
+
+## Refine album playback actions and queue presentation — September 8
+
+Replaced the competing album Shuffle action with a smaller icon-only mode toggle beside the main Play/Pause button. Shuffle changes the upcoming order without starting or restarting playback. When the current song belongs to the displayed album, the main button reflects playback intent and pauses/resumes that song, preserving the queue. Playing another album respects the chosen shuffle setting.
+
+Centered the queue button beside AirPlay. Artwork and queue now crossfade within one flexible content area above a shared, fixed playback-control layout; opening or closing the queue no longer changes scrubber or transport positions. Reduce Motion uses a shorter fade. Removed Edit and its state; native touch-and-hold dragging, swipe-to-remove, and Clear remain available.
+
+Five distinct UI flows passed across `work/player-refinement-ui.xcresult` and `work/player-refinement-dark.xcresult`, including a repeated queue flow in dark mode. Checks covered direct dragging without Edit, duplicate removal, paused restoration, fixed control geometry in both transition directions, shuffle without playback, album pause/resume preserving the current song and queue, long titles, landscape, and accessibility text sizes. Reviewed light/dark screenshots and a simulator recording of the revised layout. Production playback-model code was unchanged.
+
+Signed build 1.0 (39) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone without preview arguments. Updated the README, architecture notes, and playback proposal to match the refined interactions.

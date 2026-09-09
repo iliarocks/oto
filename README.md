@@ -36,11 +36,11 @@ swift Scripts/generate-icon.swift HiraginoSans-W6 '#171717' \
 ## Using Oto
 
 1. Tap the **folder-plus** button, navigate to your folder in Files, and tap **Open**.
-2. Open an album, then tap **Play**, **Shuffle**, or an individual song. Starting new playback replaces the queue; Play starts in album order and turns shuffle off.
+2. Open an album, then tap **Play** or an individual song. The smaller shuffle toggle sets the playback order without starting music. If the current song belongs to that album, its main button switches between Play and Pause without replacing the queue; playing another album replaces the queue and respects the shuffle setting.
 3. Tap the floating player for seeking, previous/next, shuffle, repeat, AirPlay, and the queue. Repeat cycles through Off, All, and One. Previous restarts the song after three seconds; otherwise it follows listening history. Skipping while paused stays paused. Swipe down to dismiss Now Playing.
 4. After changing the contents of your folder, pull to refresh or use **Settings → Refresh**. A notice in the library links to any files that couldn't be read. **Settings**, opened from the gear at the top left, shows the selected folder; tap its **Folder** row to choose another. Its About section links to Privacy and Support.
 
-Swipe left on an album or song and tap the queue-plus icon to append it to the queue. The queue button in Now Playing switches between artwork and Playing Next. Tap **Edit** for native reorder handles, swipe a queued row to remove it, or tap **Clear** to remove upcoming songs. Adding while paused stays paused; with nothing loaded, adding starts playback. Queue entries can include duplicates.
+Swipe left on an album or song and tap the queue-plus icon to append it to the queue. The queue button in Now Playing switches between artwork and Playing Next. Touch and hold a queued row to drag it into a new position, swipe it to remove it, or tap **Clear** to remove upcoming songs. The queue button sits beside AirPlay; switching views crossfades the artwork and list while keeping playback controls fixed. Adding while paused stays paused; with nothing loaded, adding starts playback. Queue entries can include duplicates.
 
 The queue, playback modes, current song, and position are saved. Reopening restores playback paused and does not open an audio file until you tap Play.
 

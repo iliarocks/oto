@@ -4,16 +4,16 @@ Status: accepted and implemented; validation and device delivery are recorded in
 
 ## Where the controls live
 
-- Album pages: replace the wide Play button with side-by-side Play and Shuffle buttons. Both follow the album artwork accent and keep native button styling.
+- Album pages: retain a prominent Play/Pause button with a smaller icon-only shuffle toggle beside it. Both follow the album artwork accent; shuffle uses a subtle selected background.
 - Now Playing: place smaller shuffle and repeat controls on either side of the existing previous/play/next controls, with full-sized touch targets. Active modes use the artwork accent and a subtle selected background, so selection does not depend on color alone. Repeat One adds the familiar “1.”
-- Add a queue button at the bottom right of Now Playing, alongside the existing AirPlay area. The mini player stays as it is.
-- The queue button switches the same modal into a queue view, rather than stacking another modal. Artwork and metadata become a compact current-song row, the upcoming list occupies the middle, and playback controls stay available. Tapping the queue button again restores the artwork view. Only the queue list scrolls.
+- Center the queue button beside AirPlay below the playback controls in Now Playing. The mini player stays as it is.
+- The queue button switches the same modal into a queue view, rather than stacking another modal. Artwork and metadata become a compact current-song row, the upcoming list occupies the middle, and the two views crossfade while playback controls remain fixed. Tapping the queue button again restores the artwork view. Only the queue list scrolls.
 
 ## Starting playback and shuffle
 
-Play starts the album in its original disc/track order and turns shuffle off. Shuffle starts the entire album in a randomized order and turns shuffle on. Tapping a song starts an album queue from that song; if shuffle is already on, that song plays first and the other album tracks are randomized after it.
+The shuffle toggle changes playback mode without starting music. Play starts the album in its original disc/track order when shuffle is off, or in a randomized order when it is on. If the current song belongs to the displayed album, the main button reflects Play/Pause and pauses or resumes that song without replacing the queue. Tapping a song starts an album queue from that song; if shuffle is already on, that song plays first and the other album tracks are randomized after it.
 
-Starting an album or tapping a song in an album replaces the previous playback queue. Adding music without replacing it uses the trailing Add to Queue swipe action.
+Starting another album or tapping a song in an album replaces the previous playback queue. Adding music without replacing it uses the trailing Add to Queue swipe action.
 
 Switching shuffle on during playback randomizes the upcoming songs without restarting the current song or replaying completed entries. Switching it off restores the remaining queue's original sequence. Previous follows actual listening history, including while shuffled.
 
@@ -37,7 +37,7 @@ There is no Play Next action or long-press queue menu. Moving something nearer t
 
 An added album stays in track order at insertion, even during shuffled playback. If nothing is loaded, Add to Queue starts the selected music. If playback is paused, adding music leaves it paused. Intentional duplicate entries are allowed and independently editable.
 
-The queue view has a compact current-song row and a Playing Next list. Upcoming rows show artwork, song title, and artist, with native drag handles available through Edit and swipe-to-remove in normal mode. Tapping an upcoming entry jumps to it, passing over preceding entries. A Clear action removes upcoming entries while allowing the current song to finish; those removed entries must not return through repeat. An empty upcoming list says “Nothing queued.”
+The queue view has a compact current-song row and a Playing Next list. Upcoming rows show artwork, song title, and artist, with native touch-and-hold dragging and swipe-to-remove, without an Edit mode. Tapping an upcoming entry jumps to it, passing over preceding entries. A Clear action removes upcoming entries while allowing the current song to finish; those removed entries must not return through repeat. An empty upcoming list says “Nothing queued.”
 
 Queue order is the source of truth: Next follows exactly the displayed list. Reordering does not interrupt audio. No saved playlists, automatic recommendations, or separate history screen are proposed.
 

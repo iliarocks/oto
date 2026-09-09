@@ -89,34 +89,33 @@ struct NowPlayingView: View {
     @State private var seekPosition: Double = 0
     @State private var isSeeking = false
     @State private var showingQueue = false
-    @State private var queueEditMode: EditMode = .inactive
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geometry in
-            if showingQueue {
-                queueView(compact: geometry.size.width > geometry.size.height)
-                    .dynamicTypeSize(...(geometry.size.width > geometry.size.height ? DynamicTypeSize.xxxLarge : .accessibility5))
-            } else if geometry.size.width > geometry.size.height {
-                HStack(spacing: 24) {
-                    artwork.frame(width: min(220, geometry.size.height - 24))
-                    details(compact: true)
-                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            let compact = geometry.size.width > geometry.size.height
+            VStack(spacing: compact ? 8 : 20) {
+                ZStack {
+                    if showingQueue {
+                        queueContent(compact: compact)
+                            .transition(.opacity)
+                    } else {
+                        artworkContent(compact: compact)
+                            .transition(.opacity)
+                    }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                VStack(spacing: 20) {
-                    artwork.frame(maxWidth: 360, maxHeight: .infinity)
-                        .layoutPriority(-1)
-                    details(compact: false)
-                }
-                .frame(maxWidth: 440)
-                .padding(.horizontal, 30)
-                .padding(.top, 12)
-                .padding(.bottom, 24)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .layoutPriority(-1)
+                playbackControls(compact: compact)
+                    .frame(maxWidth: 440)
             }
+            .frame(maxWidth: compact ? .infinity : 440)
+            .padding(.horizontal, 30)
+            .padding(.top, compact ? 12 : 16)
+            .padding(.bottom, compact ? 8 : 24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .dynamicTypeSize(...(compact ? DynamicTypeSize.xxxLarge : .accessibility5))
         }
         .modifier(ArtworkTheme(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory))
         .presentationDragIndicator(.visible)
@@ -134,9 +133,24 @@ struct NowPlayingView: View {
         ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory)
     }
 
-    private func details(compact: Bool) -> some View {
-        VStack(spacing: compact ? 8 : 22) {
-            metadata
+    @ViewBuilder private func artworkContent(compact: Bool) -> some View {
+        if compact {
+            HStack(spacing: 24) {
+                artwork.frame(maxWidth: 180, maxHeight: .infinity)
+                metadata.frame(maxWidth: 440)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            VStack(spacing: 20) {
+                artwork.frame(maxWidth: 360, maxHeight: .infinity)
+                    .layoutPriority(-1)
+                metadata
+            }
+        }
+    }
+
+    private func playbackControls(compact: Bool) -> some View {
+        VStack(spacing: compact ? 4 : 22) {
             seeking
             transport(compact: compact)
             accessories(compact: compact)
@@ -222,26 +236,25 @@ struct NowPlayingView: View {
     }
 
     private func accessories(compact: Bool) -> some View {
-        HStack(alignment: .top) {
-            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
-            Spacer()
-            VStack(spacing: 0) {
-                RoutePicker().frame(width: 52, height: 44)
-                if !compact {
-                    Text(player.currentTrack?.fileExtension ?? "")
-                        .font(.caption.weight(.medium)).foregroundStyle(.tertiary)
+        VStack(spacing: 0) {
+            HStack(spacing: 20) {
+                RoutePicker().frame(width: 44, height: 44)
+                modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
+                    withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.35, extraBounce: 0)) {
+                        showingQueue.toggle()
+                    }
                 }
+                .accessibilityIdentifier("queue-toggle")
             }
-            Spacer()
-            modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
-                showingQueue.toggle()
-                queueEditMode = .inactive
+            if !compact {
+                Text(player.currentTrack?.fileExtension ?? "")
+                    .font(.caption.weight(.medium)).foregroundStyle(.tertiary)
             }
-            .accessibilityIdentifier("queue-toggle")
         }
+        .frame(maxWidth: .infinity)
     }
 
-    private func queueView(compact: Bool) -> some View {
+    private func queueContent(compact: Bool) -> some View {
         VStack(spacing: compact ? 4 : 12) {
             HStack(spacing: 12) {
                 ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: compact ? 40 : 56)
@@ -250,20 +263,14 @@ struct NowPlayingView: View {
                     MarqueeText(text: player.currentTrack?.artist ?? "", style: .subheadline, color: .secondaryLabel)
                 }
             }
-            .padding(.horizontal, 24)
             HStack(spacing: 16) {
                 Text("Playing Next").font(.headline)
                 Spacer()
                 if !player.upcoming.isEmpty {
-                    Button("Clear") { player.clearUpcoming(); queueEditMode = .inactive }
+                    Button("Clear") { player.clearUpcoming() }
                         .accessibilityIdentifier("clear-queue")
-                    Button(queueEditMode.isEditing ? "Done" : "Edit") {
-                        withAnimation { queueEditMode = queueEditMode.isEditing ? .inactive : .active }
-                    }
-                    .accessibilityIdentifier("edit-queue")
                 }
             }
-            .padding(.horizontal, 24)
             if player.upcoming.isEmpty {
                 Text("Nothing queued")
                     .foregroundStyle(.secondary)
@@ -286,6 +293,8 @@ struct NowPlayingView: View {
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("queued-" + entry.track.title)
                         .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) { player.removeUpcoming(entry.id) } label: {
                                 Label("Remove", systemImage: "trash")
@@ -296,19 +305,10 @@ struct NowPlayingView: View {
                     .onMove { player.moveUpcoming(from: $0, to: $1) }
                 }
                 .listStyle(.plain)
-                .environment(\.editMode, $queueEditMode)
+                .scrollContentBackground(.hidden)
                 .accessibilityIdentifier("upcoming-queue")
             }
-            VStack(spacing: compact ? 0 : 8) {
-                if !compact { seeking }
-                transport(compact: compact)
-                accessories(compact: compact)
-            }
-            .frame(maxWidth: 440)
-            .padding(.horizontal, 24)
         }
-        .padding(.top, 16)
-        .padding(.bottom, compact ? 8 : 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 

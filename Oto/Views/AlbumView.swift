@@ -36,21 +36,33 @@ struct AlbumView: View {
                         }
                         .multilineTextAlignment(.center)
                         actionLayout {
-                            Button { play(shuffled: false) } label: {
-                                Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity).padding(.vertical, 5)
-                                    .foregroundStyle(accentInk)
+                            Button { player.setShuffle(!player.isShuffled) } label: {
+                                Image(systemName: "shuffle")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(player.isShuffled ? accent : Color.secondary)
+                                    .frame(width: 44, height: 44)
+                                    .background(player.isShuffled ? accent.opacity(0.15) : .clear,
+                                                in: RoundedRectangle(cornerRadius: 12))
                             }
-                            .accessibilityIdentifier("play-album")
-                            Button { play(shuffled: true) } label: {
-                                Label("Shuffle", systemImage: "shuffle").frame(maxWidth: .infinity).padding(.vertical, 5)
-                                    .foregroundStyle(accentInk)
-                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Shuffle")
+                            .accessibilityValue(player.isShuffled ? "On" : "Off")
+                            .accessibilityAddTraits(player.isShuffled ? .isSelected : [])
                             .accessibilityIdentifier("shuffle-album")
+                            Button {
+                                if isCurrentAlbum { player.toggle() }
+                                else { play() }
+                            } label: {
+                                Label(albumIsPlaying ? "Pause" : "Play", systemImage: albumIsPlaying ? "pause.fill" : "play.fill")
+                                    .frame(maxWidth: .infinity).padding(.vertical, 5)
+                                    .foregroundStyle(accentInk)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .accessibilityIdentifier("play-album")
                         }
-                        .buttonStyle(.borderedProminent)
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
-                        .frame(maxWidth: 340)
+                        .frame(maxWidth: 280)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -128,6 +140,8 @@ struct AlbumView: View {
     private var titleProgress: CGFloat { max((headerProgress - 0.12) / 0.88, 0) }
 
     private var discNumbers: [Int] { Set(album.tracks.map { $0.discNumber ?? 1 }).sorted() }
+    private var isCurrentAlbum: Bool { player.currentTrack?.albumID == album.id }
+    private var albumIsPlaying: Bool { isCurrentAlbum && player.wantsPlayback }
     private func isCurrent(_ track: Track) -> Bool { player.currentTrack == track }
     private func play(_ track: Track? = nil, shuffled: Bool? = nil) {
         guard let bookmark = library.snapshot?.bookmark else { return }
