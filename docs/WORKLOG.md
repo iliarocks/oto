@@ -209,3 +209,11 @@ The existing slow-scroll, reversal, playback, dismissal, and final-song-clearanc
 Offset the two scroll-driven reveal ranges by 12% of the existing 56-point range (about 7 points). Frosting reveals over 0–88% and title text over 12–100%, so the background begins first and remains a little longer on reversal. Most of the fades overlap. The title's accessibility visibility follows its own reveal amount. Main album text stays at full opacity; the existing easing and corrected scroll boundary are retained.
 
 The existing slow-scroll/reversal/playback/dismissal/clearance check passed (`work/header-stagger.xcresult`). Signed build 0.1 (18) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with existing app data preserved.
+
+## Roomier compact list spacing — September 8
+
+Compared the earlier compact-layout commit (017ab52) and its reversal (b0d2c04). That attempt used 8-point vertical row insets for albums and 6 for songs. This version uses 12 for albums and 10 for songs, adding eight points of total height per row relative to the previous compact attempt while reducing the current default spacing. Horizontal insets remain 16 points, artwork and type sizes are unchanged, and row heights can expand with Dynamic Type.
+
+Normal and largest-text scroll/playback/dismissal/final-song-clearance checks passed (`work/roomier-compact-lists.xcresult`). Inspected the song list and a four-album library preview, including a wrapped title. The preview uses locally retagged copies of the original test fixture under ignored `work/spacing-preview`, not the user's music. Signed build 0.1 (19) succeeded and the packaged build number was verified.
+
+Installed and launched build 19 on the connected iPhone, preserving its existing library.

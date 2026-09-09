@@ -37,6 +37,7 @@ struct LibraryView: View {
                                 }
                             }
                             .accessibilityIdentifier("album-\(album.title)")
+                            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                             .listRowSeparator(.hidden)
                         }
                         .listSectionSeparator(.hidden)
