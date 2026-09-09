@@ -333,3 +333,9 @@ Relaunched the installed build 1.0 (37) on the connected iPhone without preview 
 ## Refine the queue proposal — September 8
 
 Replaced the proposed Play Next / Play Last long-press menu with one trailing icon-only Add to Queue swipe action on album and song rows. It appends to the end; albums retain track order at insertion. The proposal preserves an accessible action label and queue reordering for changing what plays sooner. No feature implementation or device build changed.
+
+## Playback queue foundation — September 8
+
+Implemented a shared playback-order model with independent identities for duplicates, canonical ordering, listening history, shuffle, repeat-all/one, append, jump, move, remove, clear, and library reconciliation. The player and remote commands now consume that model. Added playback-state persistence within the selected library store, restoring paused without opening audio files and saving position during playback and app lifecycle changes. Folder replacement clears the old queue while preserving playback modes.
+
+All 41 unit/integration tests passed (`work/playback-queue-unit.xcresult`), including ten queue model tests and new real-audio checks for repeat transitions, paused restoration at the saved position, append while paused, removal on refresh, and folder replacement. Interface implementation and device validation are in progress.

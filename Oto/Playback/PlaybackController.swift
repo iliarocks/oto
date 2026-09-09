@@ -51,10 +51,13 @@ private actor AudioSessionController {
     private(set) var elapsed: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
     var errorMessage: String?
-    private(set) var queue: [Track] = []
-    private(set) var currentIndex = 0
+    private(set) var playbackQueue = PlaybackQueue()
+    var upcoming: [QueueEntry] { playbackQueue.upcoming }
+    var currentEntryID: UUID? { playbackQueue.currentID }
+    var isShuffled: Bool { playbackQueue.isShuffled }
+    var repeatMode: RepeatMode { playbackQueue.repeatMode }
     var preciseElapsed: TimeInterval { audio?.player.currentTime ?? elapsed }
-    var hasNext: Bool { currentIndex + 1 < queue.count }
+    var hasNext: Bool { playbackQueue.canAdvance }
     var hasPrevious: Bool { currentTrack != nil }
     let artworkDirectory: URL
 
@@ -70,20 +73,91 @@ private actor AudioSessionController {
     @ObservationIgnored private var notifications: [NSObjectProtocol] = []
     @ObservationIgnored private var remoteTargets: [(MPRemoteCommand, Any)] = []
     @ObservationIgnored private var nowPlayingArtwork: MPMediaItemArtwork?
+    @ObservationIgnored private var folderPath: String?
+    @ObservationIgnored private var lastCheckpoint = Date.distantPast
+    private var playbackURL: URL { artworkDirectory.deletingLastPathComponent().appendingPathComponent("playback.json") }
 
-    init(artworkDirectory: URL) {
+    init(artworkDirectory: URL, library: LibrarySnapshot? = nil) {
         self.artworkDirectory = artworkDirectory
         super.init()
         configureRemoteCommands()
         observeSession()
+        if let data = try? Data(contentsOf: playbackURL),
+           let saved = try? JSONDecoder().decode(SavedPlayback.self, from: data), saved.queue.isValid {
+            playbackQueue = saved.queue
+            folderPath = saved.folderPath
+            elapsed = saved.elapsed.isFinite ? max(0, saved.elapsed) : 0
+            if let library { reconcile(with: library) }
+            else { playbackQueue.clear(); elapsed = 0 }
+        }
     }
 
-    func play(_ tracks: [Track], startingAt track: Track? = nil, bookmark: Data) {
+    func play(_ tracks: [Track], startingAt track: Track? = nil, bookmark: Data, shuffled: Bool? = nil) {
         guard !tracks.isEmpty else { return }
-        queue = tracks
+        playbackQueue.start(tracks, at: track, shuffled: shuffled ?? isShuffled)
         self.bookmark = bookmark
-        currentIndex = track.flatMap { selected in tracks.firstIndex { $0.id == selected.id } } ?? 0
+        folderPath = (try? FolderAccess(bookmark: bookmark))?.url.standardizedFileURL.path
         loadCurrent()
+    }
+
+    func enqueue(_ tracks: [Track], bookmark: Data) {
+        guard !tracks.isEmpty else { return }
+        if currentTrack == nil {
+            self.bookmark = bookmark
+            folderPath = (try? FolderAccess(bookmark: bookmark))?.url.standardizedFileURL.path
+            playbackQueue.append(tracks)
+            loadCurrent()
+        } else {
+            playbackQueue.append(tracks)
+            queueChanged()
+        }
+    }
+
+    func setShuffle(_ enabled: Bool) { playbackQueue.setShuffle(enabled); queueChanged() }
+    func setRepeat(_ mode: RepeatMode) { playbackQueue.repeatMode = mode; queueChanged() }
+    func moveUpcoming(from offsets: IndexSet, to destination: Int) {
+        playbackQueue.move(from: offsets, to: destination); queueChanged()
+    }
+    func removeUpcoming(_ id: UUID) { playbackQueue.remove([id]); queueChanged() }
+    func clearUpcoming() { playbackQueue.clearUpcoming(); queueChanged() }
+    func jump(to id: UUID) {
+        let autoplay = wantsPlayback
+        if playbackQueue.jump(to: id) { loadCurrent(autoplay: autoplay) }
+    }
+
+    private func queueChanged() { updateNowPlaying(); checkpoint() }
+
+    func checkpoint() {
+        let saved = SavedPlayback(queue: playbackQueue, folderPath: folderPath, elapsed: preciseElapsed)
+        do {
+            try FileManager.default.createDirectory(at: playbackURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try JSONEncoder().encode(saved).write(to: playbackURL, options: .atomic)
+            lastCheckpoint = Date()
+        } catch {
+            // Playback remains usable if the device cannot save restoration state.
+            NSLog("Oto could not save playback state: %@", error.localizedDescription)
+        }
+    }
+
+    func reconcile(with snapshot: LibrarySnapshot) {
+        let newPath = (try? FolderAccess(bookmark: snapshot.bookmark))?.url.standardizedFileURL.path
+        if folderPath != nil && newPath != folderPath { stop(); return }
+        let previousID = playbackQueue.currentID
+        playbackQueue.reconcile(with: snapshot.tracks)
+        bookmark = snapshot.bookmark
+        folderPath = newPath
+        if playbackQueue.currentID != previousID {
+            let replacement = playbackQueue.current
+            loadID = UUID(); loadTask?.cancel(); loadTask = nil
+            pause(persist: false)
+            audio?.player.stop(); audio = nil; isLoading = false
+            elapsed = 0
+            currentTrack = replacement?.track
+        } else { currentTrack = playbackQueue.current?.track }
+        duration = currentTrack?.duration ?? 0
+        elapsed = min(elapsed, duration)
+        refreshArtwork()
+        queueChanged()
     }
 
     func toggle() {
@@ -91,7 +165,7 @@ private actor AudioSessionController {
         else { resume() }
     }
 
-    func pause() {
+    func pause(persist: Bool = true) {
         playRequestID = UUID()
         wantsPlayback = false
         resumeAfterInterruption = false
@@ -101,13 +175,14 @@ private actor AudioSessionController {
         timer?.invalidate()
         timer = nil
         updateNowPlaying()
+        if persist { checkpoint() }
     }
 
     func resume() {
         guard currentTrack != nil else { return }
         wantsPlayback = true
         if isLoading { return }
-        guard let audio else { loadCurrent(); return }
+        guard let audio else { loadCurrent(startPosition: elapsed); return }
         let request = UUID()
         playRequestID = request
         Task {
@@ -128,25 +203,25 @@ private actor AudioSessionController {
     }
 
     func seek(to seconds: TimeInterval) {
-        guard let audio, seconds.isFinite else { return }
-        audio.player.currentTime = min(max(seconds, 0), max(0, audio.player.duration - 0.01))
-        updateTime()
+        guard currentTrack != nil, !isLoading, seconds.isFinite else { return }
+        elapsed = min(max(seconds, 0), max(0, duration - 0.01))
+        audio?.player.currentTime = elapsed
         updateNowPlaying()
+        checkpoint()
     }
 
     func next() {
-        guard hasNext else { return }
         let autoplay = wantsPlayback
-        currentIndex += 1
+        guard playbackQueue.advance() else { return }
         loadCurrent(autoplay: autoplay)
     }
 
     func previous() {
-        if elapsed > 3 || currentIndex == 0 { seek(to: 0) }
+        if preciseElapsed > 3 { seek(to: 0) }
         else {
             let autoplay = wantsPlayback
-            currentIndex -= 1
-            loadCurrent(autoplay: autoplay)
+            if playbackQueue.previous() { loadCurrent(autoplay: autoplay) }
+            else { seek(to: 0) }
         }
     }
 
@@ -154,36 +229,35 @@ private actor AudioSessionController {
         loadID = UUID()
         loadTask?.cancel()
         loadTask = nil
-        pause()
+        pause(persist: false)
         audio?.player.stop()
         audio = nil
         currentTrack = nil
-        queue = []
+        playbackQueue.clear()
         bookmark = nil
+        folderPath = nil
         isLoading = false
         elapsed = 0
         duration = 0
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        updateNowPlaying()
+        checkpoint()
         Task { await session.deactivate() }
     }
 
-    private func loadCurrent(autoplay: Bool = true) {
-        guard queue.indices.contains(currentIndex), let bookmark else { return }
+    private func loadCurrent(autoplay: Bool = true, startPosition: TimeInterval = 0) {
+        guard let track = playbackQueue.current?.track, let bookmark else { return }
         loadTask?.cancel()
-        pause()
+        pause(persist: false)
         audio?.player.stop()
         audio = nil
-        let track = queue[currentIndex]
         currentTrack = track
-        elapsed = 0
+        errorMessage = nil
+        elapsed = startPosition
         duration = track.duration
         isLoading = true
         wantsPlayback = autoplay
-        nowPlayingArtwork = nil
-        if let key = track.artworkKey,
-           let image = UIImage(contentsOfFile: artworkDirectory.appendingPathComponent(key).path) {
-            nowPlayingArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-        }
+        refreshArtwork()
+        checkpoint()
         updateNowPlaying()
         let id = UUID()
         loadID = id
@@ -194,6 +268,8 @@ private actor AudioSessionController {
                 audio = prepared
                 prepared.player.delegate = self
                 duration = prepared.player.duration
+                prepared.player.currentTime = min(max(startPosition, 0), max(0, duration - 0.01))
+                elapsed = prepared.player.currentTime
                 isLoading = false
                 if wantsPlayback { resume() }
                 else { updateNowPlaying() }
@@ -209,6 +285,14 @@ private actor AudioSessionController {
         }
     }
 
+    private func refreshArtwork() {
+        nowPlayingArtwork = nil
+        if let key = currentTrack?.artworkKey,
+           let image = UIImage(contentsOfFile: artworkDirectory.appendingPathComponent(key).path) {
+            nowPlayingArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        }
+    }
+
     private func fail(_ message: String) {
         pause()
         errorMessage = message
@@ -217,7 +301,11 @@ private actor AudioSessionController {
     private func startTimer() {
         timer?.invalidate()
         let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.updateTime() }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.updateTime()
+                if Date().timeIntervalSince(self.lastCheckpoint) >= 5 { self.checkpoint() }
+            }
         }
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
@@ -233,12 +321,11 @@ private actor AudioSessionController {
             let shouldContinue = self.wantsPlayback
             self.pause()
             self.elapsed = self.duration
-            if flag && shouldContinue && self.hasNext {
-                self.currentIndex += 1
+            if flag && shouldContinue && self.playbackQueue.advance(automatically: true) {
                 self.loadCurrent()
             }
             else if !flag { self.fail("Playback stopped because this audio file could not be decoded.") }
-            else { self.updateNowPlaying() }
+            else { self.updateNowPlaying(); self.checkpoint() }
         }
     }
 
@@ -271,6 +358,20 @@ private actor AudioSessionController {
             return .success
         }
         remoteTargets.append((center.changePlaybackPositionCommand, token))
+        let shuffleToken = center.changeShuffleModeCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangeShuffleModeCommandEvent else { return .commandFailed }
+            let enabled = event.shuffleType != .off
+            Task { @MainActor [weak self] in self?.setShuffle(enabled) }
+            return .success
+        }
+        remoteTargets.append((center.changeShuffleModeCommand, shuffleToken))
+        let repeatToken = center.changeRepeatModeCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangeRepeatModeCommandEvent else { return .commandFailed }
+            let mode: RepeatMode = event.repeatType == .one ? .one : (event.repeatType == .all ? .all : .off)
+            Task { @MainActor [weak self] in self?.setRepeat(mode) }
+            return .success
+        }
+        remoteTargets.append((center.changeRepeatModeCommand, repeatToken))
         center.skipForwardCommand.isEnabled = false
         center.skipBackwardCommand.isEnabled = false
         updateNowPlaying()
@@ -280,11 +381,18 @@ private actor AudioSessionController {
         let commands = MPRemoteCommandCenter.shared()
         commands.nextTrackCommand.isEnabled = hasNext
         commands.previousTrackCommand.isEnabled = hasPrevious
-        commands.changePlaybackPositionCommand.isEnabled = audio != nil && !isLoading
+        commands.changePlaybackPositionCommand.isEnabled = currentTrack != nil && !isLoading
         commands.playCommand.isEnabled = currentTrack != nil
         commands.pauseCommand.isEnabled = currentTrack != nil
         commands.togglePlayPauseCommand.isEnabled = currentTrack != nil
-        guard let track = currentTrack else { return }
+        commands.changeShuffleModeCommand.isEnabled = currentTrack != nil
+        commands.changeShuffleModeCommand.currentShuffleType = isShuffled ? .items : .off
+        commands.changeRepeatModeCommand.isEnabled = currentTrack != nil
+        commands.changeRepeatModeCommand.currentRepeatType = repeatMode == .one ? .one : (repeatMode == .all ? .all : .off)
+        guard let track = currentTrack else {
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+            return
+        }
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: track.title,
             MPMediaItemPropertyArtist: track.artist,

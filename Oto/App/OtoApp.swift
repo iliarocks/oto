@@ -4,6 +4,7 @@ import SwiftUI
 struct OtoApp: App {
     @State private var library: LibraryStore
     @State private var player: PlaybackController
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         var persistence = LibraryPersistence.live
@@ -24,13 +25,17 @@ struct OtoApp: App {
                 .appendingPathComponent("OtoEmptyPreview-\(UUID().uuidString)", isDirectory: true))
         }
         #endif
-        _library = State(initialValue: LibraryStore(persistence: persistence))
-        _player = State(initialValue: PlaybackController(artworkDirectory: persistence.artworkDirectory))
+        let library = LibraryStore(persistence: persistence)
+        _library = State(initialValue: library)
+        _player = State(initialValue: PlaybackController(artworkDirectory: persistence.artworkDirectory, library: library.snapshot))
     }
 
     var body: some Scene {
         WindowGroup {
             LibraryView(library: library, player: player)
+                .onChange(of: scenePhase) { _, phase in
+                    if phase != .active { player.checkpoint() }
+                }
                 .task {
                     #if DEBUG && targetEnvironment(simulator)
                     if let path = ProcessInfo.processInfo.environment["OTO_MUSIC_FOLDER"] {

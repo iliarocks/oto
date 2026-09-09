@@ -29,7 +29,7 @@ final class PlaybackSliderView: UISlider {
     var preview: ((Double) -> Void)?
     var editing: ((Bool) -> Void)?
     private var scrubbing = false
-    private var seekingTrackID: String?
+    private var seekingTrackID: UUID?
     private var displayLink: CADisplayLink?
 
     init() {
@@ -78,7 +78,7 @@ final class PlaybackSliderView: UISlider {
     override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
         guard player?.isLoading == false, super.beginTracking(touch, with: event) else { return false }
         scrubbing = true
-        seekingTrackID = player?.currentTrack?.id
+        seekingTrackID = player?.currentEntryID
         stopDisplayLink()
         editing?(true)
         preview?(Double(value))
@@ -99,7 +99,7 @@ final class PlaybackSliderView: UISlider {
 
     private func finishSeeking() {
         guard scrubbing else { return }
-        if player?.currentTrack?.id == seekingTrackID { player?.seek(to: Double(value)) }
+        if player?.currentEntryID == seekingTrackID { player?.seek(to: Double(value)) }
         scrubbing = false
         editing?(false)
         refresh()
