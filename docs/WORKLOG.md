@@ -237,3 +237,9 @@ The existing final-song-clearance UI test passed (`work/default-song-spacing.xcr
 Removed the Now Playing navigation title and its unused NavigationStack, reclaiming the header's space for the artwork and controls. The native sheet grabber and accessibility escape dismissal remain. Updated dismissal checks to drag the native Sheet Grabber instead of the removed navigation bar. An initial test-container identifier propagated to child controls; removed it and targeted the existing system grabber directly.
 
 Normal and largest-text playback/dismissal checks passed (`work/no-player-header-verified.xcresult`), and the header-free modal screenshot was inspected. Signed build 0.1 (22) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.
+
+## Settings and About links — September 8
+
+Replaced the trailing three-dot Library Options menu with a leading gear button. The former Music Folder modal is now Settings, retaining folder details, refresh/change-folder actions, and unreadable-file details. Added an About section with native Privacy and Support links to `https://oto.page/#privacy` and `https://oto.page/#support`. Settings also opens before choosing music, with a Choose Music Folder action, and remains accessible during scans while conflicting folder actions are disabled. Updated usage notes and existing UI checks for the new entry point and the transition from Settings to the Files picker.
+
+The skipped-file/change-folder flow passed (`work/settings.xcresult`). After correcting the new assertions to query native links rather than buttons, the empty-library/settings/picker and settings/refresh/recovery flows passed (`work/settings-verified.xcresult`). Inspected the populated Settings screenshot. Signed build 0.1 (23) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone with the existing library preserved.

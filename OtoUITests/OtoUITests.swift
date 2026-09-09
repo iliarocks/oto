@@ -9,7 +9,16 @@ final class OtoUITests: XCTestCase {
         app.launchArguments = ["--reset-library"]
         app.launch()
         XCTAssertTrue(app.buttons["choose-folder"].waitForExistence(timeout: 10))
-        app.buttons["choose-folder"].tap()
+        let settings = app.buttons["settings"]
+        XCTAssertTrue(settings.isHittable)
+        XCTAssertLessThan(settings.frame.midX, app.frame.midX)
+        XCTAssertFalse(app.buttons["library-options"].exists)
+        settings.tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.links["settings-privacy"].exists)
+        XCTAssertTrue(app.links["settings-support"].exists)
+        attach(app, name: "Settings Before Choosing Music")
+        app.buttons["settings-choose-folder"].tap()
         XCTAssertTrue(app.navigationBars["Browse"].waitForExistence(timeout: 10) || app.buttons["Browse"].exists)
     }
 
@@ -157,7 +166,11 @@ final class OtoUITests: XCTestCase {
         let album = app.buttons["album-Quiet Hours"]
         XCTAssertTrue(album.waitForExistence(timeout: 20))
         try FileManager.default.removeItem(at: destination)
-        app.buttons["library-options"].tap()
+        app.buttons["settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.links["settings-privacy"].exists)
+        XCTAssertTrue(app.links["settings-support"].exists)
+        attach(app, name: "Settings With Music Folder")
         app.buttons["Refresh Library"].tap()
         let refresh = app.buttons["refresh-empty-library"]
         XCTAssertTrue(refresh.waitForExistence(timeout: 10))

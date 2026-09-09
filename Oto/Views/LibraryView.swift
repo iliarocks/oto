@@ -4,10 +4,10 @@ struct LibraryView: View {
     @Bindable var library: LibraryStore
     @Bindable var player: PlaybackController
     @State private var showingPicker = false
-    @State private var showingFolder = false
+    @State private var showingSettings = false
     @State private var showingPlayer = false
     @State private var path: [String] = []
-    @State private var chooseAfterFolderDismisses = false
+    @State private var chooseAfterSettingsDismisses = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -17,7 +17,7 @@ struct LibraryView: View {
                     List {
                         if library.isScanning { scanProgress }
                         if !library.isScanning, let issues = library.snapshot?.issues, !issues.isEmpty {
-                            Button { showingFolder = true } label: {
+                            Button { showingSettings = true } label: {
                                 Label(issues.count == 1 ? "1 file needs attention" : "\(issues.count) files need attention", systemImage: "exclamationmark.circle")
                                     .font(.subheadline)
                             }
@@ -65,16 +65,9 @@ struct LibraryView: View {
                             .accessibilityIdentifier("library-summary")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(library.snapshot == nil ? "Choose Music Folder" : "Choose Another Folder", systemImage: "folder.badge.plus") { showingPicker = true }
-                        if library.snapshot != nil {
-                            Button("Refresh Library", systemImage: "arrow.clockwise") { library.refresh() }
-                            Button("Music Folder", systemImage: "folder") { showingFolder = true }
-                        }
-                    } label: { Label("Library Options", systemImage: "ellipsis") }
-                    .disabled(library.isScanning)
-                    .accessibilityIdentifier("library-options")
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Settings", systemImage: "gearshape") { showingSettings = true }
+                        .accessibilityIdentifier("settings")
                 }
             }
         }
@@ -85,15 +78,15 @@ struct LibraryView: View {
             }
             .ignoresSafeArea()
         }
-        .sheet(isPresented: $showingFolder, onDismiss: {
-            if chooseAfterFolderDismisses {
-                chooseAfterFolderDismisses = false
+        .sheet(isPresented: $showingSettings, onDismiss: {
+            if chooseAfterSettingsDismisses {
+                chooseAfterSettingsDismisses = false
                 showingPicker = true
             }
         }) {
-            FolderInfoView(library: library) {
-                chooseAfterFolderDismisses = true
-                showingFolder = false
+            SettingsView(library: library) {
+                chooseAfterSettingsDismisses = true
+                showingSettings = false
             }
         }
         .sheet(isPresented: $showingPlayer) {
@@ -176,7 +169,7 @@ struct LibraryView: View {
     }
 }
 
-private struct FolderInfoView: View {
+private struct SettingsView: View {
     let library: LibraryStore
     let chooseFolder: () -> Void
     @Environment(\.dismiss) private var dismiss
@@ -188,6 +181,8 @@ private struct FolderInfoView: View {
                         LabeledContent("Folder", value: snapshot.folderName)
                         LabeledContent("Songs", value: "\(snapshot.tracks.count)")
                         LabeledContent("Last Updated", value: snapshot.scannedAt.formatted(date: .abbreviated, time: .shortened))
+                    } header: {
+                        Text("Music Folder")
                     } footer: {
                         Text("Oto reads your files in place. After adding or removing music in Files, refresh your library. For offline listening, use Keep Downloaded on the music folder in Files.")
                     }
@@ -196,6 +191,7 @@ private struct FolderInfoView: View {
                         Button("Choose Another Folder", systemImage: "folder") { chooseFolder() }
                             .accessibilityIdentifier("choose-another-folder")
                     }
+                    .disabled(library.isScanning)
                     if !snapshot.issues.isEmpty {
                         Section("Files Needing Attention") {
                             ForEach(snapshot.issues) { issue in
@@ -206,9 +202,21 @@ private struct FolderInfoView: View {
                             }
                         }
                     }
+                } else {
+                    Section("Music Folder") {
+                        Button("Choose Music Folder", systemImage: "folder.badge.plus") { chooseFolder() }
+                            .disabled(library.isScanning)
+                            .accessibilityIdentifier("settings-choose-folder")
+                    }
+                }
+                Section("About") {
+                    Link("Privacy", destination: URL(string: "https://oto.page/#privacy")!)
+                        .accessibilityIdentifier("settings-privacy")
+                    Link("Support", destination: URL(string: "https://oto.page/#support")!)
+                        .accessibilityIdentifier("settings-support")
                 }
             }
-            .navigationTitle("Music Folder")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
