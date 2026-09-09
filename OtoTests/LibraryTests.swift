@@ -359,7 +359,6 @@ final class LibraryTests: XCTestCase {
         first!.pause()
         first!.seek(to: 3)
         first!.enqueue([snapshot.tracks[0]], bookmark: snapshot.bookmark)
-        first!.setShuffle(true)
         first!.setRepeat(.all)
         let ids = first!.upcoming.map(\.id)
         first!.checkpoint()
@@ -371,7 +370,6 @@ final class LibraryTests: XCTestCase {
         XCTAssertFalse(restored.isLoading, "Restoration should not open any audio file")
         XCTAssertEqual(restored.elapsed, 3, accuracy: 0.1)
         XCTAssertEqual(restored.upcoming.map(\.id), ids)
-        XCTAssertTrue(restored.isShuffled)
         XCTAssertEqual(restored.repeatMode, .all)
         restored.resume()
         try await waitUntil { restored.isPlaying }

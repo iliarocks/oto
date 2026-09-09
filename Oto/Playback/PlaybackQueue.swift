@@ -15,14 +15,13 @@ struct QueueEntry: Identifiable, Codable, Equatable, Sendable {
     init(track: Track) { id = UUID(); self.track = track }
 }
 
-/// Canonical entries define unshuffled/repeat order; history records actual listening.
+/// Canonical entries define playback/repeat order; history records actual listening.
 /// Each insertion has its own identity, including repeated copies of the same song.
 struct PlaybackQueue: Codable, Sendable {
     private(set) var entries: [QueueEntry] = []
     private(set) var currentID: UUID?
     private(set) var upcomingIDs: [UUID] = []
     private(set) var history: [UUID] = []
-    private(set) var isShuffled = false
     var repeatMode: RepeatMode = .off
 
     var current: QueueEntry? { entries.first { $0.id == currentID } }
@@ -32,34 +31,13 @@ struct PlaybackQueue: Codable, Sendable {
     }
     var canAdvance: Bool { !upcomingIDs.isEmpty || (repeatMode == .all && currentID != nil) }
 
-    mutating func start(_ tracks: [Track], at track: Track? = nil, shuffled: Bool) {
+    mutating func start(_ tracks: [Track], at track: Track? = nil) {
         entries = tracks.map(QueueEntry.init)
         history = []
-        isShuffled = shuffled
         guard !entries.isEmpty else { currentID = nil; upcomingIDs = []; return }
-        if shuffled {
-            var order = entries.map(\.id).shuffled()
-            if let track, let selected = entries.first(where: { $0.track.id == track.id }) {
-                order.removeAll { $0 == selected.id }
-                order.insert(selected.id, at: 0)
-            }
-            currentID = order.removeFirst()
-            upcomingIDs = order
-        } else {
-            let index = track.flatMap { track in entries.firstIndex { $0.track.id == track.id } } ?? 0
-            currentID = entries[index].id
-            upcomingIDs = Array(entries.dropFirst(index + 1).map(\.id))
-        }
-    }
-
-    mutating func setShuffle(_ enabled: Bool) {
-        guard enabled != isShuffled else { return }
-        isShuffled = enabled
-        if enabled { upcomingIDs.shuffle() }
-        else {
-            let remaining = Set(upcomingIDs)
-            upcomingIDs = entries.filter { remaining.contains($0.id) }.map(\.id)
-        }
+        let index = track.flatMap { track in entries.firstIndex { $0.track.id == track.id } } ?? 0
+        currentID = entries[index].id
+        upcomingIDs = Array(entries.dropFirst(index + 1).map(\.id))
     }
 
     mutating func append(_ tracks: [Track]) {
@@ -75,16 +53,6 @@ struct PlaybackQueue: Codable, Sendable {
         if upcomingIDs.isEmpty {
             guard repeatMode == .all else { return false }
             upcomingIDs = entries.map(\.id)
-            if isShuffled {
-                upcomingIDs.shuffle()
-                // Avoid the same song at the cycle boundary, even with duplicate entries.
-                if let currentTrack = current?.track.id,
-                   let first = entries.first(where: { $0.id == upcomingIDs.first }),
-                   first.track.id == currentTrack,
-                   let different = upcomingIDs.firstIndex(where: { id in
-                       entries.first(where: { $0.id == id })?.track.id != currentTrack
-                   }) { upcomingIDs.swapAt(0, different) }
-            }
         }
         guard !upcomingIDs.isEmpty else { return false }
         history.append(currentID)
@@ -128,11 +96,9 @@ struct PlaybackQueue: Codable, Sendable {
         let remaining = upcomingIDs.enumerated().filter { !offsets.contains($0.offset) }.map(\.element)
         let index = min(max(0, destination - offsets.filter { $0 < destination }.count), remaining.count)
         upcomingIDs = Array(remaining.prefix(index)) + moving + Array(remaining.dropFirst(index))
-        if !isShuffled {
-            let reordered = upcoming
-            let ids = Set(upcomingIDs)
-            entries = entries.filter { !ids.contains($0.id) } + reordered
-        }
+        let reordered = upcoming
+        let ids = Set(upcomingIDs)
+        entries = entries.filter { !ids.contains($0.id) } + reordered
     }
 
     /// A refresh updates metadata and removes missing entries; never resumes by itself.

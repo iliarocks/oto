@@ -183,10 +183,12 @@ struct NowPlayingView: View {
 
     private func transport(compact: Bool) -> some View {
         HStack(spacing: 0) {
-            modeButton(symbol: "shuffle", selected: player.isShuffled, label: "Shuffle", value: player.isShuffled ? "On" : "Off") {
-                player.setShuffle(!player.isShuffled)
+            modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
+                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.35, extraBounce: 0)) {
+                    showingQueue.toggle()
+                }
             }
-            .accessibilityIdentifier("shuffle-toggle")
+            .accessibilityIdentifier("queue-toggle")
             Spacer(minLength: 0)
             Button { player.previous() } label: {
                 Image(systemName: "backward.fill").font(.system(size: 26)).frame(width: 48, height: 56)
@@ -237,15 +239,7 @@ struct NowPlayingView: View {
 
     private func accessories(compact: Bool) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: 20) {
-                RoutePicker().frame(width: 44, height: 44)
-                modeButton(symbol: "list.bullet", selected: showingQueue, label: "Queue", value: showingQueue ? "Visible" : "Hidden") {
-                    withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.35, extraBounce: 0)) {
-                        showingQueue.toggle()
-                    }
-                }
-                .accessibilityIdentifier("queue-toggle")
-            }
+            RoutePicker().frame(width: 44, height: 44)
             if !compact {
                 Text(player.currentTrack?.fileExtension ?? "")
                     .font(.caption.weight(.medium)).foregroundStyle(.tertiary)

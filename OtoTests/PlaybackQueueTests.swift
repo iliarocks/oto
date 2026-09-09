@@ -13,7 +13,7 @@ final class PlaybackQueueTests: XCTestCase {
     func testSelectedSongAndListeningHistory() {
         let tracks = tracks()
         var queue = PlaybackQueue()
-        queue.start(tracks, at: tracks[2], shuffled: false)
+        queue.start(tracks, at: tracks[2])
         XCTAssertEqual(queue.current?.track, tracks[2])
         XCTAssertFalse(queue.previous(), "Earlier album tracks have not actually been heard")
         XCTAssertEqual(queue.upcoming.map(\.track), Array(tracks[3...]))
@@ -25,27 +25,27 @@ final class PlaybackQueueTests: XCTestCase {
         XCTAssertFalse(queue.advance())
     }
 
-    func testShuffleOnlyChangesUpcomingAndRestoresOriginalOrder() {
-        let tracks = tracks(20)
+    func testOlderSavedQueueDropsRemovedModeWithoutLosingQueue() throws {
         var queue = PlaybackQueue()
-        queue.start(tracks, shuffled: false)
-        queue.advance()
-        let current = queue.currentID
-        let remaining = queue.upcomingIDs
-        queue.setShuffle(true)
-        XCTAssertEqual(queue.currentID, current)
-        XCTAssertEqual(Set(queue.upcomingIDs), Set(remaining))
-        queue.setShuffle(false)
-        XCTAssertEqual(queue.upcomingIDs, remaining)
-        queue.start(tracks, at: tracks[7], shuffled: true)
-        XCTAssertEqual(queue.current?.track, tracks[7])
-        XCTAssertEqual(Set(queue.upcoming.map(\.track.id)), Set(tracks.filter { $0 != tracks[7] }.map(\.id)))
+        queue.start(tracks())
+        queue.move(from: IndexSet(integer: 3), to: 0)
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(queue)) as? [String: Any])
+        json["isShuffled"] = true
+        let restored = try JSONDecoder().decode(PlaybackQueue.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertEqual(restored.currentID, queue.currentID)
+        XCTAssertEqual(restored.upcomingIDs, queue.upcomingIDs)
+        let encoded = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(restored)) as? [String: Any])
+        XCTAssertNil(encoded["isShuffled"])
+        var newPlayback = restored
+        newPlayback.start(tracks())
+        XCTAssertEqual(newPlayback.current?.track, tracks()[0])
+        XCTAssertEqual(newPlayback.upcoming.map(\.track), Array(tracks().dropFirst()))
     }
 
     func testAppendsOrderedAlbumsAndIndependentlyRemovesDuplicates() {
         let tracks = tracks()
         var queue = PlaybackQueue()
-        queue.start(tracks, shuffled: true)
+        queue.start(tracks)
         let original = queue.upcomingIDs
         queue.append(Array(tracks.prefix(2)))
         XCTAssertEqual(Array(queue.upcomingIDs.prefix(original.count)), original)
@@ -56,23 +56,25 @@ final class PlaybackQueueTests: XCTestCase {
         XCTAssertEqual(Set(queue.entries.map(\.id)).count, queue.entries.count)
     }
 
-    func testManualOrderingSurvivesShuffleRoundTrip() {
+    func testManualOrderingIsUsedByRepeat() {
         var queue = PlaybackQueue()
-        queue.start(tracks(), shuffled: false)
+        queue.start(tracks())
         let current = queue.currentID
         let last = queue.upcomingIDs.last!
         queue.move(from: IndexSet(integer: 3), to: 0)
         XCTAssertEqual(queue.upcomingIDs.first, last)
         let edited = queue.upcomingIDs
-        queue.setShuffle(true)
-        queue.setShuffle(false)
-        XCTAssertEqual(queue.upcomingIDs, edited)
         XCTAssertEqual(queue.currentID, current)
+        queue.repeatMode = .all
+        while !queue.upcoming.isEmpty { queue.advance() }
+        queue.advance()
+        XCTAssertEqual(queue.currentID, current)
+        XCTAssertEqual(queue.upcomingIDs, edited)
     }
 
     func testJumpSkipsEntriesButPreviousReturnsToActualSong() {
         var queue = PlaybackQueue()
-        queue.start(tracks(), shuffled: false)
+        queue.start(tracks())
         let first = queue.currentID
         let target = queue.upcomingIDs[2]
         XCTAssertTrue(queue.jump(to: target))
@@ -84,7 +86,7 @@ final class PlaybackQueueTests: XCTestCase {
 
     func testRepeatOneDoesNotTrapManualNext() {
         var queue = PlaybackQueue()
-        queue.start(tracks(2), shuffled: false)
+        queue.start(tracks(2))
         queue.repeatMode = .one
         let first = queue.currentID
         XCTAssertTrue(queue.advance(automatically: true))
@@ -95,24 +97,24 @@ final class PlaybackQueueTests: XCTestCase {
         XCTAssertTrue(queue.advance(automatically: true))
     }
 
-    func testRepeatAllUsesFreshCompleteCyclesAndAvoidsBoundaryRepeat() {
+    func testRepeatAllPreservesAlbumOrder() {
         var queue = PlaybackQueue()
-        queue.start(tracks(), shuffled: true)
+        queue.start(tracks())
         queue.repeatMode = .all
-        let all = Set(queue.entries.map(\.id))
+        let all = queue.entries.map(\.id)
         for _ in 0..<10 {
             while !queue.upcoming.isEmpty { queue.advance() }
             let last = queue.current?.track.id
             XCTAssertTrue(queue.advance())
             XCTAssertNotEqual(queue.current?.track.id, last)
-            XCTAssertEqual(Set(queue.upcomingIDs + [queue.currentID!]), all)
+            XCTAssertEqual([queue.currentID!] + queue.upcomingIDs, all)
             XCTAssertTrue(queue.isValid)
         }
     }
 
     func testClearedEntriesNeverReturnThroughRepeat() {
         var queue = PlaybackQueue()
-        queue.start(tracks(), shuffled: false)
+        queue.start(tracks())
         queue.repeatMode = .all
         let current = queue.currentID
         queue.clearUpcoming()
@@ -125,7 +127,7 @@ final class PlaybackQueueTests: XCTestCase {
     func testRefreshRemovesMissingSongsAndUpdatesAllDuplicateMetadata() {
         let original = tracks()
         var queue = PlaybackQueue()
-        queue.start(original, shuffled: false)
+        queue.start(original)
         queue.append([original[2]])
         queue.reconcile(with: Array(original[2...]))
         XCTAssertEqual(queue.current?.track, original[2])
@@ -139,7 +141,7 @@ final class PlaybackQueueTests: XCTestCase {
 
     func testRestorationRetainsIdentityHistoryModesAndManualOrder() throws {
         var queue = PlaybackQueue()
-        queue.start(tracks(), shuffled: true)
+        queue.start(tracks())
         queue.advance()
         queue.append(tracks(2))
         queue.move(from: IndexSet(integer: 2), to: 0)
@@ -151,7 +153,6 @@ final class PlaybackQueueTests: XCTestCase {
         XCTAssertEqual(restored.queue.history, queue.history)
         XCTAssertEqual(restored.queue.currentID, queue.currentID)
         XCTAssertEqual(restored.queue.repeatMode, .one)
-        XCTAssertTrue(restored.queue.isShuffled)
         XCTAssertEqual(restored.elapsed, 23.5)
     }
 }

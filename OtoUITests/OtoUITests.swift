@@ -185,12 +185,13 @@ final class OtoUITests: XCTestCase {
         let toggle = app.buttons["now-playing-toggle"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 10))
         XCTAssertEqual(toggle.label, "Play")
-        app.buttons["shuffle-toggle"].tap()
-        XCTAssertEqual(app.buttons["shuffle-toggle"].value as? String, "On")
-        app.buttons["shuffle-toggle"].tap()
+        XCTAssertFalse(app.buttons["shuffle-toggle"].exists)
+        XCTAssertEqual(app.buttons.matching(identifier: "queue-toggle").count, 1)
+        XCTAssertLessThan(app.buttons["queue-toggle"].frame.midX, toggle.frame.midX)
+        XCTAssertEqual(app.buttons["queue-toggle"].frame.midY, toggle.frame.midY, accuracy: 1)
         app.buttons["repeat-toggle"].tap()
         XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat All")
-        attach(app, name: "Now Playing Shuffle Repeat Queue Controls")
+        attach(app, name: "Now Playing Queue and Repeat Controls")
         let sliderFrame = app.sliders["playback-position"].frame
         let transportFrame = toggle.frame
         let queueButtonFrame = app.buttons["queue-toggle"].frame
@@ -248,7 +249,7 @@ final class OtoUITests: XCTestCase {
         attach(app, name: "Empty Upcoming Queue")
     }
 
-    @MainActor func testSongSwipeAndAlbumShuffle() throws {
+    @MainActor func testSongSwipeAndAlbumPlayback() throws {
         let app = XCUIApplication()
         app.launchEnvironment["OTO_UI_TEST"] = "1"
         app.launchEnvironment["OTO_MUSIC_FOLDER"] = try XCTUnwrap(Bundle(for: OtoUITests.self).resourceURL).path
@@ -256,11 +257,9 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["album-Quiet Hours"].waitForExistence(timeout: 20))
         app.buttons["album-Quiet Hours"].tap()
-        XCTAssertTrue(app.buttons["shuffle-album"].waitForExistence(timeout: 5))
-        attach(app, name: "Album Play and Shuffle")
-        app.buttons["shuffle-album"].tap()
-        XCTAssertEqual(app.buttons["shuffle-album"].value as? String, "On")
-        XCTAssertFalse(app.buttons["mini-player"].exists, "Shuffle is a mode toggle, not a playback action")
+        XCTAssertTrue(app.buttons["play-album"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["shuffle-album"].exists)
+        attach(app, name: "Album Play Button")
         app.buttons["play-album"].tap()
         XCTAssertTrue(app.buttons["mini-player"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.buttons["play-album"].label, "Pause")
@@ -271,7 +270,7 @@ final class OtoUITests: XCTestCase {
         attach(app, name: "Song Add to Queue Swipe")
         app.buttons["Add to Queue"].tap()
         app.buttons["mini-player"].tap()
-        XCTAssertEqual(app.buttons["shuffle-toggle"].value as? String, "On")
+        XCTAssertFalse(app.buttons["shuffle-toggle"].exists)
         XCTAssertEqual(app.buttons["now-playing-toggle"].label, "Play")
         app.buttons["queue-toggle"].tap()
         XCTAssertTrue(app.buttons["queued-First Light"].exists)
@@ -296,10 +295,7 @@ final class OtoUITests: XCTestCase {
         play.tap()
         XCTAssertEqual(play.label, "Pause")
         XCTAssertTrue(app.buttons["mini-player"].label.contains("Second Light"))
-        app.buttons["shuffle-album"].tap()
-        XCTAssertEqual(play.label, "Pause")
-        XCTAssertTrue(app.buttons["mini-player"].label.contains("Second Light"))
-        attach(app, name: "Album Pause and Shuffle Toggle")
+        attach(app, name: "Album Pause Button")
         play.tap()
         app.buttons["mini-player"].tap()
         app.buttons["queue-toggle"].tap()

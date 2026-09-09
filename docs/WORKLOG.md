@@ -361,3 +361,13 @@ Centered the queue button beside AirPlay. Artwork and queue now crossfade within
 Five distinct UI flows passed across `work/player-refinement-ui.xcresult` and `work/player-refinement-dark.xcresult`, including a repeated queue flow in dark mode. Checks covered direct dragging without Edit, duplicate removal, paused restoration, fixed control geometry in both transition directions, shuffle without playback, album pause/resume preserving the current song and queue, long titles, landscape, and accessibility text sizes. Reviewed light/dark screenshots and a simulator recording of the revised layout. Production playback-model code was unchanged.
 
 Signed build 1.0 (39) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone without preview arguments. Updated the README, architecture notes, and playback proposal to match the refined interactions.
+
+## Remove shuffle and move the queue control — September 8
+
+Removed shuffle from album controls, playback APIs, ordering logic, repeat cycles, persisted queue fields, and remote-command handlers. The remote shuffle command is explicitly disabled. Albums now start in track order; manually reordered queues and repeat remain supported. Existing saved queues retain their current song and explicit upcoming order, while the obsolete mode field is ignored on decode and omitted on save.
+
+Moved Queue into the former shuffle position to the left of Previous, opposite Repeat. Its selected appearance and artwork/queue crossfade remain intact. Removed the duplicate accessory-row button and centered AirPlay below the transport. Album pages retain one primary Play/Pause button.
+
+All 41 unit/integration tests and four focused UI flows passed (`work/remove-shuffle.xcresult`). Coverage includes ordered starts and repeat cycles, dropping the old saved mode, queue restoration, dragging/removal, one correctly positioned queue button, fixed control geometry, album Play/Pause, landscape, and large text. Reviewed the updated Now Playing screenshot. Updated current behavior documentation.
+
+Signed build 1.0 (40) succeeded, its packaged version was verified, and it was installed and launched on the connected iPhone without preview arguments.

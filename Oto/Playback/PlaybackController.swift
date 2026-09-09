@@ -54,7 +54,6 @@ private actor AudioSessionController {
     private(set) var playbackQueue = PlaybackQueue()
     var upcoming: [QueueEntry] { playbackQueue.upcoming }
     var currentEntryID: UUID? { playbackQueue.currentID }
-    var isShuffled: Bool { playbackQueue.isShuffled }
     var repeatMode: RepeatMode { playbackQueue.repeatMode }
     var preciseElapsed: TimeInterval { audio?.player.currentTime ?? elapsed }
     var hasNext: Bool { playbackQueue.canAdvance }
@@ -92,9 +91,9 @@ private actor AudioSessionController {
         }
     }
 
-    func play(_ tracks: [Track], startingAt track: Track? = nil, bookmark: Data, shuffled: Bool? = nil) {
+    func play(_ tracks: [Track], startingAt track: Track? = nil, bookmark: Data) {
         guard !tracks.isEmpty else { return }
-        playbackQueue.start(tracks, at: track, shuffled: shuffled ?? isShuffled)
+        playbackQueue.start(tracks, at: track)
         self.bookmark = bookmark
         folderPath = (try? FolderAccess(bookmark: bookmark))?.url.standardizedFileURL.path
         loadCurrent()
@@ -113,7 +112,6 @@ private actor AudioSessionController {
         }
     }
 
-    func setShuffle(_ enabled: Bool) { playbackQueue.setShuffle(enabled); queueChanged() }
     func setRepeat(_ mode: RepeatMode) { playbackQueue.repeatMode = mode; queueChanged() }
     func moveUpcoming(from offsets: IndexSet, to destination: Int) {
         playbackQueue.move(from: offsets, to: destination); queueChanged()
@@ -358,13 +356,6 @@ private actor AudioSessionController {
             return .success
         }
         remoteTargets.append((center.changePlaybackPositionCommand, token))
-        let shuffleToken = center.changeShuffleModeCommand.addTarget { [weak self] event in
-            guard let event = event as? MPChangeShuffleModeCommandEvent else { return .commandFailed }
-            let enabled = event.shuffleType != .off
-            Task { @MainActor [weak self] in self?.setShuffle(enabled) }
-            return .success
-        }
-        remoteTargets.append((center.changeShuffleModeCommand, shuffleToken))
         let repeatToken = center.changeRepeatModeCommand.addTarget { [weak self] event in
             guard let event = event as? MPChangeRepeatModeCommandEvent else { return .commandFailed }
             let mode: RepeatMode = event.repeatType == .one ? .one : (event.repeatType == .all ? .all : .off)
@@ -385,8 +376,8 @@ private actor AudioSessionController {
         commands.playCommand.isEnabled = currentTrack != nil
         commands.pauseCommand.isEnabled = currentTrack != nil
         commands.togglePlayPauseCommand.isEnabled = currentTrack != nil
-        commands.changeShuffleModeCommand.isEnabled = currentTrack != nil
-        commands.changeShuffleModeCommand.currentShuffleType = isShuffled ? .items : .off
+        commands.changeShuffleModeCommand.isEnabled = false
+        commands.changeShuffleModeCommand.currentShuffleType = .off
         commands.changeRepeatModeCommand.isEnabled = currentTrack != nil
         commands.changeRepeatModeCommand.currentRepeatType = repeatMode == .one ? .one : (repeatMode == .all ? .all : .off)
         guard let track = currentTrack else {
