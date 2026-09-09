@@ -263,3 +263,9 @@ Added a shared availability check before content coordination for metadata, fold
 Appended “iCloud Drive files must be downloaded.” to the Library footer and replaced the scan message that previously implied Oto would wait for downloads. The implementation follows Apple's metadata-only coordination and download-status documentation linked in ARCHITECTURE.md. Actual provider hydration/eviction races are not simulated: no user music was evicted or changed for testing.
 
 All 18 library/playback tests and both playback/refresh UI flows passed (`work/downloaded-files-only.xcresult`). Coverage includes downloaded/unknown/stale/dataless availability decisions and ordinary local scanning, artwork, playback, refresh, and persistence. Inspected the updated Settings footer. Signed build 1.0 (26) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the existing library preserved. Live iCloud removal/re-download behavior remains unverified.
+
+## Shorten the download instruction — September 8
+
+Changed the shared file-not-downloaded error to the requested exact wording: Use "Keep Downloaded" on the folder, then refresh your library. This updates the refresh alert and matching per-file issue text without changing download checks.
+
+Signed build 1.0 (27) succeeded, its packaged build number was verified, and it was installed and launched on the connected iPhone with the existing library preserved. This copy-only edit was verified through the diff and build; no additional behavior tests were needed.
