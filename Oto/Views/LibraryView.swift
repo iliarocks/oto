@@ -170,6 +170,7 @@ struct LibraryView: View {
 }
 
 private struct SettingsView: View {
+    private static let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
     let library: LibraryStore
     let chooseFolder: () -> Void
     @Environment(\.dismiss) private var dismiss
@@ -209,11 +210,15 @@ private struct SettingsView: View {
                             .accessibilityIdentifier("settings-choose-folder")
                     }
                 }
-                Section("About") {
-                    Link("Privacy", destination: URL(string: "https://oto.page/#privacy")!)
+                Section {
+                    externalLink("Privacy", systemImage: "hand.raised", destination: URL(string: "https://oto.page/#privacy")!)
                         .accessibilityIdentifier("settings-privacy")
-                    Link("Support", destination: URL(string: "https://oto.page/#support")!)
+                    externalLink("Support", systemImage: "lifepreserver", destination: URL(string: "https://oto.page/#support")!)
                         .accessibilityIdentifier("settings-support")
+                } header: {
+                    Text("About")
+                } footer: {
+                    Text("Version \(Self.appVersion)")
                 }
             }
             .navigationTitle("Settings")
@@ -221,4 +226,18 @@ private struct SettingsView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }
+
+    private func externalLink(_ title: String, systemImage: String, destination: URL) -> some View {
+        Link(destination: destination) {
+            HStack(spacing: 12) {
+                Label(title, systemImage: systemImage)
+                Spacer()
+                Image(systemName: "arrow.up.forward.app")
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+        }
+    }
+
 }
