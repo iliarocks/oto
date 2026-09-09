@@ -35,11 +35,12 @@ struct LibraryView: View {
         NavigationStack(path: $path) {
             GeometryReader { viewport in
                 libraryContent
+                    .tint(Color("AccentColor"))
                     .overlay(alignment: .top) {
                         NavigationHeaderBackdrop(progress: headerProgress, height: viewport.safeAreaInsets.top)
                     }
             }
-            .modifier(PlayerBar(player: player) { showingPlayer = true })
+            .modifier(PlayerClearance())
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -47,7 +48,7 @@ struct LibraryView: View {
                 if let album = library.albums.first(where: { $0.id == id }) {
                     AlbumView(album: album, library: library, player: player)
                         .modifier(ArtworkTheme(key: album.artworkKey, directory: library.persistence.artworkDirectory))
-                        .modifier(PlayerBar(player: player) { showingPlayer = true })
+                        .modifier(PlayerClearance())
                 } else { ContentUnavailableView("Album Unavailable", systemImage: "music.note") }
             }
             .toolbar {
@@ -61,10 +62,13 @@ struct LibraryView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Settings", systemImage: "gearshape") { showingSettings = true }
+                        .tint(.primary)
                         .accessibilityIdentifier("settings")
                 }
             }
         }
+        .tint(.primary)
+        .modifier(PlayerBar(player: player) { showingPlayer = true })
         .sheet(isPresented: $showingPicker) {
             FolderPicker { url in
                 library.choose(url)
@@ -82,6 +86,7 @@ struct LibraryView: View {
                 chooseAfterSettingsDismisses = true
                 showingSettings = false
             }
+            .tint(Color("AccentColor"))
         }
         .sheet(isPresented: $showingPlayer) {
             NowPlayingView(player: player)
@@ -147,7 +152,7 @@ struct LibraryView: View {
                                     player.enqueue(album.tracks, bookmark: bookmark)
                                 }
                             } label: { Label("Add to Queue", systemImage: "text.badge.plus").labelStyle(.iconOnly) }
-                            .tint(Color.accentColor)
+                            .tint(Color("AccentColor"))
                             .accessibilityLabel("Add to Queue")
                         }
                     }
@@ -291,6 +296,7 @@ private struct SettingsView: View {
                         Image(systemName: "xmark")
                     }
                     .accessibilityLabel("Close")
+                    .tint(.primary)
                 }
             }
         }

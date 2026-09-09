@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class OtoUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
@@ -293,6 +294,14 @@ final class OtoUITests: XCTestCase {
             let albumFolder = folder.appendingPathComponent(name)
             try FileManager.default.createDirectory(at: albumFolder, withIntermediateDirectories: true)
             for song in songs { try wav.write(to: albumFolder.appendingPathComponent(song + ".wav")) }
+            let color: UIColor = name == "Album A" ? .systemBlue : (name == "Album B" ? .systemOrange : .systemRed)
+            let cover = UIGraphicsImageRenderer(size: CGSize(width: 256, height: 256)).image { context in
+                color.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 256, height: 256))
+                UIColor.black.withAlphaComponent(0.3).setFill()
+                context.fill(CGRect(x: 24, y: 24, width: 80, height: 208))
+            }
+            try XCTUnwrap(cover.pngData()).write(to: albumFolder.appendingPathComponent("cover.png"))
         }
         app.launchEnvironment["OTO_UI_TEST"] = "1"
         app.launchEnvironment["OTO_MUSIC_FOLDER"] = folder.path
@@ -338,7 +347,12 @@ final class OtoUITests: XCTestCase {
         app.buttons["now-playing-next"].tap()
         XCTAssertEqual(toggle.label, "Pause")
         XCTAssertEqual(app.buttons["repeat-toggle"].value as? String, "Repeat All")
+        attach(app, name: "New Album Accent in Queue")
+        app.buttons["queue-toggle"].tap()
+        attach(app, name: "Detour Artwork Before Song Change")
         app.buttons["now-playing-next"].tap()
+        attach(app, name: "Source Artwork After Song Change")
+        app.buttons["queue-toggle"].tap()
         XCTAssertFalse(app.buttons["queued-Detour"].exists)
         toggle.tap()
         app.buttons["repeat-toggle"].tap()
@@ -441,9 +455,13 @@ final class OtoUITests: XCTestCase {
         next.tap()
         XCTAssertTrue(app.buttons["mini-player"].label.contains("Second Light"))
         attach(app, name: "Floating Player on Album")
+        let playerFrame = app.buttons["mini-player-toggle"].frame
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.staticTexts["library-summary"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["mini-player"].isHittable)
+        XCTAssertEqual(app.buttons.matching(identifier: "mini-player-toggle").count, 1)
+        XCTAssertEqual(app.buttons["mini-player-toggle"].frame.minX, playerFrame.minX, accuracy: 1)
+        XCTAssertEqual(app.buttons["mini-player-toggle"].frame.minY, playerFrame.minY, accuracy: 1)
         attach(app, name: "Simplified Library with Floating Player")
         app.buttons["mini-player"].tap()
         XCTAssertTrue(app.buttons["now-playing-toggle"].waitForExistence(timeout: 10))

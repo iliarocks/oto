@@ -1,18 +1,41 @@
 import AVKit
 import SwiftUI
 
-struct PlayerBar: ViewModifier {
-    // Apply to each screen's content, inside NavigationStack, so its List
-    // receives the bar's safe-area inset when scrolling to the final row.
-    let player: PlaybackController
-    let open: () -> Void
+private struct PlayerBarHeightKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+    var playerBarHeight: CGFloat {
+        get { self[PlayerBarHeightKey.self] }
+        set { self[PlayerBarHeightKey.self] = newValue }
+    }
+}
+
+/// Screens reserve space for the one player that lives above navigation.
+struct PlayerClearance: ViewModifier {
+    @Environment(\.playerBarHeight) private var height
 
     func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.safeAreaBar(edge: .bottom, spacing: 0) { bar }
-        } else {
-            content.safeAreaInset(edge: .bottom, spacing: 0) { bar }
+        content.safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: height).allowsHitTesting(false)
         }
+    }
+}
+
+struct PlayerBar: ViewModifier {
+    let player: PlaybackController
+    let open: () -> Void
+    @State private var height: CGFloat = 84
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.playerBarHeight, player.currentTrack == nil ? 0 : height)
+            .overlay(alignment: .bottom) {
+                bar.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { measuredHeight in
+                    if measuredHeight > 0 { height = measuredHeight }
+                }
+            }
     }
 
     @ViewBuilder private var bar: some View {
@@ -58,7 +81,7 @@ struct MiniPlayer: View {
         HStack(spacing: 0) {
             Button(action: open) {
                 HStack(spacing: 12) {
-                    ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: 36)
+                    ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, size: 36, animatesChanges: true)
                     VStack(alignment: .leading, spacing: 3) {
                         MarqueeText(text: player.currentTrack?.title ?? "", style: .subheadline, weight: .medium)
                         MarqueeText(text: player.currentTrack?.artist ?? "", style: .caption1, color: .secondaryLabel)
@@ -147,7 +170,7 @@ struct NowPlayingView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .dynamicTypeSize(...(compact ? DynamicTypeSize.xxxLarge : .accessibility5))
         }
-        .modifier(ArtworkTheme(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory))
+        .modifier(ArtworkTheme(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, animatesChanges: true))
         .presentationDragIndicator(.visible)
         .accessibilityAction(.escape) { dismiss() }
         .onChange(of: player.currentEntryID) { _, _ in isSeeking = false; seekPosition = 0 }
@@ -160,7 +183,7 @@ struct NowPlayingView: View {
     }
 
     private var artwork: some View {
-        ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory)
+        ArtworkView(key: player.currentTrack?.artworkKey, directory: player.artworkDirectory, animatesChanges: true)
     }
 
     private var artworkSlot: some View {
@@ -195,14 +218,28 @@ struct NowPlayingView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var metadata: some View {
-        VStack(spacing: 7) {
-            MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", alignment: .center, style: .title2, weight: .bold)
-                .accessibilityIdentifier("now-playing-title")
-            MarqueeText(text: player.currentTrack?.artist ?? "", alignment: .center, style: .title3, color: .secondaryLabel)
-        }
-        .multilineTextAlignment(.center)
+    private var songChangeAnimation: Animation {
+        .easeInOut(duration: reduceMotion ? 0.15 : 0.28)
     }
+
+    private func songMetadata(inQueue: Bool) -> some View {
+        ZStack {
+            VStack(alignment: inQueue ? .leading : .center, spacing: inQueue ? 4 : 7) {
+                MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing",
+                            alignment: inQueue ? .leading : .center,
+                            style: inQueue ? .headline : .title2, weight: inQueue ? .semibold : .bold)
+                    .accessibilityIdentifier("now-playing-title")
+                MarqueeText(text: player.currentTrack?.artist ?? "",
+                            alignment: inQueue ? .leading : .center,
+                            style: inQueue ? .subheadline : .title3, color: .secondaryLabel)
+            }
+            .id(player.currentEntryID)
+            .transition(.opacity)
+        }
+        .animation(songChangeAnimation, value: player.currentEntryID)
+    }
+
+    private var metadata: some View { songMetadata(inQueue: false) }
 
     private var seeking: some View {
         let position = isSeeking ? seekPosition : player.elapsed
@@ -290,10 +327,7 @@ struct NowPlayingView: View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 artworkSlot.frame(width: compact ? 40 : 56, height: compact ? 40 : 56)
-                VStack(alignment: .leading, spacing: 4) {
-                    MarqueeText(text: player.currentTrack?.title ?? "Nothing Playing", style: .headline, weight: .semibold)
-                    MarqueeText(text: player.currentTrack?.artist ?? "", style: .subheadline, color: .secondaryLabel)
-                }
+                songMetadata(inQueue: true)
             }
             HStack(spacing: 16) {
                 Text(player.queued.isEmpty ? sourceQueueHeading : "Queued").font(.headline)
@@ -348,6 +382,7 @@ struct NowPlayingView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(reduceMotion ? nil : songChangeAnimation, value: player.currentEntryID)
     }
 
     private var sourceQueueHeading: String {

@@ -37,6 +37,7 @@ struct OtoApp: App {
     var body: some Scene {
         WindowGroup {
             LibraryView(library: library, player: player)
+                .tint(Color("AccentColor"))
                 .onChange(of: scenePhase) { _, phase in
                     if phase != .active { player.checkpoint() }
                 }

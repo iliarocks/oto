@@ -2,7 +2,7 @@ import ImageIO
 import SwiftUI
 
 private struct AlbumAccentKey: EnvironmentKey {
-    static let defaultValue = Color.accentColor
+    static let defaultValue = Color("AccentColor")
 }
 
 private struct AlbumAccentInkKey: EnvironmentKey {
@@ -10,7 +10,7 @@ private struct AlbumAccentInkKey: EnvironmentKey {
 }
 
 private struct AlbumTextAccentKey: EnvironmentKey {
-    static let defaultValue = Color.accentColor
+    static let defaultValue = Color("AccentColor")
 }
 
 extension EnvironmentValues {
@@ -32,20 +32,24 @@ extension EnvironmentValues {
 struct ArtworkTheme: ViewModifier {
     let key: String?
     let directory: URL
+    var animatesChanges = false
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var palette: ArtworkColors?
 
     func body(content: Content) -> some View {
         let sampled = palette?.accent(dark: scheme == .dark)
-        let accent = sampled?.color ?? Color.accentColor
-        let textAccent = sampled.map { $0.hasContrast(dark: scheme == .dark, minimum: 4.5) ? accent : Color.primary } ?? accent
-        content.tint(accent)
-            .environment(\.albumAccent, accent)
+        let accent = sampled ?? ArtworkColor(uiColor: UIColor(named: "AccentColor") ?? .label, dark: scheme == .dark)
+        let textAccent = sampled.map { $0.hasContrast(dark: scheme == .dark, minimum: 4.5) ? accent.color : Color.primary } ?? accent.color
+        content
+            .modifier(InterpolatedArtworkTint(color: accent))
             .environment(\.albumTextAccent, textAccent)
             .environment(\.albumAccentInk, sampled?.contrastingInk ?? Color(uiColor: .systemBackground))
+            .animation(animatesChanges ? .easeInOut(duration: reduceMotion ? 0.15 : 0.28) : nil, value: accent)
             .task(id: key) {
-                palette = nil
-                guard let key else { return }
+                // Retain the old palette until the new one is ready, avoiding an
+                // intermediate flash of the app's default accent.
+                guard let key else { palette = nil; return }
                 let color = await ArtworkPalette.shared.read(directory.appendingPathComponent(key))
                 guard !Task.isCancelled else { return }
                 palette = color
@@ -53,10 +57,36 @@ struct ArtworkTheme: ViewModifier {
     }
 }
 
+/// Interpolate the environment color itself so UIKit's slider and route picker
+/// receive the same intermediate colors as SwiftUI's tinted controls.
+private struct InterpolatedArtworkTint: AnimatableModifier {
+    var color: ArtworkColor
+
+    var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
+        get { AnimatablePair(color.red, AnimatablePair(color.green, color.blue)) }
+        set { color = ArtworkColor(red: newValue.first, green: newValue.second.first, blue: newValue.second.second) }
+    }
+
+    func body(content: Content) -> some View {
+        content.tint(color.color).environment(\.albumAccent, color.color)
+    }
+}
+
 struct ArtworkColor: Sendable, Equatable {
     let red: Double
     let green: Double
     let blue: Double
+
+    init(red: Double, green: Double, blue: Double) {
+        self.red = red; self.green = green; self.blue = blue
+    }
+
+    init(uiColor: UIColor, dark: Bool) {
+        let resolved = uiColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: dark ? .dark : .light))
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        self.init(red: Double(red), green: Double(green), blue: Double(blue))
+    }
 
     private static func linear(_ value: Double) -> Double {
         value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
