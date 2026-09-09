@@ -56,7 +56,7 @@ struct PlaybackQueue: Codable, Sendable {
         guard current != nil else { return false }
         if automatically && repeatMode == .one { return true }
         guard canAdvance else {
-            if automatically && isCurrentQueued { current = nil }
+            if automatically && isCurrentQueued { clear() }
             return false
         }
         if !automatically && repeatMode == .one { repeatMode = .all }

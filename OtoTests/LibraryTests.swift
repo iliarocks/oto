@@ -523,6 +523,24 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(player.repeatMode, .all)
     }
 
+    @MainActor func testFinalConsumableFinishesWithoutRevivingSourceOrManualTrack() async throws {
+        let music = temporary.appendingPathComponent("Music")
+        try copyFixture("01", "flac", into: music)
+        let persistence = LibraryPersistence(directory: temporary.appendingPathComponent("Index"))
+        let snapshot = try await LibraryScanner(persistence: persistence).scan(folder: music) { _ in }
+        let player = PlaybackController(artworkDirectory: persistence.artworkDirectory)
+        defer { player.stop() }
+        player.play(snapshot.tracks, bookmark: snapshot.bookmark)
+        player.enqueue(snapshot.tracks, bookmark: snapshot.bookmark)
+        player.next()
+        try await waitUntil { player.isPlaying }
+        player.seek(to: 7.7)
+        try await waitUntil { player.currentTrack == nil }
+        XCTAssertFalse(player.wantsPlayback)
+        XCTAssertTrue(player.playbackQueue.isValid)
+        XCTAssertTrue(player.upcoming.isEmpty)
+    }
+
     @MainActor private func waitUntil(_ condition: () -> Bool) async throws {
         let deadline = Date().addingTimeInterval(10)
         while !condition() && Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }

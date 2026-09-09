@@ -150,6 +150,7 @@ final class PlaybackQueueTests: XCTestCase {
         XCTAssertTrue(queue.advance())
         XCTAssertFalse(queue.advance(automatically: true))
         XCTAssertNil(queue.current)
+        XCTAssertTrue(queue.isValid)
     }
 
     func testDuplicateManualEntriesHaveIndependentIdentity() {
