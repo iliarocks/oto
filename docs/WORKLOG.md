@@ -495,3 +495,7 @@ Changed only the website's dark palette to a true-black background and neutral g
 ## Near-black website background and soft phone glow — September 8
 
 Adjusted the dark website background to neutral #080808, giving a slight separation from the app's pure black, analogous to the off-white/light-app pairing. Added a broad 4.5%-opacity white glow alongside a soft black shadow around the phone. Light-mode styling is unchanged. Local preview responds successfully; no publishing or remote push.
+
+## Simplify the opening privacy paragraph — September 8
+
+Rephrased the first privacy paragraph using the user's proposed copy, with minor grammar adjustments. It now leads with on-device storage, then in-place music reading and the absence of developer data collection, advertising, and analytics. Remaining website copy is unchanged. Local-only change; no publishing or remote push.
