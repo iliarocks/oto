@@ -32,8 +32,14 @@ Debug builds use `ilia.page.oto.dev` and display **Oto Dev**. Release builds kee
 music folder once in the development app; production bookmarks and playback state
 are not copied into it.
 
-UI tests use a separate library directory and synthetic audio fixtures on the
-simulator. Unit tests create temporary directories and remove their own data.
+UI tests use a separate library directory. `OtoBasicUITests` runs on a simulator
+or physical iPhone. The music-screen suite shares synthetic files with the app;
+iOS sandboxing restricts it to simulators, so it explicitly skips on physical
+devices. Unit tests run on either destination with temporary, isolated data.
+
+To use a connected iPhone, set `TEST_DESTINATION='platform=iOS,id=<device-UDID>'`.
+The `all` command runs the unit suite and basic UI checks there. Test the real
+music folder and playback manually on the phone as well.
 
 ## Local release archives
 

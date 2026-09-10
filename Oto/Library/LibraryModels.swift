@@ -99,7 +99,9 @@ enum MusicPath {
 
     static func resolve(_ path: String, in root: URL) throws -> URL {
         guard !path.hasPrefix("/"), !path.split(separator: "/").contains("..") else { throw LibraryError.invalidPath }
-        let result = root.appendingPathComponent(path)
+        // Canonicalize the existing root first. On a device, resolving a missing
+        // child can otherwise leave /var and /private/var prefixes mismatched.
+        let result = root.standardizedFileURL.resolvingSymlinksInPath().appendingPathComponent(path)
         _ = try relative(result, to: root)
         return result
     }

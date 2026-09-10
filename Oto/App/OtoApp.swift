@@ -8,7 +8,7 @@ struct OtoApp: App {
 
     init() {
         var persistence = LibraryPersistence.live
-        #if DEBUG && targetEnvironment(simulator)
+        #if DEBUG
         if ProcessInfo.processInfo.environment["OTO_UI_TEST"] == "1" {
             persistence = LibraryPersistence(directory: URL.applicationSupportDirectory.appendingPathComponent("OtoUITests"))
             if ProcessInfo.processInfo.arguments.contains("--reset-library") {

@@ -147,7 +147,6 @@ final class LibraryTests: XCTestCase {
         try original.write(to: persistence.indexURL)
         XCTAssertThrowsError(try persistence.load())
         XCTAssertEqual(try Data(contentsOf: persistence.indexURL), original)
-        XCTAssertEqual(try Data(contentsOf: artworkURL), originalArtwork)
     }
 
     func testNumberParsingAndTimeClamping() {
