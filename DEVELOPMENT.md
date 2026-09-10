@@ -2,8 +2,8 @@
 
 Use **Xcode 27 RC, build 27A266a**. Select it in Xcode's Locations settings or
 with `sudo xcode-select --switch /Applications/Xcode.app`. Run Xcode's first-launch
-setup and install the iOS 27 simulator runtime. The scripts report a toolchain
-mismatch; set `EXPECTED_XCODE_BUILD` only when intentionally checking another
+setup. Install the iOS 27 runtime only for simulator tests. The scripts report a
+toolchain mismatch; set `EXPECTED_XCODE_BUILD` only when intentionally checking another
 reviewed Xcode version.
 
 ## Builds and tests
