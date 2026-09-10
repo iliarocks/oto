@@ -1,0 +1,106 @@
+{
+  "captured_date": "2026-09-09",
+  "source_commit": "cd1a601b5ee884acad9061de5ca253b68c611f2e",
+  "source_note": "Current working-tree files staged in .build/ScreenshotCaptureSource; production sources unchanged by capture preparation.",
+  "iphone_device": "iPhone 17 simulator",
+  "iphone_status": "9:41; full Wi-Fi and cellular; full battery, discharging; standard Large content size; light App Store captures, light/dark website heroes",
+  "mac_window_points": null,
+  "font": "Native app typography only; no marketing captions",
+  "files": [
+    {
+      "path": "app-store/iPhone/01-library.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "bytes": 1052491,
+      "sha256": "a34106d5b8cdeacb28ebcbb62e53366913df484055c1117b62c0a4239e9d3fb6"
+    },
+    {
+      "path": "app-store/iPhone/02-album.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "bytes": 1204053,
+      "sha256": "5f8d8eac067a8b8a4acd8d792e6e0e0f447f98ef2c29ba4f8bbfc0daa568d8d2"
+    },
+    {
+      "path": "app-store/iPhone/03-now-playing.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "bytes": 1401678,
+      "sha256": "267833348cac60105bda1843bedf0b4da3394725a2516c12b641be5d380afcf5"
+    },
+    {
+      "path": "app-store/iPhone/04-queue.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "bytes": 775683,
+      "sha256": "b5ef250e79f7c35c9bbac22ff98f88f40e85bc500d5c36a0a599c79dd1e0e768"
+    },
+    {
+      "path": "originals/Website/hero-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "mode": "RGB",
+      "bytes": 752300,
+      "sha256": "fd1d1b7354319638a2ba3fa2d520a43e5168c42cf6c570ef39389747ceb01fce"
+    },
+    {
+      "path": "originals/Website/hero-light.png",
+      "width": 1206,
+      "height": 2622,
+      "mode": "RGB",
+      "bytes": 776340,
+      "sha256": "2f8dfb86f53787103b536253cf1df186f059fdafaf9ae5b264d7764d9622c59d"
+    },
+    {
+      "path": "originals/iPhone/01-library.png",
+      "width": 1206,
+      "height": 2622,
+      "mode": "RGB",
+      "bytes": 776340,
+      "sha256": "2f8dfb86f53787103b536253cf1df186f059fdafaf9ae5b264d7764d9622c59d"
+    },
+    {
+      "path": "originals/iPhone/02-album.png",
+      "width": 1206,
+      "height": 2622,
+      "mode": "RGB",
+      "bytes": 975146,
+      "sha256": "7dce8d4ccd98a09e350e7915a291191e2b30c96d96903b7219775ecf23524d62"
+    },
+    {
+      "path": "originals/iPhone/03-now-playing.png",
+      "width": 1206,
+      "height": 2622,
+      "mode": "RGB",
+      "bytes": 1316003,
+      "sha256": "c8b28a42a0e3bd8fcd859b3aa0e78821eac7eb295f6366a6816fa4a999c86834"
+    },
+    {
+      "path": "originals/iPhone/04-queue.png",
+      "width": 1206,
+      "height": 2622,
+      "mode": "RGB",
+      "bytes": 564596,
+      "sha256": "e7095b495c60a22387a355e72a5a6ca5e95ceab309ffc8eca5f0a7c1837b1973"
+    }
+  ],
+  "iphone_frame": {
+    "source": "Apple Design Resources",
+    "model": "iPhone 17",
+    "finish": "White",
+    "asset": "design/Assets/Apple/iPhone 17 - White - Portrait.png",
+    "screen_rect": [
+      72,
+      69,
+      1206,
+      2622
+    ],
+    "sha256": "fb93a0b6e95e8c3c5ad923a8437e598746f5d4fa63ea971650172cb93727006a"
+  },
+  "layout": "All four pages use the same centered screenshot size within each platform; no opening caption.",
+  "publication_status": "Approved for publication"
+}

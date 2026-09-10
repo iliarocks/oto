@@ -1,0 +1,27 @@
+{
+  "app": "Oto",
+  "background": "#607D8B",
+  "phone": {
+    "width": 1320,
+    "height": 2868,
+    "frame": {
+      "asset": "Assets/Apple/iPhone 17 - White - Portrait.png",
+      "screenX": 72,
+      "screenY": 69,
+      "screenWidth": 1206,
+      "screenHeight": 2622
+    },
+    "deviceWidth": 0.89
+  },
+  "sets": [
+    {
+      "platform": "iPhone",
+      "pages": [
+        "01-library",
+        "02-album",
+        "03-now-playing",
+        "04-queue"
+      ]
+    }
+  ]
+}
