@@ -88,6 +88,17 @@ enum MetadataReader {
 }
 
 enum ArtworkCache {
+    /// Only remove files produced by this cache, after the library index commits.
+    static func prune(in directory: URL, keeping keys: Set<String>) throws {
+        let files = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+        for file in files {
+            let name = file.lastPathComponent
+            guard !keys.contains(name),
+                  name.range(of: #"^v1-[0-9a-f]{64}\.jpg$"#, options: .regularExpression) != nil else { continue }
+            try FileManager.default.removeItem(at: file)
+        }
+    }
+
     static func store(_ data: Data?, in directory: URL) throws -> String? {
         guard let data, data.count <= 24 * 1_024 * 1_024 else { return nil }
         // Album downloads often embed the same large image in every song.

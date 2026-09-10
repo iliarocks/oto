@@ -1,6 +1,4 @@
 .build/
-.build-device/
-work/
 DerivedData/
 *.xcuserstate
 xcuserdata/

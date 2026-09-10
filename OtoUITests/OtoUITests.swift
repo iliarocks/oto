@@ -651,8 +651,6 @@ final class OtoUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts["200 albums · 400 songs"].waitForExistence(timeout: 60))
         app.swipeUp()
-        app.buttons["Sheet Grabber"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
-            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
         app.buttons["album-Quiet Hours"].firstMatch.tap()
         app.buttons["track-Second Light"].tap()
         app.buttons["mini-player"].tap()

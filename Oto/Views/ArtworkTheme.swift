@@ -81,7 +81,7 @@ struct ArtworkSwipeAction: View {
 
 /// Interpolate the environment color itself so UIKit's slider and route picker
 /// receive the same intermediate colors as SwiftUI's tinted controls.
-private struct InterpolatedArtworkTint: AnimatableModifier {
+private nonisolated struct InterpolatedArtworkTint: AnimatableModifier {
     var color: ArtworkColor
 
     var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {

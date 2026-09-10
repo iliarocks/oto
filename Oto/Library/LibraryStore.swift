@@ -86,6 +86,7 @@ import Foundation
                 snapshot = committed
                 albums = updatedAlbums
                 folderPath = access.url.standardizedFileURL.path
+                await scanner.pruneArtwork(keeping: committed.tracks)
             } catch is CancellationError { }
             catch { errorMessage = error.localizedDescription }
         }

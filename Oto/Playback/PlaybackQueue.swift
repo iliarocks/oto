@@ -203,9 +203,3 @@ struct PlaybackQueue: Codable, Sendable {
         try values.encode(repeatMode, forKey: .repeatMode)
     }
 }
-
-struct SavedPlayback: Codable {
-    let queue: PlaybackQueue
-    let folderPath: String?
-    let elapsed: TimeInterval
-}

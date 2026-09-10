@@ -147,6 +147,7 @@ final class LibraryTests: XCTestCase {
         try original.write(to: persistence.indexURL)
         XCTAssertThrowsError(try persistence.load())
         XCTAssertEqual(try Data(contentsOf: persistence.indexURL), original)
+        XCTAssertEqual(try Data(contentsOf: artworkURL), originalArtwork)
     }
 
     func testNumberParsingAndTimeClamping() {
@@ -220,6 +221,9 @@ final class LibraryTests: XCTestCase {
         try await waitUntil { !store.isScanning }
         XCTAssertEqual(store.tracks.count, 1)
         let originalIndex = try Data(contentsOf: persistence.indexURL)
+        let artwork = try XCTUnwrap(store.tracks.first?.artworkKey)
+        let artworkURL = persistence.artworkDirectory.appendingPathComponent(artwork)
+        let originalArtwork = try Data(contentsOf: artworkURL)
         let empty = temporary.appendingPathComponent("Empty")
         try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
         store.choose(empty)
@@ -227,6 +231,7 @@ final class LibraryTests: XCTestCase {
         XCTAssertEqual(store.tracks.count, 1)
         XCTAssertNotNil(store.errorMessage)
         XCTAssertEqual(try Data(contentsOf: persistence.indexURL), originalIndex)
+        XCTAssertEqual(try Data(contentsOf: artworkURL), originalArtwork)
     }
 
     @MainActor func testRefreshRetainsUnreadableTracksButRemovesDeletedTracks() async throws {
@@ -259,6 +264,9 @@ final class LibraryTests: XCTestCase {
         store.choose(music)
         try await waitUntil { !store.isScanning }
         let original = try Data(contentsOf: persistence.indexURL)
+        let artwork = try XCTUnwrap(store.tracks.first?.artworkKey)
+        let artworkURL = persistence.artworkDirectory.appendingPathComponent(artwork)
+        let originalArtwork = try Data(contentsOf: artworkURL)
         let replacement = temporary.appendingPathComponent("Replacement")
         try copyFixture("02", "flac", into: replacement)
         store.choose(replacement)
@@ -266,6 +274,7 @@ final class LibraryTests: XCTestCase {
         try await waitUntil { !store.isScanning }
         XCTAssertEqual(store.tracks.first?.title, "First Light")
         XCTAssertEqual(try Data(contentsOf: persistence.indexURL), original)
+        XCTAssertEqual(try Data(contentsOf: artworkURL), originalArtwork)
     }
 
     @MainActor func testAutomaticAdvanceAndInterruptionPolicy() async throws {

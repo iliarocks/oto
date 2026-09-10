@@ -7,7 +7,6 @@ struct OtoApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        UserDefaults.standard.removeObject(forKey: "albumSort")
         var persistence = LibraryPersistence.live
         #if DEBUG && targetEnvironment(simulator)
         if ProcessInfo.processInfo.environment["OTO_UI_TEST"] == "1" {

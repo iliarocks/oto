@@ -66,6 +66,15 @@ actor LibraryScanner {
                                tracks: tracks.sorted(by: Track.ordered), scannedAt: Date(), issues: issues)
     }
 
+    func pruneArtwork(keeping tracks: [Track]) {
+        do {
+            try ArtworkCache.prune(in: persistence.artworkDirectory, keeping: Set(tracks.compactMap(\.artworkKey)))
+        } catch {
+            // A cache cleanup failure must never undo a successfully saved library.
+            NSLog("Oto could not clean artwork cache: %@", error.localizedDescription)
+        }
+    }
+
     private func enumerate(_ folder: URL) async throws -> [URL] {
         try await CoordinatedRead.perform(at: folder, metadataOnly: true) { readable in
             let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey]

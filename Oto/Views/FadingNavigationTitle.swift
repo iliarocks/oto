@@ -43,7 +43,7 @@ struct FadingNavigationTitle: UIViewRepresentable {
 }
 
 /// One reversible timeline drives both layers, including their slight stagger.
-struct AlbumNavigationHeader: AnimatableModifier {
+nonisolated struct AlbumNavigationHeader: AnimatableModifier {
     let title: String
     var progress: CGFloat
     let height: CGFloat

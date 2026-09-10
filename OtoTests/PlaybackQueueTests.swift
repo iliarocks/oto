@@ -226,7 +226,11 @@ final class PlaybackQueueTests: XCTestCase {
         queue.moveQueued(from: IndexSet(integer: 1), to: 0)
         queue.repeatMode = .one
         let saved = SavedPlayback(queue: queue, folderPath: "/Music", elapsed: 23.5)
-        let restored = try JSONDecoder().decode(SavedPlayback.self, from: JSONEncoder().encode(saved))
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let persistence = PlaybackPersistence(directory: directory)
+        try persistence.save(saved)
+        let restored = try XCTUnwrap(persistence.load())
         XCTAssertEqual(restored.queue.source, queue.source)
         XCTAssertEqual(restored.queue.queued, queue.queued)
         XCTAssertEqual(restored.queue.sourcePosition, queue.sourcePosition)

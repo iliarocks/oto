@@ -1,7 +1,5 @@
 import AVFoundation
-import MediaPlayer
 import Observation
-import UIKit
 
 // The loader transfers exclusive ownership to the main actor after preparing.
 // No audio player is accessed concurrently across actors.
@@ -74,19 +72,18 @@ private actor AudioSessionController {
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var notifications: [NSObjectProtocol] = []
-    @ObservationIgnored private var remoteTargets: [(MPRemoteCommand, Any)] = []
-    @ObservationIgnored private var nowPlayingArtwork: MPMediaItemArtwork?
+    @ObservationIgnored private var systemMedia: PlaybackSystemMedia?
+    @ObservationIgnored private let persistence: PlaybackPersistence
     @ObservationIgnored private var folderPath: String?
     @ObservationIgnored private var lastCheckpoint = Date.distantPast
-    private var playbackURL: URL { artworkDirectory.deletingLastPathComponent().appendingPathComponent("playback.json") }
 
     init(artworkDirectory: URL, library: LibrarySnapshot? = nil) {
         self.artworkDirectory = artworkDirectory
+        persistence = PlaybackPersistence(directory: artworkDirectory.deletingLastPathComponent())
         super.init()
-        configureRemoteCommands()
+        systemMedia = PlaybackSystemMedia(controller: self, artworkDirectory: artworkDirectory)
         observeSession()
-        if let data = try? Data(contentsOf: playbackURL),
-           let saved = try? JSONDecoder().decode(SavedPlayback.self, from: data), saved.queue.isValid {
+        if let saved = persistence.load() {
             playbackQueue = saved.queue
             folderPath = saved.folderPath
             elapsed = saved.elapsed.isFinite ? max(0, saved.elapsed) : 0
@@ -134,8 +131,7 @@ private actor AudioSessionController {
     func checkpoint() {
         let saved = SavedPlayback(queue: playbackQueue, folderPath: folderPath, elapsed: preciseElapsed)
         do {
-            try FileManager.default.createDirectory(at: playbackURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try JSONEncoder().encode(saved).write(to: playbackURL, options: .atomic)
+            try persistence.save(saved)
             lastCheckpoint = Date()
         } catch {
             // Playback remains usable if the device cannot save restoration state.
@@ -303,13 +299,7 @@ private actor AudioSessionController {
         }
     }
 
-    private func refreshArtwork() {
-        nowPlayingArtwork = nil
-        if let key = currentTrack?.artworkKey,
-           let image = UIImage(contentsOfFile: artworkDirectory.appendingPathComponent(key).path) {
-            nowPlayingArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-        }
-    }
+    private func refreshArtwork() { systemMedia?.refreshArtwork() }
 
     private func fail(_ message: String) {
         pause()
@@ -356,68 +346,7 @@ private actor AudioSessionController {
         }
     }
 
-    private func configureRemoteCommands() {
-        let center = MPRemoteCommandCenter.shared()
-        func register(_ command: MPRemoteCommand, _ action: @escaping @MainActor (PlaybackController) -> Void) {
-            let token = command.addTarget { [weak self] _ in
-                Task { @MainActor [weak self] in if let self { action(self) } }
-                return .success
-            }
-            remoteTargets.append((command, token))
-        }
-        register(center.playCommand) { $0.resume() }
-        register(center.pauseCommand) { $0.pause() }
-        register(center.togglePlayPauseCommand) { $0.toggle() }
-        register(center.nextTrackCommand) { $0.next() }
-        register(center.previousTrackCommand) { $0.previous() }
-        let token = center.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
-            let position = event.positionTime
-            Task { @MainActor [weak self] in self?.seek(to: position) }
-            return .success
-        }
-        remoteTargets.append((center.changePlaybackPositionCommand, token))
-        let repeatToken = center.changeRepeatModeCommand.addTarget { [weak self] event in
-            guard let event = event as? MPChangeRepeatModeCommandEvent else { return .commandFailed }
-            let mode: RepeatMode = event.repeatType == .one ? .one : (event.repeatType == .all ? .all : .off)
-            Task { @MainActor [weak self] in self?.setRepeat(mode) }
-            return .success
-        }
-        remoteTargets.append((center.changeRepeatModeCommand, repeatToken))
-        center.skipForwardCommand.isEnabled = false
-        center.skipBackwardCommand.isEnabled = false
-        updateNowPlaying()
-    }
-
-    private func updateNowPlaying() {
-        let commands = MPRemoteCommandCenter.shared()
-        commands.nextTrackCommand.isEnabled = hasNext
-        commands.previousTrackCommand.isEnabled = hasPrevious
-        commands.changePlaybackPositionCommand.isEnabled = currentTrack != nil && !isLoading
-        commands.playCommand.isEnabled = currentTrack != nil
-        commands.pauseCommand.isEnabled = currentTrack != nil
-        commands.togglePlayPauseCommand.isEnabled = currentTrack != nil
-        commands.changeShuffleModeCommand.isEnabled = false
-        commands.changeShuffleModeCommand.currentShuffleType = .off
-        commands.changeRepeatModeCommand.isEnabled = currentTrack != nil
-        commands.changeRepeatModeCommand.currentRepeatType = repeatMode == .one ? .one : (repeatMode == .all ? .all : .off)
-        guard let track = currentTrack else {
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
-            return
-        }
-        var info: [String: Any] = [
-            MPMediaItemPropertyTitle: track.title,
-            MPMediaItemPropertyArtist: track.artist,
-            MPMediaItemPropertyAlbumTitle: track.albumTitle,
-            MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyElapsedPlaybackTime: elapsed,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
-            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
-            MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue
-        ]
-        if let artwork = nowPlayingArtwork { info[MPMediaItemPropertyArtwork] = artwork }
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
-    }
+    private func updateNowPlaying() { systemMedia?.update() }
 
     private func observeSession() {
         let center = NotificationCenter.default
@@ -457,6 +386,5 @@ private actor AudioSessionController {
     isolated deinit {
         timer?.invalidate()
         notifications.forEach { NotificationCenter.default.removeObserver($0) }
-        remoteTargets.forEach { $0.0.removeTarget($0.1) }
     }
 }
