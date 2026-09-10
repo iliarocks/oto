@@ -499,3 +499,16 @@ Adjusted the dark website background to neutral #080808, giving a slight separat
 ## Simplify the opening privacy paragraph — September 8
 
 Rephrased the first privacy paragraph using the user's proposed copy, with minor grammar adjustments. It now leads with on-device storage, then in-place music reading and the absence of developer data collection, advertising, and analytics. Remaining website copy is unchanged. Local-only change; no publishing or remote push.
+
+
+## App Store Connect identity and first upload — September 9
+
+Changed the app bundle identifier to `ilia.page.oto` in Debug and Release, with matching `ilia.page.ototests` and `ilia.page.otouitests` test identifiers. Registered the new identifier and created the `Oto — 音` App Store Connect entry (Apple ID `6810410791`, SKU `ilia.page.oto`, English U.S.). The initial `com.shmilia.oto` record was removed at the user’s request after the replacement was created.
+
+The Release archive succeeded, its embedded identifier was verified as `ilia.page.oto`, and its code signature passed verification. Version 1.0 (53) uploaded successfully and entered Apple processing. Archive and upload records are in `.build/AppStoreConnect/`, with the final upload log at `upload-ilia.page-53.log`. No submission for App Review was made.
+
+## iPhone-only device support — September 9
+
+During App Store screenshot planning, the user clarified that Oto should be iPhone-only. Changed TARGETED_DEVICE_FAMILY from 1,2 to 1 across the app and test target configurations. The project passes plutil validation and all six configurations now target iPhone. The previously uploaded build is unchanged; a new archive and upload are required to apply this correction in App Store Connect.
+
+At the user's request, incremented the app build number to 54 and archived version 1.0 using the existing automatic signing configuration. Verified the archive's identifier (`ilia.page.oto`), version (`54`), iPhone-only UIDeviceFamily (`[1]`), and code signature. App Store Connect accepted the upload at 15:06 on September 9 and began processing. Archive: `.build/AppStoreConnect/Oto-ilia.page-1.0-54.xcarchive`; upload log: `.build/AppStoreConnect/upload-ilia.page-54.log`. No App Review submission was made.
